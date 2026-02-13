@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MULTI-TENANT: Organizations
+// ============================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  subdomain String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       OrgUser[]
+  students    Student[]
+  assessments Assessment[]
+}
+
+// ============================================
+// ADMIN USERS (Instructors)
+// ============================================
+
+model OrgUser {
+  id          String    @id @default(uuid())
+  orgId       String
+  email       String
+  password    String
+  name        String
+  role        String    @default("admin")
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  org         Organization @relation(fields: [orgId], references: [id])
+  assessments Assessment[]
+
+  @@unique([orgId, email])
+}
+
+// ============================================
+// STUDENTS
+// ============================================
+
+model Student {
+  id        String   @id @default(uuid())
+  orgId     String
+  email     String
+  firstName String
+  lastName  String
+  password  String?  // nullable — students can take assessments before creating an account
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org       Organization         @relation(fields: [orgId], references: [id])
+  responses AssessmentResponse[]
+
+  @@unique([orgId, email])
+}
+
+// ============================================
+// ASSESSMENTS
+// ============================================
+
+model Assessment {
+  id                 String           @id @default(uuid())
+  orgId              String
+  createdById        String
+  title              String
+  description        String?
+  surveyJson         Json             // SurveyJS JSON with questions, choices, correctAnswer, metadata
+  status             AssessmentStatus @default(draft)
+  publicHash         String           @unique @default(uuid())
+  resultsReleased    Boolean          @default(false)
+  passingScore       Int?             @default(70)
+  timeLimitMinutes   Int?
+  randomizeQuestions Boolean          @default(true)
+  randomizeChoices   Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  org       Organization         @relation(fields: [orgId], references: [id])
+  createdBy OrgUser              @relation(fields: [createdById], references: [id])
+  responses AssessmentResponse[]
+
+  @@index([orgId])
+  @@index([publicHash])
+}
+
+enum AssessmentStatus {
+  draft
+  active
+  closed
+}
+
+// ============================================
+// ASSESSMENT RESPONSES
+// ============================================
+
+model AssessmentResponse {
+  id              String    @id @default(uuid())
+  assessmentId    String
+  studentId       String?   // null until student creates an account
+  studentEmail    String
+  studentName     String
+  responseData    Json      // { questionName: answerValue }
+  questionOrder   Json?     // array of question names in the randomized order shown
+  totalQuestions  Int?
+  totalCorrect    Int?
+  scorePercentage Decimal?  @db.Decimal(5, 2)
+  passed          Boolean?
+  timeTaken       Int?      // seconds
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student    Student?   @relation(fields: [studentId], references: [id])
+
+  @@unique([assessmentId, studentEmail])
+  @@index([assessmentId])
+  @@index([studentEmail])
+}

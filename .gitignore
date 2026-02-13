@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+app/node_modules/
+
+# Build outputs
+app/dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test artifacts
+app/test-results/
+app/playwright-report/
+e2e/.auth/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Database
+prisma/*.db
+
+# File uploads
+storage/

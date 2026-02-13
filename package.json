@@ -1,0 +1,68 @@
+{
+  "name": "mededprep-inst",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "PORT=9001 node --watch server.js",
+    "start": "node server.js",
+    "db:migrate": "npx prisma migrate dev",
+    "db:deploy": "npx prisma migrate deploy",
+    "db:push": "npx prisma db push",
+    "db:studio": "npx prisma studio",
+    "db:generate": "npx prisma generate",
+    "db:seed": "node prisma/seed.js",
+    "create-admin": "node scripts/create-admin.js",
+    "create-org": "node scripts/create-org.js",
+    "lint": "eslint lib/ routes/ middleware/ scripts/ server.js app.js",
+    "lint:fix": "eslint lib/ routes/ middleware/ scripts/ server.js app.js --fix",
+    "format": "prettier --write \"**/*.{js,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{js,json,md}\" --ignore-path .gitignore",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --write"
+    ],
+    "lib/**/*.js": [
+      "eslint --fix"
+    ],
+    "routes/**/*.js": [
+      "eslint --fix"
+    ],
+    "middleware/**/*.js": [
+      "eslint --fix"
+    ],
+    "app/src/**/*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "csv-parse": "^6.1.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "qrcode": "^1.5.4",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "prisma": "^5.22.0"
+  }
+}

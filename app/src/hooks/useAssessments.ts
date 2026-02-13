@@ -1,0 +1,124 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api, ensureSuccess } from '../lib/api';
+import type {
+  Assessment,
+  AssessmentDetail,
+  AssessmentResponse,
+  ItemAnalysisResult,
+  QrCodeData,
+} from '../types/api';
+
+export function useAssessments() {
+  return useQuery({
+    queryKey: ['assessments'],
+    queryFn: async () => ensureSuccess(await api.get<Assessment[]>('/api/assessments')),
+  });
+}
+
+export function useAssessment(id: string) {
+  return useQuery({
+    queryKey: ['assessments', id],
+    queryFn: async () => ensureSuccess(await api.get<AssessmentDetail>(`/api/assessments/${id}`)),
+    enabled: !!id,
+  });
+}
+
+export function useCreateAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
+      ensureSuccess(await api.post<Assessment>('/api/assessments', data)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assessments'] }),
+  });
+}
+
+export function useUpdateAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number; resultsReleased?: boolean; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
+      ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}`, data)),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['assessments'] });
+      qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
+    },
+  });
+}
+
+export function useDeleteAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      ensureSuccess(await api.delete<void>(`/api/assessments/${id}`)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['assessments'] }),
+  });
+}
+
+export function usePublishAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      ensureSuccess(await api.post<Assessment>(`/api/assessments/${id}/publish`)),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['assessments'] });
+      qc.invalidateQueries({ queryKey: ['assessments', id] });
+    },
+  });
+}
+
+export function useCloseAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      ensureSuccess(await api.post<Assessment>(`/api/assessments/${id}/close`)),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['assessments'] });
+      qc.invalidateQueries({ queryKey: ['assessments', id] });
+    },
+  });
+}
+
+export function useImportCsv() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, csvContent }: { id: string; csvContent: string }) =>
+      ensureSuccess(await api.post<{ questionCount: number }>(`/api/assessments/${id}/import-csv`, { csvContent })),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
+    },
+  });
+}
+
+export function useAssessmentQrCode(id: string) {
+  return useQuery({
+    queryKey: ['assessments', id, 'qr-code'],
+    queryFn: async () => ensureSuccess(await api.get<QrCodeData>(`/api/assessments/${id}/qr-code`)),
+    enabled: !!id,
+  });
+}
+
+export function useAssessmentResponses(id: string) {
+  return useQuery({
+    queryKey: ['assessments', id, 'responses'],
+    queryFn: async () => ensureSuccess(await api.get<AssessmentResponse[]>(`/api/assessments/${id}/responses`)),
+    enabled: !!id,
+  });
+}
+
+export function useItemAnalysis(id: string) {
+  return useQuery({
+    queryKey: ['assessments', id, 'item-analysis'],
+    queryFn: async () => ensureSuccess(await api.get<ItemAnalysisResult>(`/api/assessments/${id}/item-analysis`)),
+    enabled: !!id,
+  });
+}
+
+export function useReleaseResults() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, released }: { id: string; released: boolean }) =>
+      ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}/release-results`, { released })),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
+    },
+  });
+}
