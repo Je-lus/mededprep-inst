@@ -46,11 +46,11 @@ export default function StudentLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
+    <div className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto w-full max-w-md">
         <Card>
           <CardHeader className="space-y-2 text-center">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#1b5fd0]">MedEdPrep</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">MedEdPrep</p>
             <CardTitle className="text-2xl">Student Login</CardTitle>
             <CardDescription>Sign in to view your assessments and review results.</CardDescription>
           </CardHeader>
@@ -97,7 +97,7 @@ export default function StudentLogin() {
 
             <p className="text-center text-sm text-muted-foreground">
               Need an account?{' '}
-              <Link to="/create-account" className="font-medium text-[#1b5fd0] underline">
+              <Link to="/create-account" className="font-medium text-primary underline">
                 Create one
               </Link>
             </p>

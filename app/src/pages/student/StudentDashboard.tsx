@@ -39,12 +39,12 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:py-10">
+    <div className="min-h-screen bg-background px-4 py-8 sm:py-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#1b5fd0]">Student Portal</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Student Portal</p>
               <CardTitle className="text-2xl">My Assessments</CardTitle>
               <CardDescription>
                 Signed in as {student?.firstName} {student?.lastName}
