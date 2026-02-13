@@ -256,7 +256,7 @@ export default function TakeAssessment() {
 
   if (!hash) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-2xl">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -270,7 +270,7 @@ export default function TakeAssessment() {
 
   if (assessmentQuery.isPending) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl space-y-4">
           <Skeleton className="h-8 w-72" />
           <Skeleton className="h-28 w-full" />
@@ -287,7 +287,7 @@ export default function TakeAssessment() {
         : 'Unable to load assessment details';
 
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-2xl space-y-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -306,10 +306,10 @@ export default function TakeAssessment() {
   const isTimed = typeof surveyJson?.timeLimit === 'number' && surveyJson.timeLimit > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:py-10">
+    <div className="min-h-screen bg-background px-4 py-8 sm:py-10">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#1b5fd0]">MedEdPrep</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">MedEdPrep</p>
           <h1 className="text-3xl font-bold text-slate-900">{assessment.title}</h1>
           {assessment.description && <p className="text-sm text-slate-600">{assessment.description}</p>}
         </div>
@@ -385,9 +385,9 @@ export default function TakeAssessment() {
         {step === 'taking' && (
           <div className="space-y-4">
             {isTimed && remainingSeconds !== null && (
-              <Card className="border-[#1b5fd0]/30">
+              <Card className="border-primary/30">
                 <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-[#1b5fd0]">
+                  <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Clock3 className="h-4 w-4" />
                     Time Remaining
                   </div>
@@ -432,7 +432,7 @@ export default function TakeAssessment() {
                               onChange={() =>
                                 setAnswers((current) => ({ ...current, [question.name]: choice.value }))
                               }
-                              className="h-4 w-4 border-slate-300 text-[#1b5fd0] focus:ring-[#1b5fd0]"
+                              className="h-4 w-4 border-slate-300 text-primary focus:ring-primary"
                             />
                             <span className="text-sm text-slate-800">{choice.text}</span>
                           </label>
@@ -453,7 +453,7 @@ export default function TakeAssessment() {
                               onChange={(event) =>
                                 updateCheckboxAnswer(question.name, choice.value, event.target.checked)
                               }
-                              className="h-4 w-4 rounded border-slate-300 text-[#1b5fd0] focus:ring-[#1b5fd0]"
+                              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
                             />
                             <span className="text-sm text-slate-800">{choice.text}</span>
                           </label>
@@ -525,7 +525,7 @@ export default function TakeAssessment() {
               </CardContent>
             </Card>
 
-            <Card className="border-[#1b5fd0]/30">
+            <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle className="text-xl">Create an account to save your results and review later</CardTitle>
                 <CardDescription>Use your assessment email to link this attempt to your account.</CardDescription>
@@ -542,7 +542,7 @@ export default function TakeAssessment() {
                 ) : accountSkipped ? (
                   <p className="text-sm text-muted-foreground">
                     You can create an account later at{' '}
-                    <Link to="/student/login" className="font-medium text-[#1b5fd0] underline">
+                    <Link to="/student/login" className="font-medium text-primary underline">
                       student login
                     </Link>
                     .

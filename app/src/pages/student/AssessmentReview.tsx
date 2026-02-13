@@ -29,7 +29,7 @@ export default function AssessmentReview() {
 
   if (!responseId) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl">
           <Alert variant="destructive">
             <AlertTitle>Invalid review link</AlertTitle>
@@ -42,7 +42,7 @@ export default function AssessmentReview() {
 
   if (reviewQuery.isPending) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-5xl space-y-4">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-28 w-full" />
@@ -55,7 +55,7 @@ export default function AssessmentReview() {
 
   if (reviewQuery.isError || !reviewQuery.data) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl space-y-4">
           <Alert variant="destructive">
             <AlertTitle>Unable to load review</AlertTitle>
@@ -76,7 +76,7 @@ export default function AssessmentReview() {
   const review = reviewQuery.data;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:py-10">
+    <div className="min-h-screen bg-background px-4 py-8 sm:py-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Button asChild variant="outline">
@@ -85,7 +85,7 @@ export default function AssessmentReview() {
               Back to My Assessments
             </Link>
           </Button>
-          <Badge className="bg-[#1b5fd0] text-white">{review.scorePercentage}%</Badge>
+          <Badge className="bg-primary text-primary-foreground">{review.scorePercentage}%</Badge>
         </div>
 
         <Card>

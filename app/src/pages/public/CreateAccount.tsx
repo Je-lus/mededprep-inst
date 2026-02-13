@@ -59,11 +59,11 @@ export default function CreateAccount() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
+    <div className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto w-full max-w-md">
         <Card>
           <CardHeader className="space-y-2 text-center">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#1b5fd0]">MedEdPrep</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">MedEdPrep</p>
             <CardTitle className="text-2xl">Create Student Account</CardTitle>
             <CardDescription>Save results and review your completed assessments.</CardDescription>
           </CardHeader>
@@ -145,7 +145,7 @@ export default function CreateAccount() {
 
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/student/login" className="font-medium text-[#1b5fd0] underline">
+              <Link to="/student/login" className="font-medium text-primary underline">
                 Sign in
               </Link>
             </p>
