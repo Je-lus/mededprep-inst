@@ -82,6 +82,7 @@ model Assessment {
   status             AssessmentStatus @default(draft)
   publicHash         String           @unique @default(uuid())
   resultsReleased    Boolean          @default(false)
+  showScoreFeedback  Boolean          @default(true)
   passingScore       Int?             @default(70)
   timeLimitMinutes   Int?
   randomizeQuestions Boolean          @default(true)
@@ -113,6 +114,7 @@ model AssessmentResponse {
   studentId       String?   // null until student creates an account
   studentEmail    String
   studentName     String
+  attempt         Int       @default(1)
   responseData    Json      // { questionName: answerValue }
   questionOrder   Json?     // array of question names in the randomized order shown
   totalQuestions  Int?
@@ -128,7 +130,7 @@ model AssessmentResponse {
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   student    Student?   @relation(fields: [studentId], references: [id])
 
-  @@unique([assessmentId, studentEmail])
+  @@unique([assessmentId, studentEmail, attempt])
   @@index([assessmentId])
   @@index([studentEmail])
 }

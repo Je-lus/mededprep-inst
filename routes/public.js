@@ -157,40 +157,46 @@ router.post('/assessment/:hash/start', validate(startAssessmentSchema), async (r
       throw new NotFoundError('Assessment not found');
     }
 
-    const existingResponse = await prisma.assessmentResponse.findFirst({
+    const existingIncompleteResponse = await prisma.assessmentResponse.findFirst({
       where: {
         assessmentId: assessment.id,
         studentEmail,
+        completedAt: null,
       },
       select: {
         id: true,
-        completedAt: true,
         questionOrder: true,
+      },
+      orderBy: {
+        startedAt: 'desc',
       },
     });
 
-    if (existingResponse?.completedAt) {
-      throw new ValidationError('You have already completed this assessment');
-    }
-
-    if (existingResponse) {
+    if (existingIncompleteResponse) {
       const resumedSurveyJson = buildResumedSurveyJson(
         assessment.surveyJson,
-        existingResponse.questionOrder,
+        existingIncompleteResponse.questionOrder,
       );
       const sanitizedSurveyJson = stripSensitiveData(resumedSurveyJson);
 
       return res.json({
         success: true,
         data: {
-          responseId: existingResponse.id,
+          responseId: existingIncompleteResponse.id,
           surveyJson: applyTimerConfig(sanitizedSurveyJson, assessment.timeLimitMinutes),
-          questionOrder: Array.isArray(existingResponse.questionOrder)
-            ? existingResponse.questionOrder
+          questionOrder: Array.isArray(existingIncompleteResponse.questionOrder)
+            ? existingIncompleteResponse.questionOrder
             : [],
         },
       });
     }
+
+    const existingResponseCount = await prisma.assessmentResponse.count({
+      where: {
+        assessmentId: assessment.id,
+        studentEmail,
+      },
+    });
 
     const { firstName, lastName } = parseStudentName(studentName);
     const student = await prisma.student.upsert({
@@ -216,6 +222,7 @@ router.post('/assessment/:hash/start', validate(startAssessmentSchema), async (r
         studentId: student.id,
         studentEmail,
         studentName,
+        attempt: existingResponseCount + 1,
         responseData: {},
         questionOrder: randomized.questionOrder,
         startedAt: new Date(),
@@ -258,6 +265,7 @@ router.post('/assessment/:hash/submit', validate(submitAssessmentSchema), async 
           select: {
             surveyJson: true,
             passingScore: true,
+            showScoreFeedback: true,
           },
         },
       },
@@ -290,15 +298,19 @@ router.post('/assessment/:hash/submit', validate(submitAssessmentSchema), async 
       },
     });
 
+    const resultData = response.assessment.showScoreFeedback
+      ? {
+          responseId: response.id,
+          totalQuestions: score.totalQuestions,
+          totalCorrect: score.totalCorrect,
+          scorePercentage: score.scorePercentage,
+          passed: score.passed,
+        }
+      : { responseId: response.id };
+
     return res.json({
       success: true,
-      data: {
-        responseId: response.id,
-        totalQuestions: score.totalQuestions,
-        totalCorrect: score.totalCorrect,
-        scorePercentage: score.scorePercentage,
-        passed: score.passed,
-      },
+      data: resultData,
     });
   } catch (error) {
     return next(error);
