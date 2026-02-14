@@ -3,10 +3,11 @@ import { AlertCircle, ArrowRight, Plus } from 'lucide-react';
 import { useAssessments } from '@/hooks/useAssessments';
 import type { Assessment, SurveyElement, SurveyJson } from '@/types/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusBadge } from '@/components/StatusBadge';
+import { EmptyState } from '@/components/EmptyState';
 import {
   Table,
   TableBody,
@@ -24,16 +25,6 @@ function getQuestionCount(assessment: Assessment) {
     if (!Array.isArray(page?.elements)) return total;
     return total + page.elements.filter((el: SurveyElement | undefined) => !!el?.name).length;
   }, 0);
-}
-
-function statusBadge(status: Assessment['status']) {
-  if (status === 'active') {
-    return <Badge className="bg-[#1b5fd0] text-white hover:bg-[#1b5fd0]">Active</Badge>;
-  }
-  if (status === 'closed') {
-    return <Badge variant="secondary">Closed</Badge>;
-  }
-  return <Badge variant="outline">Draft</Badge>;
 }
 
 function formatDate(value: string) {
@@ -86,20 +77,18 @@ export default function AssessmentList() {
         )}
 
         {!isLoading && !isError && data && data.length === 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>No assessments yet</CardTitle>
-              <CardDescription>Create your first assessment to begin collecting responses.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EmptyState
+            title="No assessments yet"
+            description="Create your first assessment to begin collecting responses."
+            action={
               <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
                 <Link to="/assessments/new">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Assessment
                 </Link>
               </Button>
-            </CardContent>
-          </Card>
+            }
+          />
         )}
 
         {!isLoading && !isError && data && data.length > 0 && (
@@ -131,7 +120,7 @@ export default function AssessmentList() {
                           </p>
                         )}
                       </TableCell>
-                      <TableCell>{statusBadge(assessment.status)}</TableCell>
+                      <TableCell><StatusBadge status={assessment.status} /></TableCell>
                       <TableCell className="text-right">{getQuestionCount(assessment)}</TableCell>
                       <TableCell className="text-right">{assessment._count?.responses ?? 0}</TableCell>
                       <TableCell>{formatDate(assessment.createdAt)}</TableCell>

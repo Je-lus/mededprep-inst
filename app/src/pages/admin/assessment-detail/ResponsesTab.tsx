@@ -1,0 +1,124 @@
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PaginationControls } from '@/components/PaginationControls';
+import { cn } from '@/lib/utils';
+import type { AssessmentResponse } from '@/types/api';
+import { formatDateTime, formatTimeTaken } from './utils';
+
+export function ResponsesTab({
+  responses,
+  total,
+  page,
+  limit,
+  isLoading,
+  isError,
+  error,
+  onPrevious,
+  onNext,
+}: {
+  responses: AssessmentResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Responses</CardTitle>
+        <CardDescription>Submitted student assessments and outcomes.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && (
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        )}
+
+        {isError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Unable to load responses</AlertTitle>
+            <AlertDescription>
+              {error instanceof Error ? error.message : 'Try again later.'}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isLoading && !isError && total === 0 && (
+          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+            No responses yet. Student submissions will appear here once the assessment is taken.
+          </div>
+        )}
+
+        {!isLoading && !isError && total > 0 && (
+          <div className="space-y-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="w-[90px] text-right">Score</TableHead>
+                  <TableHead className="w-[90px]">Passed</TableHead>
+                  <TableHead className="w-[120px]">Time Taken</TableHead>
+                  <TableHead className="w-[180px]">Completed At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {responses.map((response) => (
+                  <TableRow key={response.id}>
+                    <TableCell className="font-medium">{response.studentName || '-'}</TableCell>
+                    <TableCell>{response.studentEmail || '-'}</TableCell>
+                    <TableCell className="text-right">{response.scorePercentage ?? '-'}</TableCell>
+                    <TableCell>
+                      {typeof response.passed === 'boolean' ? (
+                        <Badge
+                          className={cn(
+                            response.passed
+                              ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                              : 'bg-red-100 text-red-700 hover:bg-red-100',
+                          )}
+                        >
+                          {response.passed ? 'Pass' : 'Fail'}
+                        </Badge>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell>{formatTimeTaken(response.timeTaken)}</TableCell>
+                    <TableCell>{formatDateTime(response.completedAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <PaginationControls
+              total={total}
+              page={page}
+              limit={limit}
+              onPrevious={onPrevious}
+              onNext={onNext}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

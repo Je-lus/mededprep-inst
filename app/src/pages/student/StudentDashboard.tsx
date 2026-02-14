@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PaginationControls } from '@/components/PaginationControls';
+import { EmptyState } from '@/components/EmptyState';
 
 function formatCompletedDate(value?: string): string {
   if (!value) return 'Not completed';
@@ -38,9 +40,6 @@ export default function StudentDashboard() {
   const total = assessmentsQuery.data?.total ?? 0;
   const currentPage = assessmentsQuery.data?.page ?? page;
   const currentLimit = assessmentsQuery.data?.limit ?? limit;
-  const canPrevious = currentPage > 1;
-  const canNext = currentPage * currentLimit < total;
-
   const handleLogout = () => {
     logout();
     toast.success('Logged out');
@@ -88,14 +87,10 @@ export default function StudentDashboard() {
         {!assessmentsQuery.isPending &&
           !assessmentsQuery.isError &&
           total === 0 && (
-            <Card>
-              <CardContent className="py-10 text-center">
-                <p className="text-lg font-semibold">No assessments yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Complete an assessment from a QR code link and your results will appear here.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              title="No assessments yet"
+              description="Complete an assessment from a QR code link and your results will appear here."
+            />
           )}
 
         {!assessmentsQuery.isPending &&
@@ -193,32 +188,13 @@ export default function StudentDashboard() {
                 ))}
               </div>
 
-              {total > currentLimit && (
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * currentLimit + 1}-{Math.min(currentPage * currentLimit, total)} of{' '}
-                    {total} assessments
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setPage((current) => Math.max(current - 1, 1))}
-                      disabled={!canPrevious}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setPage((current) => current + 1)}
-                      disabled={!canNext}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <PaginationControls
+                total={total}
+                page={currentPage}
+                limit={currentLimit}
+                onPrevious={() => setPage((current) => Math.max(current - 1, 1))}
+                onNext={() => setPage((current) => current + 1)}
+              />
             </>
           )}
       </div>
