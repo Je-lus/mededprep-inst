@@ -23,6 +23,10 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
 
 function normalizeAnswer(answer) {
   if (Array.isArray(answer)) {
@@ -66,6 +70,17 @@ function buildReviewQuestions(surveyJson, responseData) {
   }
 
   return questions;
+}
+
+function formatZodErrors(error) {
+  const details = {};
+  for (const issue of error.issues) {
+    const field = issue.path.join('.') || '_root';
+    if (!details[field]) {
+      details[field] = issue.message;
+    }
+  }
+  return details;
 }
 
 router.post('/register', validate(registerSchema), async (req, res, next) => {
@@ -198,45 +213,61 @@ router.get('/me', requireStudentAuth, (req, res) => {
 
 router.get('/assessments', requireStudentAuth, async (req, res, next) => {
   try {
-    const responses = await prisma.assessmentResponse.findMany({
-      where: {
-        studentId: req.student.id,
-        completedAt: {
-          not: null,
-        },
-        assessment: {
-          orgId: req.orgId,
-        },
+    const { page, limit } = paginationSchema.parse(req.query);
+    const skip = (page - 1) * limit;
+    const where = {
+      studentId: req.student.id,
+      completedAt: {
+        not: null,
       },
-      select: {
-        id: true,
-        scorePercentage: true,
-        passed: true,
-        completedAt: true,
-        assessment: {
-          select: {
-            title: true,
-            resultsReleased: true,
+      assessment: {
+        orgId: req.orgId,
+      },
+    };
+    const [responses, total] = await Promise.all([
+      prisma.assessmentResponse.findMany({
+        where,
+        select: {
+          id: true,
+          scorePercentage: true,
+          passed: true,
+          completedAt: true,
+          assessment: {
+            select: {
+              title: true,
+              resultsReleased: true,
+            },
           },
         },
-      },
-      orderBy: {
-        completedAt: 'desc',
-      },
-    });
+        orderBy: {
+          completedAt: 'desc',
+        },
+        take: limit,
+        skip,
+      }),
+      prisma.assessmentResponse.count({ where }),
+    ]);
 
     return res.json({
       success: true,
-      data: responses.map((response) => ({
-        id: response.id,
-        assessmentTitle: response.assessment.title,
-        scorePercentage: response.scorePercentage,
-        passed: response.passed,
-        completedAt: response.completedAt,
-        resultsReleased: response.assessment.resultsReleased,
-      })),
+      data: {
+        responses: responses.map((response) => ({
+          id: response.id,
+          assessmentTitle: response.assessment.title,
+          scorePercentage: response.scorePercentage,
+          passed: response.passed,
+          completedAt: response.completedAt,
+          resultsReleased: response.assessment.resultsReleased,
+        })),
+        total,
+        page,
+        limit,
+      },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new ValidationError('Invalid query parameters', formatZodErrors(error)));
+    }
     return next(error);
   }
 });
