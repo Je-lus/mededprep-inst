@@ -16,9 +16,14 @@ const createAssessmentSchema = z.object({
   timeLimitMinutes: z.number().int().positive().optional(),
   randomizeQuestions: z.boolean().optional(),
   randomizeChoices: z.boolean().optional(),
+  showScoreFeedback: z.boolean().optional(),
 });
 
 const updateAssessmentSchema = createAssessmentSchema.partial();
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
 
 const importCsvSchema = z.object({
   csvContent: z.string().min(1),
@@ -62,12 +67,41 @@ function hasScoredQuestion(surveyJson) {
   return false;
 }
 
+function formatZodErrors(error) {
+  const details = {};
+  for (const issue of error.issues) {
+    const field = issue.path.join('.') || '_root';
+    if (!details[field]) {
+      details[field] = issue.message;
+    }
+  }
+  return details;
+}
+
 router.get('/', async (req, res, next) => {
   try {
     const assessments = await prisma.assessment.findMany({
       where: { orgId: req.orgId },
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { responses: true } } },
+      select: {
+        id: true,
+        orgId: true,
+        createdById: true,
+        title: true,
+        description: true,
+        surveyJson: true,
+        status: true,
+        publicHash: true,
+        resultsReleased: true,
+        passingScore: true,
+        timeLimitMinutes: true,
+        randomizeQuestions: true,
+        randomizeChoices: true,
+        showScoreFeedback: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { responses: true } },
+      },
     });
 
     res.json({ success: true, data: assessments });
@@ -86,6 +120,7 @@ router.post('/', validate(createAssessmentSchema), async (req, res, next) => {
       timeLimitMinutes,
       randomizeQuestions,
       randomizeChoices,
+      showScoreFeedback,
     } = req.body;
 
     const assessment = await prisma.assessment.create({
@@ -99,6 +134,7 @@ router.post('/', validate(createAssessmentSchema), async (req, res, next) => {
         timeLimitMinutes,
         randomizeQuestions,
         randomizeChoices,
+        showScoreFeedback,
       },
     });
 
@@ -114,7 +150,13 @@ router.get('/:id', async (req, res, next) => {
       _count: { select: { responses: true } },
     });
 
-    res.json({ success: true, data: assessment });
+    res.json({
+      success: true,
+      data: {
+        ...assessment,
+        showScoreFeedback: assessment.showScoreFeedback ?? false,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -252,33 +294,44 @@ router.get('/:id/qr-code', async (req, res, next) => {
 router.get('/:id/responses', async (req, res, next) => {
   try {
     const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+    const { page, limit } = paginationSchema.parse(req.query);
+    const skip = (page - 1) * limit;
 
-    const responses = await prisma.assessmentResponse.findMany({
-      where: {
-        assessmentId: assessment.id,
-        assessment: { orgId: req.orgId },
-      },
-      orderBy: { completedAt: 'desc' },
-      select: {
-        id: true,
-        assessmentId: true,
-        studentId: true,
-        studentEmail: true,
-        studentName: true,
-        totalQuestions: true,
-        totalCorrect: true,
-        scorePercentage: true,
-        passed: true,
-        timeTaken: true,
-        startedAt: true,
-        completedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const where = {
+      assessmentId: assessment.id,
+      assessment: { orgId: req.orgId },
+    };
+    const [responses, total] = await Promise.all([
+      prisma.assessmentResponse.findMany({
+        where,
+        orderBy: { completedAt: 'desc' },
+        take: limit,
+        skip,
+        select: {
+          id: true,
+          assessmentId: true,
+          studentId: true,
+          studentEmail: true,
+          studentName: true,
+          totalQuestions: true,
+          totalCorrect: true,
+          scorePercentage: true,
+          passed: true,
+          timeTaken: true,
+          startedAt: true,
+          completedAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.assessmentResponse.count({ where }),
+    ]);
 
-    res.json({ success: true, data: responses });
+    res.json({ success: true, data: { responses, total, page, limit } });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new ValidationError('Invalid query parameters', formatZodErrors(error)));
+    }
     next(error);
   }
 });
@@ -287,15 +340,43 @@ router.get('/:id/item-analysis', async (req, res, next) => {
   try {
     const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
 
-    const responses = await prisma.assessmentResponse.findMany({
+    const allResponses = await prisma.assessmentResponse.findMany({
       where: {
         assessmentId: assessment.id,
         assessment: { orgId: req.orgId },
       },
-      select: { responseData: true },
+      orderBy: { completedAt: 'desc' },
     });
+    const latestByStudent = new Map();
+    for (const response of allResponses) {
+      const key = response.studentEmail;
+      const existing = latestByStudent.get(key);
+      if (!existing) {
+        latestByStudent.set(key, response);
+        continue;
+      }
 
-    const analysis = computeItemAnalysis(assessment.surveyJson, responses);
+      const responseAttempt = response.attempt ?? Number.NEGATIVE_INFINITY;
+      const existingAttempt = existing.attempt ?? Number.NEGATIVE_INFINITY;
+      if (responseAttempt > existingAttempt) {
+        latestByStudent.set(key, response);
+        continue;
+      }
+      if (responseAttempt < existingAttempt) {
+        continue;
+      }
+
+      const responseCompletedAt = response.completedAt?.getTime?.() ?? 0;
+      const existingCompletedAt = existing.completedAt?.getTime?.() ?? 0;
+      if (responseCompletedAt > existingCompletedAt) {
+        latestByStudent.set(key, response);
+      }
+    }
+    const latestResponses = [...latestByStudent.values()].map((response) => ({
+      responseData: response.responseData,
+    }));
+
+    const analysis = computeItemAnalysis(assessment.surveyJson, latestResponses);
     res.json({ success: true, data: analysis });
   } catch (error) {
     next(error);
