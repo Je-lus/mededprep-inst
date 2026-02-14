@@ -29,6 +29,18 @@ export const publicLimiter = rateLimit({
   },
 });
 
+// Public submit: 5 submissions per 15 minutes per IP
+export const submitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMITED', message: 'Too many submissions. Please try again later.' },
+  },
+});
+
 // General API: 100 requests per minute per IP
 export const generalLimiter = rateLimit({
   windowMs: 60 * 1000,

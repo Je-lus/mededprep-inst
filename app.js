@@ -16,7 +16,7 @@ import { logger } from './lib/logger.js';
 
 import { tenantResolver } from './middleware/tenantResolver.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { authLimiter, generalLimiter } from './middleware/rate-limiter.js';
+import { authLimiter, generalLimiter, submitLimiter } from './middleware/rate-limiter.js';
 
 import { requireAuth } from './lib/auth.js';
 import healthRoutes from './routes/health.js';
@@ -115,6 +115,7 @@ app.use('/api', tenantResolver);
 app.use('/api/auth', authLimiter, authRoutes);
 
 app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);
+app.use('/api/public/assessment/:hash/submit', submitLimiter);
 app.use('/api/public', generalLimiter, publicRoutes);
 app.use('/api/student', authLimiter, studentAuthRoutes);
 

@@ -262,6 +262,9 @@ router.post('/:id/import-csv', validate(importCsvSchema), async (req, res, next)
   }
 });
 
+// In-memory QR code cache keyed by publicHash
+const qrCodeCache = new Map();
+
 router.get('/:id/qr-code', async (req, res, next) => {
   try {
     const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
@@ -275,6 +278,11 @@ router.get('/:id/qr-code', async (req, res, next) => {
       throw new ValidationError('Organization subdomain is required in production');
     }
 
+    const cached = qrCodeCache.get(assessment.publicHash);
+    if (cached) {
+      return res.json({ success: true, data: cached });
+    }
+
     const url = isProduction
       ? `https://${req.org.subdomain}.mededprep.app/take/${assessment.publicHash}`
       : `http://localhost:9000/take/${assessment.publicHash}`;
@@ -285,7 +293,10 @@ router.get('/:id/qr-code', async (req, res, next) => {
       color: { dark: '#000000', light: '#ffffff' },
     });
 
-    res.json({ success: true, data: { url, qrCode } });
+    const data = { url, qrCode };
+    qrCodeCache.set(assessment.publicHash, data);
+
+    res.json({ success: true, data });
   } catch (error) {
     next(error);
   }
