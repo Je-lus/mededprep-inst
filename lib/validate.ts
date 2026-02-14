@@ -2,11 +2,12 @@
  * Zod Validation Middleware for Express
  */
 
-import { z } from 'zod';
+import { z, type ZodSchema, type ZodError } from 'zod';
+import type { Request, Response, NextFunction } from 'express';
 import { ValidationError } from './errors.js';
 
-function formatZodErrors(error) {
-  const details = {};
+function formatZodErrors(error: ZodError): Record<string, string> {
+  const details: Record<string, string> = {};
   for (const issue of error.issues) {
     const path = issue.path.join('.');
     const fieldName = path || '_root';
@@ -17,8 +18,8 @@ function formatZodErrors(error) {
   return details;
 }
 
-function validate(schema) {
-  return (req, res, next) => {
+function validate(schema: ZodSchema) {
+  return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
       const details = formatZodErrors(result.error);
@@ -29,8 +30,8 @@ function validate(schema) {
   };
 }
 
-function validateQuery(schema) {
-  return (req, res, next) => {
+function validateQuery(schema: ZodSchema) {
+  return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.query);
     if (!result.success) {
       const details = formatZodErrors(result.error);
@@ -41,8 +42,8 @@ function validateQuery(schema) {
   };
 }
 
-function validateParams(schema) {
-  return (req, res, next) => {
+function validateParams(schema: ZodSchema) {
+  return (req: Request, _res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.params);
     if (!result.success) {
       const details = formatZodErrors(result.error);

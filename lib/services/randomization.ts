@@ -3,8 +3,19 @@
  * Shuffles questions and answer choices per student
  */
 import crypto from 'crypto';
+import type { SurveyJson, SurveyElement } from '../../types/survey.js';
 
-function shuffle(array) {
+interface RandomizationOptions {
+  randomizeQuestions?: boolean;
+  randomizeChoices?: boolean;
+}
+
+export interface RandomizationResult {
+  surveyJson: SurveyJson;
+  questionOrder: string[];
+}
+
+function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = crypto.randomInt(i + 1);
@@ -16,10 +27,13 @@ function shuffle(array) {
 /**
  * Randomize an assessment's questions and choices
  */
-export function randomizeAssessment(surveyJson, options = {}) {
+export function randomizeAssessment(
+  surveyJson: SurveyJson,
+  options: RandomizationOptions = {},
+): RandomizationResult {
   const { randomizeQuestions = true, randomizeChoices = true } = options;
 
-  const allElements = [];
+  const allElements: SurveyElement[] = [];
   for (const page of surveyJson.pages || []) {
     for (const element of page.elements || []) {
       if ('correctAnswer' in element) {
@@ -38,7 +52,7 @@ export function randomizeAssessment(surveyJson, options = {}) {
     return el;
   });
 
-  const randomizedJson = {
+  const randomizedJson: SurveyJson = {
     ...surveyJson,
     pages: [{ name: 'assessment', elements: finalElements }],
   };

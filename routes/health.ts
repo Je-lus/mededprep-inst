@@ -10,19 +10,20 @@
  */
 
 import { Router } from 'express';
+import type { Request, Response } from 'express';
 import { createRequire } from 'module';
 import os from 'os';
 import { prisma } from '../lib/prisma.js';
 
 const require = createRequire(import.meta.url);
-const { version } = require('../package.json');
+const { version } = require('../package.json') as { version: string };
 
 const router = Router();
 
 /**
  * GET /health — basic liveness check
  */
-router.get('/', (req, res) => {
+router.get('/', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -34,7 +35,7 @@ router.get('/', (req, res) => {
 /**
  * GET /health/db — checks database connectivity
  */
-router.get('/db', async (req, res) => {
+router.get('/db', async (_req: Request, res: Response) => {
   try {
     const startTime = Date.now();
     await prisma.$queryRaw`SELECT 1`;
@@ -58,7 +59,7 @@ router.get('/db', async (req, res) => {
       version,
       database: {
         status: 'error',
-        error: err.message,
+        error: (err as Error).message,
       },
     });
   }
@@ -67,7 +68,7 @@ router.get('/db', async (req, res) => {
 /**
  * GET /health/detailed — comprehensive system diagnostics
  */
-router.get('/detailed', async (req, res) => {
+router.get('/detailed', async (_req: Request, res: Response) => {
   const startTime = Date.now();
 
   const memUsage = process.memoryUsage();
@@ -77,12 +78,12 @@ router.get('/detailed', async (req, res) => {
     used: os.totalmem() - os.freemem(),
   };
 
-  const toMB = (bytes) => Math.round((bytes / 1024 / 1024) * 100) / 100;
+  const toMB = (bytes: number) => Math.round((bytes / 1024 / 1024) * 100) / 100;
   const loadAvg = os.loadavg();
 
-  let dbStatus;
-  let dbResponseTime = null;
-  let dbError = null;
+  let dbStatus: string;
+  let dbResponseTime: number | null = null;
+  let dbError: string | null = null;
 
   try {
     const dbStartTime = Date.now();
@@ -91,7 +92,7 @@ router.get('/detailed', async (req, res) => {
     dbStatus = 'connected';
   } catch (err) {
     dbStatus = 'error';
-    dbError = err.message;
+    dbError = (err as Error).message;
   }
 
   const totalResponseTime = Date.now() - startTime;

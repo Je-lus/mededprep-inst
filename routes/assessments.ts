@@ -1,10 +1,18 @@
 import { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import QRCode from 'qrcode';
 import { prisma } from '../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../lib/errors.js';
 import { z, validate } from '../lib/validate.js';
 import { parseCsvToSurveyJson } from '../lib/services/csv-import.js';
 import { computeItemAnalysis } from '../lib/services/item-analysis.js';
+import type { Prisma } from '@prisma/client';
+import type { SurveyJson, SurveyElement } from '../types/survey.js';
+
+/** Express route params are always strings; cast from string | string[] */
+function param(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 const router = Router();
 
@@ -35,15 +43,15 @@ const releaseResultsSchema = z.object({
 
 const emptyBodySchema = z.object({}).strict();
 
-function parseSurveyJsonOrThrow(surveyJson) {
+function parseSurveyJsonOrThrow(surveyJson: string): SurveyJson {
   try {
-    return JSON.parse(surveyJson);
+    return JSON.parse(surveyJson) as SurveyJson;
   } catch {
     throw new ValidationError('surveyJson must be valid JSON');
   }
 }
 
-async function findAssessmentOrThrow(id, orgId, include = undefined) {
+async function findAssessmentOrThrow(id: string, orgId: string, include?: Record<string, unknown>) {
   const assessment = await prisma.assessment.findFirst({
     where: { id, orgId },
     include,
@@ -53,22 +61,23 @@ async function findAssessmentOrThrow(id, orgId, include = undefined) {
   return assessment;
 }
 
-function hasScoredQuestion(surveyJson) {
+function hasScoredQuestion(surveyJson: SurveyJson): boolean {
   for (const page of surveyJson?.pages || []) {
-    for (const element of page?.elements || []) {
+    for (const element of (page?.elements || []) as SurveyElement[]) {
       if (!('correctAnswer' in element)) continue;
       if (Array.isArray(element.correctAnswer)) {
         if (element.correctAnswer.length > 0) return true;
         continue;
       }
-      if (element.correctAnswer !== null && String(element.correctAnswer).trim() !== '') return true;
+      if (element.correctAnswer !== null && String(element.correctAnswer).trim() !== '')
+        return true;
     }
   }
   return false;
 }
 
-function formatZodErrors(error) {
-  const details = {};
+function formatZodErrors(error: z.ZodError): Record<string, string> {
+  const details: Record<string, string> = {};
   for (const issue of error.issues) {
     const field = issue.path.join('.') || '_root';
     if (!details[field]) {
@@ -78,7 +87,7 @@ function formatZodErrors(error) {
   return details;
 }
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const assessments = await prisma.assessment.findMany({
       where: { orgId: req.orgId },
@@ -110,43 +119,49 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', validate(createAssessmentSchema), async (req, res, next) => {
-  try {
-    const {
-      title,
-      description,
-      surveyJson,
-      passingScore,
-      timeLimitMinutes,
-      randomizeQuestions,
-      randomizeChoices,
-      showScoreFeedback,
-    } = req.body;
-
-    const assessment = await prisma.assessment.create({
-      data: {
-        orgId: req.orgId,
-        createdById: req.user.id,
+router.post(
+  '/',
+  validate(createAssessmentSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
         title,
         description,
-        surveyJson: surveyJson ? parseSurveyJsonOrThrow(surveyJson) : { pages: [] },
+        surveyJson,
         passingScore,
         timeLimitMinutes,
         randomizeQuestions,
         randomizeChoices,
         showScoreFeedback,
-      },
-    });
+      } = req.body;
 
-    res.json({ success: true, data: assessment });
-  } catch (error) {
-    next(error);
-  }
-});
+      const assessment = await prisma.assessment.create({
+        data: {
+          orgId: req.orgId,
+          createdById: req.user!.id,
+          title,
+          description,
+          surveyJson: (surveyJson
+            ? parseSurveyJsonOrThrow(surveyJson)
+            : { pages: [] }) as unknown as Prisma.InputJsonValue,
+          passingScore,
+          timeLimitMinutes,
+          randomizeQuestions,
+          randomizeChoices,
+          showScoreFeedback,
+        },
+      });
 
-router.get('/:id', async (req, res, next) => {
+      res.json({ success: true, data: assessment });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId, {
+    const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId, {
       _count: { select: { responses: true } },
     });
 
@@ -162,39 +177,43 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.put('/:id', validate(updateAssessmentSchema), async (req, res, next) => {
-  try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+router.put(
+  '/:id',
+  validate(updateAssessmentSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
-    const updateKeys = Object.keys(req.body);
-    if (assessment.status !== 'draft' && updateKeys.length > 0) {
-      const allowed = new Set(['title', 'description']);
-      const hasDisallowedField = updateKeys.some((key) => !allowed.has(key));
-      if (hasDisallowedField) {
-        throw new ValidationError(
-          "Only 'title' and 'description' can be updated when assessment is not in draft status",
-        );
+      const updateKeys = Object.keys(req.body);
+      if (assessment.status !== 'draft' && updateKeys.length > 0) {
+        const allowed = new Set(['title', 'description']);
+        const hasDisallowedField = updateKeys.some((key) => !allowed.has(key));
+        if (hasDisallowedField) {
+          throw new ValidationError(
+            "Only 'title' and 'description' can be updated when assessment is not in draft status",
+          );
+        }
       }
+
+      const { surveyJson, ...rest } = req.body;
+      const updated = await prisma.assessment.update({
+        where: { id: assessment.id },
+        data: {
+          ...rest,
+          ...(surveyJson !== undefined ? { surveyJson: parseSurveyJsonOrThrow(surveyJson) } : {}),
+        },
+      });
+
+      res.json({ success: true, data: updated });
+    } catch (error) {
+      next(error);
     }
+  },
+);
 
-    const { surveyJson, ...rest } = req.body;
-    const updated = await prisma.assessment.update({
-      where: { id: assessment.id },
-      data: {
-        ...rest,
-        ...(surveyJson !== undefined ? { surveyJson: parseSurveyJsonOrThrow(surveyJson) } : {}),
-      },
-    });
-
-    res.json({ success: true, data: updated });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+    const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
     if (assessment.status !== 'draft') {
       throw new ValidationError('Only draft assessments can be deleted');
@@ -208,63 +227,77 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/:id/publish', validate(emptyBodySchema), async (req, res, next) => {
-  try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+router.post(
+  '/:id/publish',
+  validate(emptyBodySchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
-    if (!hasScoredQuestion(assessment.surveyJson)) {
-      throw new ValidationError('Assessment must contain at least one question with a correctAnswer');
+      if (!hasScoredQuestion(assessment.surveyJson as SurveyJson)) {
+        throw new ValidationError(
+          'Assessment must contain at least one question with a correctAnswer',
+        );
+      }
+
+      const updated = await prisma.assessment.update({
+        where: { id: assessment.id },
+        data: { status: 'active' },
+      });
+
+      res.json({ success: true, data: updated });
+    } catch (error) {
+      next(error);
     }
+  },
+);
 
-    const updated = await prisma.assessment.update({
-      where: { id: assessment.id },
-      data: { status: 'active' },
-    });
+router.post(
+  '/:id/close',
+  validate(emptyBodySchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
-    res.json({ success: true, data: updated });
-  } catch (error) {
-    next(error);
-  }
-});
+      const updated = await prisma.assessment.update({
+        where: { id: assessment.id },
+        data: { status: 'closed' },
+      });
 
-router.post('/:id/close', validate(emptyBodySchema), async (req, res, next) => {
-  try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
-
-    const updated = await prisma.assessment.update({
-      where: { id: assessment.id },
-      data: { status: 'closed' },
-    });
-
-    res.json({ success: true, data: updated });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post('/:id/import-csv', validate(importCsvSchema), async (req, res, next) => {
-  try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
-    if (assessment.status !== 'draft') {
-      throw new ValidationError('CSV import is only allowed for draft assessments');
+      res.json({ success: true, data: updated });
+    } catch (error) {
+      next(error);
     }
+  },
+);
 
-    const { surveyJson, questionCount } = parseCsvToSurveyJson(req.body.csvContent);
+router.post(
+  '/:id/import-csv',
+  validate(importCsvSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
+      if (assessment.status !== 'draft') {
+        throw new ValidationError('CSV import is only allowed for draft assessments');
+      }
 
-    await prisma.assessment.update({
-      where: { id: assessment.id },
-      data: { surveyJson },
-    });
+      const { surveyJson, questionCount } = parseCsvToSurveyJson(req.body.csvContent);
 
-    res.json({ success: true, data: { questionCount } });
-  } catch (error) {
-    next(error);
-  }
-});
+      await prisma.assessment.update({
+        where: { id: assessment.id },
+        data: { surveyJson: surveyJson as unknown as Prisma.InputJsonValue },
+      });
 
-router.get('/:id/qr-code', async (req, res, next) => {
+      res.json({ success: true, data: { questionCount } });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.get('/:id/qr-code', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+    const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
     if (assessment.status !== 'active') {
       throw new ValidationError('QR code can only be generated for active assessments');
@@ -291,9 +324,9 @@ router.get('/:id/qr-code', async (req, res, next) => {
   }
 });
 
-router.get('/:id/responses', async (req, res, next) => {
+router.get('/:id/responses', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+    const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
     const { page, limit } = paginationSchema.parse(req.query);
     const skip = (page - 1) * limit;
 
@@ -336,9 +369,9 @@ router.get('/:id/responses', async (req, res, next) => {
   }
 });
 
-router.get('/:id/item-analysis', async (req, res, next) => {
+router.get('/:id/item-analysis', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+    const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
     const allResponses = await prisma.assessmentResponse.findMany({
       where: {
@@ -347,7 +380,7 @@ router.get('/:id/item-analysis', async (req, res, next) => {
       },
       orderBy: { completedAt: 'desc' },
     });
-    const latestByStudent = new Map();
+    const latestByStudent = new Map<string, (typeof allResponses)[number]>();
     for (const response of allResponses) {
       const key = response.studentEmail;
       const existing = latestByStudent.get(key);
@@ -373,29 +406,33 @@ router.get('/:id/item-analysis', async (req, res, next) => {
       }
     }
     const latestResponses = [...latestByStudent.values()].map((response) => ({
-      responseData: response.responseData,
+      responseData: response.responseData as Record<string, unknown>,
     }));
 
-    const analysis = computeItemAnalysis(assessment.surveyJson, latestResponses);
+    const analysis = computeItemAnalysis(assessment.surveyJson as SurveyJson, latestResponses);
     res.json({ success: true, data: analysis });
   } catch (error) {
     next(error);
   }
 });
 
-router.put('/:id/release-results', validate(releaseResultsSchema), async (req, res, next) => {
-  try {
-    const assessment = await findAssessmentOrThrow(req.params.id, req.orgId);
+router.put(
+  '/:id/release-results',
+  validate(releaseResultsSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
 
-    const updated = await prisma.assessment.update({
-      where: { id: assessment.id },
-      data: { resultsReleased: req.body.released },
-    });
+      const updated = await prisma.assessment.update({
+        where: { id: assessment.id },
+        data: { resultsReleased: req.body.released },
+      });
 
-    res.json({ success: true, data: updated });
-  } catch (error) {
-    next(error);
-  }
-});
+      res.json({ success: true, data: updated });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

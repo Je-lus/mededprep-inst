@@ -1,7 +1,7 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 /**
  * Create first admin user for an organization
- * Usage: node scripts/create-admin.js
+ * Usage: tsx scripts/create-admin.ts
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -11,9 +11,9 @@ import readline from 'readline';
 const prisma = new PrismaClient();
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
+const ask = (q: string): Promise<string> => new Promise((resolve) => rl.question(q, resolve));
 
-async function main() {
+async function main(): Promise<void> {
   // List orgs
   const orgs = await prisma.organization.findMany({
     select: { id: true, name: true, slug: true },

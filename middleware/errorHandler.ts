@@ -2,12 +2,19 @@
  * Centralized Error Handler Middleware
  */
 
+import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-function handleMulterError(err) {
+interface ErrorResponse {
+  statusCode: number;
+  code: string;
+  message: string;
+}
+
+function handleMulterError(err: Error & { code?: string }): ErrorResponse | null {
   if (err.code === 'LIMIT_FILE_SIZE')
     return { statusCode: 400, code: 'VALIDATION_ERROR', message: 'File too large' };
   if (err.code === 'LIMIT_UNEXPECTED_FILE')
@@ -17,7 +24,9 @@ function handleMulterError(err) {
   return null;
 }
 
-function handlePrismaError(err) {
+function handlePrismaError(
+  err: Error & { code?: string; meta?: { target?: string[] } },
+): ErrorResponse | null {
   if (err.code === 'P2002') {
     const field = err.meta?.target?.[0] || 'field';
     return {
@@ -37,44 +46,60 @@ function handlePrismaError(err) {
   return null;
 }
 
-function handleSyntaxError(err) {
+function handleSyntaxError(err: Error & { status?: number }): ErrorResponse | null {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return { statusCode: 400, code: 'VALIDATION_ERROR', message: 'Invalid JSON in request body' };
   }
   return null;
 }
 
-export function errorHandler(err, req, res, next) {
-  if (res.headersSent) return next(err);
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): void {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
 
   logger.error({ err, method: req.method, url: req.url }, 'Request error');
 
-  const multerError = handleMulterError(err);
-  if (multerError)
-    return res
+  const multerError = handleMulterError(err as Error & { code?: string });
+  if (multerError) {
+    res
       .status(multerError.statusCode)
       .json({ success: false, error: { code: multerError.code, message: multerError.message } });
-
-  const prismaError = handlePrismaError(err);
-  if (prismaError)
-    return res
-      .status(prismaError.statusCode)
-      .json({ success: false, error: { code: prismaError.code, message: prismaError.message } });
-
-  const syntaxError = handleSyntaxError(err);
-  if (syntaxError)
-    return res
-      .status(syntaxError.statusCode)
-      .json({ success: false, error: { code: syntaxError.code, message: syntaxError.message } });
-
-  if (err instanceof AppError) {
-    const response = { success: false, error: { code: err.code, message: err.message } };
-    if (err.details && Object.keys(err.details).length > 0) response.error.details = err.details;
-    if (!isProduction && err.stack) response.error.stack = err.stack;
-    return res.status(err.statusCode).json(response);
+    return;
   }
 
-  return res.status(500).json({
+  const prismaError = handlePrismaError(
+    err as Error & { code?: string; meta?: { target?: string[] } },
+  );
+  if (prismaError) {
+    res
+      .status(prismaError.statusCode)
+      .json({ success: false, error: { code: prismaError.code, message: prismaError.message } });
+    return;
+  }
+
+  const syntaxError = handleSyntaxError(err as Error & { status?: number });
+  if (syntaxError) {
+    res.status(syntaxError.statusCode).json({
+      success: false,
+      error: { code: syntaxError.code, message: syntaxError.message },
+    });
+    return;
+  }
+
+  if (err instanceof AppError) {
+    const response: {
+      success: false;
+      error: { code: string; message: string; details?: Record<string, string>; stack?: string };
+    } = { success: false, error: { code: err.code, message: err.message } };
+    if (err.details && Object.keys(err.details).length > 0) response.error.details = err.details;
+    if (!isProduction && err.stack) response.error.stack = err.stack;
+    res.status(err.statusCode).json(response);
+    return;
+  }
+
+  res.status(500).json({
     success: false,
     error: {
       code: 'INTERNAL',

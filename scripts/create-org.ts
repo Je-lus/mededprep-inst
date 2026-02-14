@@ -1,7 +1,7 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 /**
  * Create a new organization
- * Usage: node scripts/create-org.js
+ * Usage: tsx scripts/create-org.ts
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -10,9 +10,9 @@ import readline from 'readline';
 const prisma = new PrismaClient();
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
+const ask = (q: string): Promise<string> => new Promise((resolve) => rl.question(q, resolve));
 
-async function main() {
+async function main(): Promise<void> {
   const name = await ask('Organization name: ');
   const slug = await ask('Slug (e.g., demo): ');
   const subdomain =

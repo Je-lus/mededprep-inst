@@ -1,7 +1,7 @@
 /**
  * Seed script — creates demo organization + admin user
  *
- * Usage: node prisma/seed.js
+ * Usage: tsx prisma/seed.ts
  * Credentials: admin@demo.org / password123
  */
 
@@ -10,7 +10,7 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-async function main() {
+async function main(): Promise<void> {
   console.info('Seeding database...');
 
   // Create demo org

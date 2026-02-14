@@ -6,6 +6,6 @@ import { PrismaClient } from '@prisma/client';
 
 export const prisma = new PrismaClient();
 
-export async function gracefulDisconnect() {
+export async function gracefulDisconnect(): Promise<void> {
   await prisma.$disconnect();
 }
