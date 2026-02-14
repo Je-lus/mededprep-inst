@@ -128,46 +128,107 @@ function ResultToggle({
   );
 }
 
-function ResponsesTable({ responses }: { responses: AssessmentResponse[] }) {
+function ScoreFeedbackToggle({
+  checked,
+  disabled,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (value: boolean) => void;
+}) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Student Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead className="w-[90px] text-right">Score</TableHead>
-          <TableHead className="w-[90px]">Passed</TableHead>
-          <TableHead className="w-[120px]">Time Taken</TableHead>
-          <TableHead className="w-[180px]">Completed At</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {responses.map((response) => (
-          <TableRow key={response.id}>
-            <TableCell className="font-medium">{response.studentName || '-'}</TableCell>
-            <TableCell>{response.studentEmail || '-'}</TableCell>
-            <TableCell className="text-right">{response.scorePercentage ?? '-'}</TableCell>
-            <TableCell>
-              {typeof response.passed === 'boolean' ? (
-                <Badge
-                  className={cn(
-                    response.passed
-                      ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                      : 'bg-red-100 text-red-700 hover:bg-red-100',
-                  )}
-                >
-                  {response.passed ? 'Pass' : 'Fail'}
-                </Badge>
-              ) : (
-                '-'
-              )}
-            </TableCell>
-            <TableCell>{formatTimeTaken(response.timeTaken)}</TableCell>
-            <TableCell>{formatDateTime(response.completedAt)}</TableCell>
+    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm">
+      <span>Show Score on Submit</span>
+      <input
+        type="checkbox"
+        className="peer sr-only"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="relative h-5 w-9 rounded-full bg-muted transition-colors peer-checked:bg-[#1b5fd0] peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4" />
+    </label>
+  );
+}
+
+function ResponsesTable({
+  responses,
+  total,
+  page,
+  limit,
+  onPrevious,
+  onNext,
+  canPrevious,
+  canNext,
+}: {
+  responses: AssessmentResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  onPrevious: () => void;
+  onNext: () => void;
+  canPrevious: boolean;
+  canNext: boolean;
+}) {
+  const start = total === 0 ? 0 : (page - 1) * limit + 1;
+  const end = total === 0 ? 0 : Math.min(page * limit, total);
+
+  return (
+    <div className="space-y-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Student Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="w-[90px] text-right">Score</TableHead>
+            <TableHead className="w-[90px]">Passed</TableHead>
+            <TableHead className="w-[120px]">Time Taken</TableHead>
+            <TableHead className="w-[180px]">Completed At</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {responses.map((response) => (
+            <TableRow key={response.id}>
+              <TableCell className="font-medium">{response.studentName || '-'}</TableCell>
+              <TableCell>{response.studentEmail || '-'}</TableCell>
+              <TableCell className="text-right">{response.scorePercentage ?? '-'}</TableCell>
+              <TableCell>
+                {typeof response.passed === 'boolean' ? (
+                  <Badge
+                    className={cn(
+                      response.passed
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                        : 'bg-red-100 text-red-700 hover:bg-red-100',
+                    )}
+                  >
+                    {response.passed ? 'Pass' : 'Fail'}
+                  </Badge>
+                ) : (
+                  '-'
+                )}
+              </TableCell>
+              <TableCell>{formatTimeTaken(response.timeTaken)}</TableCell>
+              <TableCell>{formatDateTime(response.completedAt)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground">
+          Showing {start}-{end} of {total} responses
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onPrevious} disabled={!canPrevious}>
+            Previous
+          </Button>
+          <Button variant="outline" size="sm" onClick={onNext} disabled={!canNext}>
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -180,13 +241,22 @@ export default function AssessmentDetail() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [responsesPage, setResponsesPage] = useState(1);
+  const responsesLimit = 10;
+  const [timeLimitEnabled, setTimeLimitEnabled] = useState(false);
+  const [timeLimitInput, setTimeLimitInput] = useState('');
 
   const assessmentQuery = useAssessment(id);
-  const responsesQuery = useAssessmentResponses(id);
-  const responses = responsesQuery.data ?? [];
-  const hasResponses = responses.length > 0;
+  const responsesQuery = useAssessmentResponses(id, responsesPage, responsesLimit);
+  const responses = responsesQuery.data?.responses ?? [];
+  const totalResponses = responsesQuery.data?.total ?? 0;
+  const responsePage = responsesQuery.data?.page ?? responsesPage;
+  const responseLimit = responsesQuery.data?.limit ?? responsesLimit;
+  const hasResponses = totalResponses > 0;
   const qrQuery = useAssessmentQrCode(assessmentQuery.data?.status === 'active' ? id : '');
   const analysisQuery = useItemAnalysis(hasResponses ? id : '');
+  const canPreviousPage = responsePage > 1;
+  const canNextPage = responsePage * responseLimit < totalResponses;
 
   const publishAssessment = usePublishAssessment();
   const closeAssessment = useCloseAssessment();
@@ -204,7 +274,13 @@ export default function AssessmentDetail() {
     if (!assessment) return;
     setEditTitle(assessment.title);
     setEditDescription(assessment.description || '');
+    setTimeLimitEnabled(typeof assessment.timeLimitMinutes === 'number' && assessment.timeLimitMinutes > 0);
+    setTimeLimitInput(assessment.timeLimitMinutes ? String(assessment.timeLimitMinutes) : '');
   }, [assessment]);
+
+  useEffect(() => {
+    setResponsesPage(1);
+  }, [id]);
 
   const copyText = async (value: string, message = 'Copied to clipboard') => {
     try {
@@ -250,6 +326,58 @@ export default function AssessmentDetail() {
       toast.success(released ? 'Results released to students' : 'Results locked');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to update results release');
+    }
+  };
+
+  const handleScoreFeedbackToggle = async (showScoreFeedback: boolean) => {
+    try {
+      await updateAssessment.mutateAsync({ id, showScoreFeedback });
+      toast.success(showScoreFeedback ? 'Score feedback enabled' : 'Score feedback hidden');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update score feedback setting');
+    }
+  };
+
+  const handleTimeLimitToggle = async (enabled: boolean) => {
+    if (!assessment || assessment.status !== 'draft') return;
+
+    const currentMinutes = Number(timeLimitInput);
+    const minutes = enabled ? (currentMinutes > 0 ? currentMinutes : 60) : null;
+
+    try {
+      await updateAssessment.mutateAsync({
+        id,
+        timeLimitMinutes: minutes || null,
+      });
+      setTimeLimitEnabled(enabled);
+      setTimeLimitInput(enabled ? String(minutes) : '');
+      toast.success(enabled ? 'Time limit enabled' : 'Time limit disabled');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update time limit');
+    }
+  };
+
+  const handleTimeLimitCommit = async () => {
+    if (!assessment || assessment.status !== 'draft' || !timeLimitEnabled) return;
+
+    const parsedMinutes = Number(timeLimitInput);
+    if (!Number.isFinite(parsedMinutes) || parsedMinutes <= 0) {
+      setTimeLimitInput(assessment.timeLimitMinutes ? String(assessment.timeLimitMinutes) : '');
+      toast.error('Enter a valid number of minutes');
+      return;
+    }
+
+    if (assessment.timeLimitMinutes === parsedMinutes) return;
+
+    try {
+      await updateAssessment.mutateAsync({
+        id,
+        timeLimitMinutes: parsedMinutes || null,
+      });
+      toast.success('Time limit updated');
+    } catch (error) {
+      setTimeLimitInput(assessment.timeLimitMinutes ? String(assessment.timeLimitMinutes) : '');
+      toast.error(error instanceof Error ? error.message : 'Unable to update time limit');
     }
   };
 
@@ -397,6 +525,11 @@ export default function AssessmentDetail() {
             )}
 
             {responsesQuery.isLoading && <Skeleton className="h-9 w-36" />}
+            <ScoreFeedbackToggle
+              checked={assessment.showScoreFeedback}
+              disabled={updateAssessment.isPending}
+              onChange={handleScoreFeedbackToggle}
+            />
             {hasResponses && (
               <ResultToggle
                 checked={assessment.resultsReleased}
@@ -450,7 +583,44 @@ export default function AssessmentDetail() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Time Limit</p>
-                  <p>{assessment.timeLimitMinutes ? `${assessment.timeLimitMinutes} minutes` : 'None'}</p>
+                  <div className="mt-2 space-y-2">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-sm">
+                      <span>Enable Timer</span>
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={timeLimitEnabled}
+                        disabled={assessment.status !== 'draft' || updateAssessment.isPending}
+                        onChange={(event) => {
+                          void handleTimeLimitToggle(event.target.checked);
+                        }}
+                      />
+                      <span className="relative h-5 w-9 rounded-full bg-muted transition-colors peer-checked:bg-[#1b5fd0] peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4" />
+                    </label>
+
+                    {timeLimitEnabled ? (
+                      <div className="max-w-[180px] space-y-1">
+                        <Input
+                          type="number"
+                          min={1}
+                          value={timeLimitInput}
+                          disabled={assessment.status !== 'draft' || updateAssessment.isPending}
+                          onChange={(event) => setTimeLimitInput(event.target.value)}
+                          onBlur={() => {
+                            void handleTimeLimitCommit();
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key !== 'Enter') return;
+                            event.preventDefault();
+                            void handleTimeLimitCommit();
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">Minutes</p>
+                      </div>
+                    ) : (
+                      <p>None</p>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Randomize Questions</p>
@@ -566,15 +736,24 @@ export default function AssessmentDetail() {
                   </Alert>
                 )}
 
-                {!responsesQuery.isLoading && !responsesQuery.isError && responses.length === 0 && (
+                {!responsesQuery.isLoading && !responsesQuery.isError && totalResponses === 0 && (
                   <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
                     No responses yet. Student submissions will appear here once the assessment is
                     taken.
                   </div>
                 )}
 
-                {!responsesQuery.isLoading && !responsesQuery.isError && responses.length > 0 && (
-                  <ResponsesTable responses={responses} />
+                {!responsesQuery.isLoading && !responsesQuery.isError && totalResponses > 0 && (
+                  <ResponsesTable
+                    responses={responses}
+                    total={totalResponses}
+                    page={responsePage}
+                    limit={responseLimit}
+                    onPrevious={() => setResponsesPage((current) => Math.max(current - 1, 1))}
+                    onNext={() => setResponsesPage((current) => current + 1)}
+                    canPrevious={canPreviousPage}
+                    canNext={canNextPage}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -586,7 +765,7 @@ export default function AssessmentDetail() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Total Responses</CardDescription>
-                    <CardTitle>{analysisQuery.data?.totalResponses ?? responses.length}</CardTitle>
+                    <CardTitle>{analysisQuery.data?.totalResponses ?? totalResponses}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>

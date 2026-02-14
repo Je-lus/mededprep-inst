@@ -106,6 +106,7 @@ export default function TakeAssessment() {
     () => (submitResult ? formatScore(submitResult) : { totalCorrect: 0, totalQuestions: 0, percent: '0.00' }),
     [submitResult],
   );
+  const hasScoreFeedback = typeof submitResult?.totalQuestions === 'number';
 
   const onSubmitAssessment = useCallback(
     async (autoSubmitted = false) => {
@@ -507,21 +508,29 @@ export default function TakeAssessment() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Assessment Complete</CardTitle>
-                <CardDescription>Your score is available now.</CardDescription>
+                <CardDescription>
+                  {hasScoreFeedback ? 'Your score is available now.' : 'Assessment submitted successfully.'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-base">
-                  You scored{' '}
-                  <span className="font-semibold">
-                    {score.totalCorrect} out of {score.totalQuestions}
-                  </span>{' '}
-                  ({score.percent}%)
-                </p>
-                <Badge
-                  className={submitResult.passed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}
-                >
-                  {submitResult.passed ? 'Passed' : 'Failed'}
-                </Badge>
+                {hasScoreFeedback ? (
+                  <>
+                    <p className="text-base">
+                      You scored{' '}
+                      <span className="font-semibold">
+                        {score.totalCorrect} out of {score.totalQuestions}
+                      </span>{' '}
+                      ({score.percent}%)
+                    </p>
+                    <Badge
+                      className={submitResult.passed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}
+                    >
+                      {submitResult.passed ? 'Passed' : 'Failed'}
+                    </Badge>
+                  </>
+                ) : (
+                  <p className="text-base">Assessment submitted successfully.</p>
+                )}
               </CardContent>
             </Card>
 

@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { LogOut } from 'lucide-react';
 import { useStudentAssessments } from '../../hooks/useStudentAuth';
@@ -30,7 +31,15 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const student = useStudentAuthStore((state) => state.student);
   const logout = useStudentAuthStore((state) => state.logout);
-  const assessmentsQuery = useStudentAssessments();
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const assessmentsQuery = useStudentAssessments(page, limit);
+  const assessments = assessmentsQuery.data?.responses ?? [];
+  const total = assessmentsQuery.data?.total ?? 0;
+  const currentPage = assessmentsQuery.data?.page ?? page;
+  const currentLimit = assessmentsQuery.data?.limit ?? limit;
+  const canPrevious = currentPage > 1;
+  const canNext = currentPage * currentLimit < total;
 
   const handleLogout = () => {
     logout();
@@ -78,7 +87,7 @@ export default function StudentDashboard() {
 
         {!assessmentsQuery.isPending &&
           !assessmentsQuery.isError &&
-          (assessmentsQuery.data?.length ?? 0) === 0 && (
+          total === 0 && (
             <Card>
               <CardContent className="py-10 text-center">
                 <p className="text-lg font-semibold">No assessments yet</p>
@@ -91,7 +100,7 @@ export default function StudentDashboard() {
 
         {!assessmentsQuery.isPending &&
           !assessmentsQuery.isError &&
-          (assessmentsQuery.data?.length ?? 0) > 0 && (
+          total > 0 && (
             <>
               <Card className="hidden md:block">
                 <CardContent className="p-0">
@@ -99,6 +108,7 @@ export default function StudentDashboard() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Assessment</TableHead>
+                        <TableHead>Attempt</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Completed</TableHead>
@@ -106,9 +116,10 @@ export default function StudentDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {assessmentsQuery.data!.map((assessment) => (
+                      {assessments.map((assessment) => (
                         <TableRow key={assessment.id}>
                           <TableCell className="font-medium">{assessment.assessmentTitle}</TableCell>
+                          <TableCell>{assessment.attempt ?? '-'}</TableCell>
                           <TableCell>{scoreLabel(assessment.scorePercentage)}</TableCell>
                           <TableCell>
                             {assessment.passed === undefined ? (
@@ -141,13 +152,17 @@ export default function StudentDashboard() {
               </Card>
 
               <div className="grid gap-4 md:hidden">
-                {assessmentsQuery.data!.map((assessment) => (
+                {assessments.map((assessment) => (
                   <Card key={assessment.id}>
                     <CardHeader className="space-y-2">
                       <CardTitle className="text-base">{assessment.assessmentTitle}</CardTitle>
                       <CardDescription>{formatCompletedDate(assessment.completedAt)}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Attempt</span>
+                        <span className="font-medium">{assessment.attempt ?? '-'}</span>
+                      </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Score</span>
                         <span className="font-medium">{scoreLabel(assessment.scorePercentage)}</span>
@@ -177,6 +192,33 @@ export default function StudentDashboard() {
                   </Card>
                 ))}
               </div>
+
+              {total > currentLimit && (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {(currentPage - 1) * currentLimit + 1}-{Math.min(currentPage * currentLimit, total)} of{' '}
+                    {total} assessments
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                      disabled={!canPrevious}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPage((current) => current + 1)}
+                      disabled={!canNext}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
       </div>

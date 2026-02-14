@@ -1,7 +1,17 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api, ensureSuccess } from '../lib/api';
 import { useStudentAuthStore, type StudentUser } from '../lib/student-auth';
-import type { AssessmentReviewData } from '../types/api';
+import type { AssessmentReviewData, PaginatedResponse } from '../types/api';
+
+export interface StudentAssessmentSummary {
+  id: string;
+  assessmentTitle: string;
+  attempt?: number;
+  scorePercentage?: string;
+  passed?: boolean;
+  completedAt?: string;
+  resultsReleased: boolean;
+}
 
 export function useStudentLogin() {
   const login = useStudentAuthStore((s) => s.login);
@@ -25,10 +35,15 @@ export function useStudentRegister() {
   });
 }
 
-export function useStudentAssessments() {
+export function useStudentAssessments(page = 1, limit = 10) {
   return useQuery({
-    queryKey: ['student-assessments'],
-    queryFn: async () => ensureSuccess(await api.get<Array<{ id: string; assessmentTitle: string; scorePercentage?: string; passed?: boolean; completedAt?: string; resultsReleased: boolean }>>('/api/student/assessments')),
+    queryKey: ['student-assessments', page, limit],
+    queryFn: async () =>
+      ensureSuccess(
+        await api.get<PaginatedResponse<StudentAssessmentSummary>>(
+          `/api/student/assessments?page=${page}&limit=${limit}`,
+        ),
+      ),
   });
 }
 

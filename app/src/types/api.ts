@@ -6,6 +6,7 @@ export interface Assessment {
   status: 'draft' | 'active' | 'closed';
   publicHash: string;
   resultsReleased: boolean;
+  showScoreFeedback: boolean;
   passingScore?: number;
   timeLimitMinutes?: number;
   randomizeQuestions: boolean;
@@ -19,11 +20,19 @@ export interface AssessmentDetail extends Assessment {
   surveyJson: SurveyJson;
 }
 
+export interface PaginatedResponse<T> {
+  responses: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface AssessmentResponse {
   id: string;
   assessmentId: string;
   studentEmail: string;
   studentName: string;
+  attempt?: number;
   totalQuestions?: number;
   totalCorrect?: number;
   scorePercentage?: string;

@@ -5,6 +5,7 @@ import type {
   AssessmentDetail,
   AssessmentResponse,
   ItemAnalysisResult,
+  PaginatedResponse,
   QrCodeData,
 } from '../types/api';
 
@@ -35,7 +36,7 @@ export function useCreateAssessment() {
 export function useUpdateAssessment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number; resultsReleased?: boolean; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number | null; resultsReleased?: boolean; showScoreFeedback?: boolean; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
       ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}`, data)),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assessments'] });
@@ -96,10 +97,15 @@ export function useAssessmentQrCode(id: string) {
   });
 }
 
-export function useAssessmentResponses(id: string) {
+export function useAssessmentResponses(id: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: ['assessments', id, 'responses'],
-    queryFn: async () => ensureSuccess(await api.get<AssessmentResponse[]>(`/api/assessments/${id}/responses`)),
+    queryKey: ['assessments', id, 'responses', page, limit],
+    queryFn: async () =>
+      ensureSuccess(
+        await api.get<PaginatedResponse<AssessmentResponse>>(
+          `/api/assessments/${id}/responses?page=${page}&limit=${limit}`,
+        ),
+      ),
     enabled: !!id,
   });
 }

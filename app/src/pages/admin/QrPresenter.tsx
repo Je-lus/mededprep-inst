@@ -13,7 +13,7 @@ export default function QrPresenter() {
 
   const assessmentQuery = useAssessment(id);
   const qrQuery = useAssessmentQrCode(id);
-  const responsesQuery = useAssessmentResponses(id);
+  const responsesQuery = useAssessmentResponses(id, 1, 1);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -32,7 +32,7 @@ export default function QrPresenter() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [id, navigate]);
 
-  const studentCount = responsesQuery.data?.length ?? 0;
+  const studentCount = responsesQuery.data?.total ?? responsesQuery.data?.responses.length ?? 0;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
