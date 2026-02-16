@@ -45,11 +45,11 @@ model BugReport {
   errorMessage     String?
   errorStack       String?
   screenshotUrl    String?
-  status           String         @default("open")
+  status           String         @default("pending")
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
-  org Organization @relation(fields: [orgId], references: [id])
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@index([orgId])
   @@index([status])
@@ -72,7 +72,7 @@ model OrgUser {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  org         Organization @relation(fields: [orgId], references: [id])
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   assessments Assessment[]
   questionBanks QuestionBank[] @relation("QuestionBankCreator")
   sessions      Session[]      @relation("SessionCreator")
@@ -95,7 +95,7 @@ model Student {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org       Organization         @relation(fields: [orgId], references: [id])
+  org       Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
   responses AssessmentResponse[]
   attendances SessionAttendee[]
 
@@ -125,8 +125,8 @@ model Assessment {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  org       Organization         @relation(fields: [orgId], references: [id])
-  createdBy OrgUser              @relation(fields: [createdById], references: [id])
+  org       Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdBy OrgUser              @relation(fields: [createdById], references: [id], onDelete: Restrict)
   responses AssessmentResponse[]
 
   @@index([orgId])
@@ -163,10 +163,11 @@ model AssessmentResponse {
   updatedAt       DateTime  @updatedAt
 
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  student    Student?   @relation(fields: [studentId], references: [id])
+  student    Student?   @relation(fields: [studentId], references: [id], onDelete: SetNull)
 
   @@unique([assessmentId, studentEmail, attempt])
   @@index([assessmentId])
+  @@index([assessmentId, completedAt])
   @@index([studentEmail])
 }
 
@@ -184,8 +185,8 @@ model QuestionBank {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  org       Organization @relation(fields: [orgId], references: [id])
-  createdBy OrgUser      @relation("QuestionBankCreator", fields: [createdById], references: [id])
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdBy OrgUser      @relation("QuestionBankCreator", fields: [createdById], references: [id], onDelete: Restrict)
   items     QuestionBankItem[]
 
   @@index([orgId])
@@ -231,8 +232,8 @@ model Session {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  org       Organization @relation(fields: [orgId], references: [id])
-  createdBy OrgUser      @relation("SessionCreator", fields: [createdById], references: [id])
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdBy OrgUser      @relation("SessionCreator", fields: [createdById], references: [id], onDelete: Restrict)
   attendees SessionAttendee[]
 
   @@index([orgId])
@@ -254,4 +255,5 @@ model SessionAttendee {
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, studentId])
+  @@index([sessionId])
 }
