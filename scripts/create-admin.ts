@@ -18,16 +18,46 @@ async function main(): Promise<void> {
   const orgs = await prisma.organization.findMany({
     select: { id: true, name: true, slug: true },
   });
-  if (orgs.length === 0) {
-    console.info('No organizations found. Run: npm run create-org');
-    process.exit(1);
-  }
 
   console.info('Organizations:');
   orgs.forEach((o, i) => console.info(`  [${i}] ${o.name} (${o.slug})`));
+  console.info(`  [${orgs.length}] [+] Create new organization`);
 
   const orgIndex = await ask('Select org number: ');
-  const org = orgs[Number(orgIndex)];
+  const trimmedSelection = orgIndex.trim();
+  const selectedIndex = Number(trimmedSelection);
+  if (
+    trimmedSelection === '' ||
+    !Number.isInteger(selectedIndex) ||
+    selectedIndex < 0 ||
+    selectedIndex > orgs.length
+  ) {
+    console.info('Invalid selection');
+    process.exit(1);
+  }
+
+  let org = orgs[selectedIndex];
+  if (selectedIndex === orgs.length) {
+    const orgName = (await ask('Organization name: ')).trim();
+    const orgSlug = (await ask('Organization slug: ')).trim();
+
+    if (!orgName || !orgSlug) {
+      console.info('Organization name and slug are required');
+      process.exit(1);
+    }
+
+    if (orgs.some((existing) => existing.slug === orgSlug)) {
+      console.info('Organization slug already exists');
+      process.exit(1);
+    }
+
+    org = await prisma.organization.create({
+      data: { name: orgName, slug: orgSlug },
+      select: { id: true, name: true, slug: true },
+    });
+    console.info(`Created organization: ${org.name} (${org.slug})`);
+  }
+
   if (!org) {
     console.info('Invalid selection');
     process.exit(1);

@@ -13,6 +13,13 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      'Seed script is disabled in production. Use `npm run create-admin` to create your first user.',
+    );
+    process.exit(1);
+  }
+
   console.info('Seeding database...');
 
   // ─── Organization ───────────────────────────────────────────────────────────
