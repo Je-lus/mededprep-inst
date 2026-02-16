@@ -208,3 +208,79 @@ export interface BugReportSubmission {
   errorStack?: string;
   screenshot?: string; // base64 data
 }
+
+// Attendance & Session types
+export type AttendanceStatus = 'registered' | 'checked_in' | 'attended' | 'no_show' | 'cancelled';
+
+export interface Session {
+  id: string;
+  name: string;
+  description?: string;
+  publicHash: string;
+  isPublished: boolean;
+  startDateTime?: string;
+  endDateTime?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { attendees: number };
+}
+
+export interface SessionDetail extends Session {
+  attendees: SessionAttendee[];
+}
+
+export interface SessionAttendee {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  status: AttendanceStatus;
+  checkedInAt?: string;
+  checkedOutAt?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+export interface PublicSessionInfo {
+  id: string;
+  name: string;
+  description?: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  isPublished: boolean;
+  org?: { name: string };
+  checkInWindow: { allowed: boolean; reason?: string | null };
+  checkOutWindow: { allowed: boolean; reason?: string | null };
+}
+
+export interface AttendeeRegistrationResult {
+  studentId: string;
+  attendeeId: string;
+}
+
+export interface StudentLookupResult {
+  found: boolean;
+  student?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+export interface CheckOutResult {
+  alreadyCheckedOut: boolean;
+  checkedOutAt: string;
+  studentName: string;
+}
+
+export interface SessionQrCodes {
+  checkIn: QrCodeData;
+  checkOut: QrCodeData;
+}

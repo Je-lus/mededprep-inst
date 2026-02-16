@@ -27,6 +27,8 @@ import assessmentRoutes from './routes/assessments.js';
 import publicRoutes from './routes/public.js';
 import studentAuthRoutes from './routes/student-auth.js';
 import bugReportRoutes from './routes/bug-reports.js';
+import sessionRoutes from './routes/sessions.js';
+import publicAttendanceRoutes from './routes/public-attendance.js';
 
 const ALLOWED_ORIGINS = new Set((process.env.CORS_ORIGINS || 'http://localhost:9000').split(','));
 
@@ -119,8 +121,9 @@ app.use('/api', tenantResolver);
 app.use('/api/auth', authLimiter, authRoutes);
 
 app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);
+app.use('/api/sessions', generalLimiter, requireAuth, sessionRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
-app.use('/api/public', generalLimiter, publicRoutes);
+app.use('/api/public', generalLimiter, publicRoutes, publicAttendanceRoutes);
 app.use('/api/student', authLimiter, studentAuthRoutes);
 app.use('/api/bug-reports', submitLimiter, optionalAuth, bugReportRoutes);
 
