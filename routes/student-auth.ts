@@ -326,6 +326,7 @@ router.get(
               title: true,
               description: true,
               resultsReleased: true,
+              allowStudentReview: true,
               surveyJson: true,
             },
           },
@@ -338,6 +339,18 @@ router.get(
 
       if (!response.assessment.resultsReleased) {
         throw new ValidationError('Results have not been released yet');
+      }
+
+      const isReviewAllowed = Boolean(response.assessment.allowStudentReview);
+      if (!isReviewAllowed) {
+        // Students are not permitted to review this assessment yet.
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'REVIEW_NOT_ALLOWED',
+            message: 'The instructor has not enabled review for this assessment.',
+          },
+        });
       }
 
       const questions = buildReviewQuestions(

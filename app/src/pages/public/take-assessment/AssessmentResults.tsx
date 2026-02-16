@@ -39,10 +39,12 @@ export function AssessmentResults({
   result,
   studentName,
   studentEmail,
+  allowStudentReview = false,
 }: {
   result: AssessmentSubmitResult;
   studentName: string;
   studentEmail: string;
+  allowStudentReview?: boolean;
 }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -121,7 +123,11 @@ export function AssessmentResults({
 
       <Card className="border-primary/30">
         <CardHeader>
-          <CardTitle className="text-xl">Create an account to save your results and review later</CardTitle>
+          <CardTitle className="text-xl">
+            {allowStudentReview
+              ? 'Create your account to review your answers, explanations, and track your progress'
+              : 'Create your account to track your progress and view your scores'}
+          </CardTitle>
           <CardDescription>Use your assessment email to link this attempt to your account.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

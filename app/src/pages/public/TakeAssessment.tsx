@@ -313,6 +313,7 @@ export default function TakeAssessment() {
             result={submitResult}
             studentName={studentName}
             studentEmail={studentEmail}
+            allowStudentReview={Boolean(assessment.allowStudentReview)}
           />
         )}
       </div>
