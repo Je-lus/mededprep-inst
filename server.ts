@@ -37,7 +37,7 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-async function shutdown() {
+async function shutdown(): Promise<void> {
   logger.info('Shutting down...');
   await gracefulDisconnect();
   process.exit(0);

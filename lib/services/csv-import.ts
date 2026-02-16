@@ -7,10 +7,20 @@
  * Difficulty Level, Category, Sub Topics, Explanation, Page Number
  */
 import { parse } from 'csv-parse/sync';
+import type { SurveyJson, SurveyElement } from '../../types/survey.js';
+
+interface CsvRow {
+  [key: string]: string | undefined;
+}
+
+export interface CsvImportResult {
+  surveyJson: SurveyJson;
+  questionCount: number;
+}
 
 const REQUIRED_COLUMNS = ['Question Code', 'Question', 'Answer 1', 'Correct Answer'];
 
-export function parseCsvToSurveyJson(csvContent) {
+export function parseCsvToSurveyJson(csvContent: string): CsvImportResult {
   const records = parse(csvContent, {
     columns: true,
     skip_empty_lines: true,
@@ -18,7 +28,7 @@ export function parseCsvToSurveyJson(csvContent) {
     bom: true,
     relax_quotes: true,
     relax_column_count: true,
-  });
+  }) as CsvRow[];
 
   if (records.length === 0) {
     throw new Error('CSV file is empty or contains no data rows');
@@ -30,7 +40,7 @@ export function parseCsvToSurveyJson(csvContent) {
     throw new Error(`CSV is missing required columns: ${missing.join(', ')}`);
   }
 
-  const elements = [];
+  const elements: SurveyElement[] = [];
   const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   for (const row of records) {
@@ -40,7 +50,7 @@ export function parseCsvToSurveyJson(csvContent) {
 
     if (!questionCode || !questionText) continue;
 
-    const choices = [];
+    const choices: { value: string; text: string }[] = [];
     for (let i = 1; i <= 6; i++) {
       const answerText = row[`Answer ${i}`]?.trim();
       if (answerText) {
@@ -49,9 +59,9 @@ export function parseCsvToSurveyJson(csvContent) {
     }
 
     const correctAnswer = row['Correct Answer']?.trim();
-    const difficulty = parseInt(row['Difficulty Level']) || null;
+    const difficulty = parseInt(row['Difficulty Level'] ?? '') || null;
 
-    const element = {
+    const element: SurveyElement = {
       type: questionChoice.toLowerCase() === 'multiple' ? 'checkbox' : 'radiogroup',
       name: questionCode,
       title: questionText,
@@ -75,11 +85,11 @@ export function parseCsvToSurveyJson(csvContent) {
     elements.push(element);
   }
 
-  const chapterMap = new Map();
+  const chapterMap = new Map<string, SurveyElement[]>();
   for (const el of elements) {
     const chapter = el.metadata?.chapter || 'Questions';
     if (!chapterMap.has(chapter)) chapterMap.set(chapter, []);
-    chapterMap.get(chapter).push(el);
+    chapterMap.get(chapter)!.push(el);
   }
 
   const pages = [];

@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
+import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
 
 import { logger } from './lib/logger.js';
@@ -67,29 +68,30 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
-  pinoHttp({
+  (pinoHttp as unknown as typeof pinoHttp.default)({
     logger,
-    genReqId: (req) => req.headers['x-request-id'] || crypto.randomUUID(),
+    genReqId: (req: IncomingMessage) =>
+      (req.headers['x-request-id'] as string) || crypto.randomUUID(),
     autoLogging: {
-      ignore: (req) => req.url === '/health',
+      ignore: (req: IncomingMessage) => req.url === '/health',
     },
-    customLogLevel: (req, res, err) => {
+    customLogLevel: (_req: IncomingMessage, res: ServerResponse, err: Error | undefined) => {
       if (res.statusCode >= 500 || err) return 'error';
       if (res.statusCode >= 400) return 'warn';
       return 'info';
     },
-    customSuccessMessage: (req, res) => {
+    customSuccessMessage: (req: IncomingMessage, res: ServerResponse) => {
       return `${req.method} ${req.url} ${res.statusCode}`;
     },
-    customErrorMessage: (req, res, err) => {
+    customErrorMessage: (req: IncomingMessage, res: ServerResponse, err: Error) => {
       return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`;
     },
     serializers: {
-      req: (req) => ({
+      req: (req: IncomingMessage) => ({
         method: req.method,
         url: req.url,
       }),
-      res: (res) => ({
+      res: (res: ServerResponse) => ({
         statusCode: res.statusCode,
       }),
     },
