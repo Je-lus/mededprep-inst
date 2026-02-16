@@ -4,12 +4,9 @@ import QRCode from 'qrcode';
 import { prisma } from '../lib/prisma.js';
 import { NotFoundError } from '../lib/errors.js';
 import { z, validate } from '../lib/validate.js';
+import { param } from '../lib/route-utils.js';
 
 const router = Router();
-
-function param(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 // ============================================
 // HELPER FUNCTIONS

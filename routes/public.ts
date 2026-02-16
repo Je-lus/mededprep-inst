@@ -6,11 +6,7 @@ import { NotFoundError, ValidationError } from '../lib/errors.js';
 import { scoreSurveyResponse, stripSensitiveData } from '../lib/services/quiz-scoring.js';
 import { randomizeAssessment } from '../lib/services/randomization.js';
 import type { SurveyJson, SurveyElement } from '../types/survey.js';
-
-/** Express route params are always strings; cast from string | string[] */
-function param(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] : value;
-}
+import { param } from '../lib/route-utils.js';
 
 const router = Router();
 

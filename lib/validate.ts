@@ -54,4 +54,4 @@ function validateParams(schema: ZodSchema) {
   };
 }
 
-export { z, validate, validateQuery, validateParams };
+export { z, validate, validateQuery, validateParams, formatZodErrors };
