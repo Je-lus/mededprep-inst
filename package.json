@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "PORT=9001 tsx --watch server.ts",
+    "dev:all": "concurrently -n api,app -c blue,green \"npm run dev\" \"npm run dev --prefix app\"",
     "start": "tsx server.ts",
     "db:migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy",
@@ -46,6 +47,7 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",
+    "concurrently": "^9.2.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "csv-parse": "^6.1.0",
