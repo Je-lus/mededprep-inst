@@ -83,7 +83,7 @@ export function QrCodeTab({
             />
             <p className="text-center text-sm text-muted-foreground">{qrData.url}</p>
             <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+              <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
                 <Link to={`/assessments/${assessmentId}/present`}>
                   <QrCode className="mr-2 h-4 w-4" />
                   Present Full Screen

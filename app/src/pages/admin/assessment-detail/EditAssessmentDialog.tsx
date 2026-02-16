@@ -64,7 +64,7 @@ export function EditAssessmentDialog({
           <Button
             onClick={onSave}
             disabled={isSaving}
-            className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+            className="bg-primary-500 hover:bg-primary-500/90"
           >
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes

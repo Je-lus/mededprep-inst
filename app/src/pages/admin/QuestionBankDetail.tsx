@@ -364,7 +364,7 @@ export default function QuestionBankDetail() {
                     size="sm"
                     onClick={handleUpdateBank}
                     disabled={updateBank.isPending}
-                    className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+                    className="bg-primary-500 hover:bg-primary-500/90"
                   >
                     {updateBank.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save
@@ -448,7 +448,7 @@ export default function QuestionBankDetail() {
           <div className="flex justify-end">
             <Button
               onClick={() => setAddDialogOpen(true)}
-              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+              className="bg-primary-500 hover:bg-primary-500/90"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Question
@@ -510,7 +510,7 @@ export default function QuestionBankDetail() {
                 <Button
                   onClick={handleImportCsv}
                   disabled={importCsv.isPending || !csvContent.trim()}
-                  className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+                  className="bg-primary-500 hover:bg-primary-500/90"
                 >
                   {importCsv.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Import
@@ -608,7 +608,7 @@ export default function QuestionBankDetail() {
             <Button
               onClick={handleAddQuestion}
               disabled={addItem.isPending}
-              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+              className="bg-primary-500 hover:bg-primary-500/90"
             >
               {addItem.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Question
@@ -687,7 +687,7 @@ export default function QuestionBankDetail() {
             <Button
               onClick={handleEditQuestion}
               disabled={updateItem.isPending}
-              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+              className="bg-primary-500 hover:bg-primary-500/90"
             >
               {updateItem.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Update Question

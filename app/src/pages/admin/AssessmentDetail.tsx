@@ -283,7 +283,7 @@ export default function AssessmentDetail() {
               <Button
                 onClick={handlePublish}
                 disabled={publishAssessment.isPending}
-                className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+                className="bg-primary-500 hover:bg-primary-500/90"
               >
                 {publishAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Publish
@@ -319,11 +319,11 @@ export default function AssessmentDetail() {
           )}
 
           {assessment.status === 'closed' && (
-            <Button
-              onClick={handleReactivate}
-              disabled={reactivateAssessment.isPending}
-              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
-            >
+              <Button
+                onClick={handleReactivate}
+                disabled={reactivateAssessment.isPending}
+                className="bg-primary-500 hover:bg-primary-500/90"
+              >
               {reactivateAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Reactivate
             </Button>

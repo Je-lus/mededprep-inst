@@ -82,7 +82,7 @@ export default function SessionList() {
         </div>
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+          className="bg-primary-500 hover:bg-primary-500/90"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create Session
@@ -120,7 +120,7 @@ export default function SessionList() {
           action={
             <Button
               onClick={() => setShowCreateDialog(true)}
-              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+              className="bg-primary-500 hover:bg-primary-500/90"
             >
               <Plus className="mr-2 h-4 w-4" />
               Create Session
