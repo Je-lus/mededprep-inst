@@ -1,6 +1,6 @@
 import { useAuthStore } from '../lib/auth';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ArrowRight, ClipboardList } from 'lucide-react';
+import { AlertCircle, ArrowRight, ClipboardList, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -123,6 +123,26 @@ export default function Dashboard() {
                 </>
               )}
             </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Bug className="h-5 w-5 text-[#1b5fd0]" />
+                  Bug Reports
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  View and manage user-submitted bug reports and feedback.
+                </p>
+              </div>
+              <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+                <Link to="/bug-reports">
+                  Open
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardHeader>
           </Card>
         </div>
       </main>
