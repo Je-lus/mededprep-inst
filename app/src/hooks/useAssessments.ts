@@ -136,7 +136,12 @@ export function useAssessmentQrCode(id: string) {
   });
 }
 
-export function useAssessmentResponses(id: string, page = 1, limit = 10) {
+export function useAssessmentResponses(
+  id: string,
+  page = 1,
+  limit = 10,
+  refetchInterval?: number,
+) {
   return useQuery({
     queryKey: ['assessments', id, 'responses', page, limit],
     queryFn: async () =>
@@ -146,6 +151,7 @@ export function useAssessmentResponses(id: string, page = 1, limit = 10) {
         ),
       ),
     enabled: !!id,
+    refetchInterval,
   });
 }
 
@@ -160,12 +166,13 @@ export function useResponseDetail(assessmentId: string, responseId: string) {
   });
 }
 
-export function useItemAnalysis(id: string) {
+export function useItemAnalysis(id: string, refetchInterval?: number) {
   return useQuery({
     queryKey: ['assessments', id, 'item-analysis'],
     queryFn: async () =>
       ensureSuccess(await api.get<ItemAnalysisResult>(`/api/assessments/${id}/item-analysis`)),
     enabled: !!id,
+    refetchInterval,
   });
 }
 

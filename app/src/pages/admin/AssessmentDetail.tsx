@@ -51,14 +51,24 @@ export default function AssessmentDetail() {
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
 
   const assessmentQuery = useAssessment(id);
-  const responsesQuery = useAssessmentResponses(id, responsesPage, responsesLimit);
+  const assessment = assessmentQuery.data;
+  const isActiveAssessment = assessment?.status === 'active';
+  const responsesQuery = useAssessmentResponses(
+    id,
+    responsesPage,
+    responsesLimit,
+    isActiveAssessment ? 10000 : undefined,
+  );
   const responses = responsesQuery.data?.responses ?? [];
   const totalResponses = responsesQuery.data?.total ?? 0;
   const responsePage = responsesQuery.data?.page ?? responsesPage;
   const responseLimit = responsesQuery.data?.limit ?? responsesLimit;
   const hasResponses = totalResponses > 0;
-  const qrQuery = useAssessmentQrCode(assessmentQuery.data?.status === 'active' ? id : '');
-  const analysisQuery = useItemAnalysis(hasResponses ? id : '');
+  const qrQuery = useAssessmentQrCode(isActiveAssessment ? id : '');
+  const analysisQuery = useItemAnalysis(
+    hasResponses ? id : '',
+    isActiveAssessment ? 10000 : undefined,
+  );
 
   const publishAssessment = usePublishAssessment();
   const closeAssessment = useCloseAssessment();
@@ -66,8 +76,6 @@ export default function AssessmentDetail() {
   const deleteAssessment = useDeleteAssessment();
   const releaseResults = useReleaseResults();
   const updateAssessment = useUpdateAssessment();
-
-  const assessment = assessmentQuery.data;
 
   useEffect(() => {
     if (!assessment) return;
@@ -253,12 +261,18 @@ export default function AssessmentDetail() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-semibold">{assessment.title}</h1>
-            <StatusBadge status={assessment.status} />
-          </div>
-          <p className="text-sm text-muted-foreground">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-semibold">{assessment.title}</h1>
+              <StatusBadge status={assessment.status} />
+              {isActiveAssessment && (
+                <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
             Created {new Date(assessment.createdAt).toLocaleDateString()}
           </p>
         </div>
