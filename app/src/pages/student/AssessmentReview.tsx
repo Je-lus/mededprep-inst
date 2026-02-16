@@ -53,6 +53,9 @@ export default function AssessmentReview() {
     );
   }
 
+  const reviewNotAllowed =
+    reviewQuery.error instanceof ApiError && reviewQuery.error.code === 'REVIEW_NOT_ALLOWED';
+
   if (reviewQuery.isError || !reviewQuery.data) {
     return (
       <div className="min-h-screen bg-background px-4 py-10">
@@ -60,9 +63,11 @@ export default function AssessmentReview() {
           <Alert variant="destructive">
             <AlertTitle>Unable to load review</AlertTitle>
             <AlertDescription>
-              {reviewQuery.error instanceof ApiError
-                ? reviewQuery.error.message
-                : 'Please return to your dashboard and try again.'}
+              {reviewNotAllowed
+                ? 'Review is not available for this assessment.'
+                : reviewQuery.error instanceof ApiError
+                  ? reviewQuery.error.message
+                  : 'Please return to your dashboard and try again.'}
             </AlertDescription>
           </Alert>
           <Button asChild variant="outline">

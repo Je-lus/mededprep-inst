@@ -44,7 +44,6 @@ function getGradableElements(surveyJson: SurveyJson): SurveyElement[] {
   return elements;
 }
 
-
 function applyTimerConfig(surveyJson: SurveyJson, timeLimitMinutes: number | null): SurveyJson {
   if (timeLimitMinutes) {
     surveyJson.showTimer = true;
@@ -104,6 +103,7 @@ router.get('/assessment/:hash', async (req: Request, res: Response, next: NextFu
         description: true,
         timeLimitMinutes: true,
         surveyJson: true,
+        allowStudentReview: true,
       },
     });
 
@@ -121,6 +121,7 @@ router.get('/assessment/:hash', async (req: Request, res: Response, next: NextFu
         description: assessment.description,
         timeLimitMinutes: assessment.timeLimitMinutes,
         questionCount,
+        allowStudentReview: assessment.allowStudentReview,
       },
     });
   } catch (error) {

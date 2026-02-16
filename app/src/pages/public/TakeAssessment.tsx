@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertCircle, Clock3 } from 'lucide-react';
-import { usePublicAssessment, useStartAssessment, useSubmitAssessment } from '../../hooks/usePublic';
+import {
+  usePublicAssessment,
+  useStartAssessment,
+  useSubmitAssessment,
+} from '../../hooks/usePublic';
 import type { AssessmentSubmitResult, SurveyElement, SurveyJson } from '../../types/api';
 import { ApiError } from '../../lib/api';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +37,9 @@ function flattenSurveyElements(surveyJson: SurveyJson, questionOrder?: string[])
   if (!Array.isArray(questionOrder) || questionOrder.length === 0) return rawElements;
 
   const elementByName = new Map(rawElements.map((element) => [element.name, element]));
-  const ordered = questionOrder.map((name) => elementByName.get(name)).filter(Boolean) as SurveyElement[];
+  const ordered = questionOrder
+    .map((name) => elementByName.get(name))
+    .filter(Boolean) as SurveyElement[];
   const orderedNames = new Set(ordered.map((element) => element.name));
   const remainder = rawElements.filter((element) => !orderedNames.has(element.name));
   return [...ordered, ...remainder];
@@ -72,7 +78,9 @@ export default function TakeAssessment() {
       if (!responseId || submitAssessment.isPending) return;
       if (autoSubmitted) toast.info('Time is up. Submitting your assessment...');
 
-      const timeTaken = startedAt ? Math.max(0, Math.round((Date.now() - startedAt) / 1000)) : undefined;
+      const timeTaken = startedAt
+        ? Math.max(0, Math.round((Date.now() - startedAt) / 1000))
+        : undefined;
 
       try {
         const result = await submitAssessment.mutateAsync({
@@ -168,10 +176,14 @@ export default function TakeAssessment() {
   const updateCheckboxAnswer = (questionName: string, value: string, checked: boolean) => {
     setAnswers((current) => {
       const existing = Array.isArray(current[questionName])
-        ? (current[questionName] as string[]).filter((item): item is string => typeof item === 'string')
+        ? (current[questionName] as string[]).filter(
+            (item): item is string => typeof item === 'string',
+          )
         : [];
 
-      const next = checked ? [...new Set([...existing, value])] : existing.filter((item) => item !== value);
+      const next = checked
+        ? [...new Set([...existing, value])]
+        : existing.filter((item) => item !== value);
       return { ...current, [questionName]: next };
     });
   };
@@ -233,7 +245,9 @@ export default function TakeAssessment() {
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">MedEdPrep</p>
           <h1 className="text-3xl font-bold text-slate-900">{assessment.title}</h1>
-          {assessment.description && <p className="text-sm text-slate-600">{assessment.description}</p>}
+          {assessment.description && (
+            <p className="text-sm text-slate-600">{assessment.description}</p>
+          )}
         </div>
 
         {step === 'info' && (
@@ -320,6 +334,7 @@ export default function TakeAssessment() {
             firstName={firstName}
             lastName={lastName}
             studentEmail={studentEmail}
+            allowStudentReview={Boolean(assessment.allowStudentReview)}
           />
         )}
       </div>

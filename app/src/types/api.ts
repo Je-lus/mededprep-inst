@@ -126,6 +126,7 @@ export interface PublicAssessmentInfo {
   description?: string;
   questionCount: number;
   timeLimitMinutes?: number;
+  allowStudentReview?: boolean;
 }
 
 export interface AssessmentSubmitResult {

@@ -33,11 +33,13 @@ export function AssessmentResults({
   firstName,
   lastName,
   studentEmail,
+  allowStudentReview = false,
 }: {
   result: AssessmentSubmitResult;
   firstName: string;
   lastName: string;
   studentEmail: string;
+  allowStudentReview?: boolean;
 }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -87,7 +89,9 @@ export function AssessmentResults({
         <CardHeader>
           <CardTitle className="text-2xl">Assessment Complete</CardTitle>
           <CardDescription>
-            {hasScoreFeedback ? 'Your score is available now.' : 'Assessment submitted successfully.'}
+            {hasScoreFeedback
+              ? 'Your score is available now.'
+              : 'Assessment submitted successfully.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -114,7 +118,11 @@ export function AssessmentResults({
 
       <Card className="border-primary/30">
         <CardHeader>
-          <CardTitle className="text-xl">Create your account to review your answers and track your progress</CardTitle>
+          <CardTitle className="text-xl">
+            {allowStudentReview
+              ? 'Create your account to review your answers, explanations, and track your progress'
+              : 'Create your account to track your progress and view your scores'}
+          </CardTitle>
           <CardDescription>Set a password to secure your account.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -139,21 +147,11 @@ export function AssessmentResults({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="accountFirstName">First Name</Label>
-                  <Input
-                    id="accountFirstName"
-                    value={firstName}
-                    readOnly
-                    className="bg-muted"
-                  />
+                  <Input id="accountFirstName" value={firstName} readOnly className="bg-muted" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="accountLastName">Last Name</Label>
-                  <Input
-                    id="accountLastName"
-                    value={lastName}
-                    readOnly
-                    className="bg-muted"
-                  />
+                  <Input id="accountLastName" value={lastName} readOnly className="bg-muted" />
                 </div>
               </div>
               <div className="space-y-2">
