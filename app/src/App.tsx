@@ -8,6 +8,9 @@ import AssessmentList from './pages/admin/AssessmentList';
 import AssessmentCreate from './pages/admin/AssessmentCreate';
 import AssessmentDetail from './pages/admin/AssessmentDetail';
 import QrPresenter from './pages/admin/QrPresenter';
+import QuestionBankList from './pages/admin/QuestionBankList';
+import QuestionBankCreate from './pages/admin/QuestionBankCreate';
+import QuestionBankDetail from './pages/admin/QuestionBankDetail';
 import BugReports from './pages/admin/BugReports';
 import TakeAssessment from './pages/public/TakeAssessment';
 import CreateAccount from './pages/public/CreateAccount';
@@ -46,6 +49,9 @@ export default function App() {
           <Route path="assessments/new" element={<AssessmentCreate />} />
           <Route path="assessments/:id" element={<AssessmentDetail />} />
           <Route path="assessments/:id/present" element={<QrPresenter />} />
+          <Route path="question-banks" element={<QuestionBankList />} />
+          <Route path="question-banks/new" element={<QuestionBankCreate />} />
+          <Route path="question-banks/:id" element={<QuestionBankDetail />} />
           <Route path="bug-reports" element={<BugReports />} />
         </Route>
 

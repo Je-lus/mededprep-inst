@@ -24,6 +24,7 @@ import { requireAuth } from './lib/auth.js';
 import healthRoutes from './routes/health.js';
 import authRoutes from './routes/auth.js';
 import assessmentRoutes from './routes/assessments.js';
+import questionBankRoutes from './routes/question-banks.js';
 import publicRoutes from './routes/public.js';
 import studentAuthRoutes from './routes/student-auth.js';
 import bugReportRoutes from './routes/bug-reports.js';
@@ -119,6 +120,7 @@ app.use('/api', tenantResolver);
 app.use('/api/auth', authLimiter, authRoutes);
 
 app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);
+app.use('/api/question-banks', generalLimiter, requireAuth, questionBankRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
 app.use('/api/public', generalLimiter, publicRoutes);
 app.use('/api/student', authLimiter, studentAuthRoutes);

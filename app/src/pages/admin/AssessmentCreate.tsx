@@ -10,8 +10,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { getFieldErrors } from '@/lib/api';
 import { useCreateAssessment, useImportCsv } from '@/hooks/useAssessments';
+import { useQuestionBanks, useQuestionBank, useIncrementItemUsage } from '@/hooks/useQuestionBanks';
+import type { QuestionBankItem } from '@/types/api';
 
 type FormState = {
   title: string;
@@ -34,6 +44,8 @@ export default function AssessmentCreate() {
   const surveyEditorRef = useRef<SurveyEditorRef>(null);
   const createAssessment = useCreateAssessment();
   const importCsv = useImportCsv();
+  const { data: banks } = useQuestionBanks();
+  const incrementUsage = useIncrementItemUsage();
 
   const [form, setForm] = useState<FormState>({
     title: '',
@@ -44,13 +56,46 @@ export default function AssessmentCreate() {
     randomizeChoices: true,
     allowStudentReview: false,
   });
-  const [activeTab, setActiveTab] = useState<'builder' | 'csv'>('builder');
+  const [activeTab, setActiveTab] = useState<'builder' | 'csv' | 'bank'>('builder');
   const [surveyJson, setSurveyJson] = useState<string | null>(null);
   const [csvContent, setCsvContent] = useState('');
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const { data: bankDetail } = useQuestionBank(selectedBankId, 1, 200);
 
   const isCreating =
     createAssessment.isPending || (activeTab === 'csv' && importCsv.isPending);
+
+  const handleAddSelectedQuestions = () => {
+    if (!bankDetail || selectedQuestions.size === 0) {
+      toast.error('Select at least one question');
+      return;
+    }
+
+    const items = bankDetail.items.filter((item) => selectedQuestions.has(item.id));
+    const elements = items.map((item) => item.questionData);
+
+    const surveyJsonObj = {
+      pages: [
+        {
+          name: 'questions',
+          title: 'Questions',
+          elements,
+        },
+      ],
+    };
+
+    setSurveyJson(JSON.stringify(surveyJsonObj));
+    setActiveTab('builder');
+    toast.success(`Added ${elements.length} questions from bank`);
+
+    // Increment usage count for each question (fire-and-forget)
+    items.forEach((item) => {
+      incrementUsage.mutate({ bankId: selectedBankId, itemId: item.id });
+    });
+  };
 
   const createPayload = () => ({
     title: form.title.trim(),
@@ -220,12 +265,13 @@ export default function AssessmentCreate() {
 
         <Tabs
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as 'builder' | 'csv')}
+          onValueChange={(value) => setActiveTab(value as 'builder' | 'csv' | 'bank')}
           className="space-y-4"
         >
           <TabsList>
             <TabsTrigger value="builder">Survey Builder</TabsTrigger>
             <TabsTrigger value="csv">CSV Import</TabsTrigger>
+            <TabsTrigger value="bank">From Bank</TabsTrigger>
           </TabsList>
 
           <TabsContent value="builder" className="space-y-4">
@@ -282,6 +328,107 @@ export default function AssessmentCreate() {
                     Create &amp; Import
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="bank" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Select from Question Bank</CardTitle>
+                <CardDescription>
+                  Choose a question bank and select questions to add to this assessment.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bankSelect">Question Bank</Label>
+                  <Select value={selectedBankId} onValueChange={setSelectedBankId}>
+                    <SelectTrigger id="bankSelect">
+                      <SelectValue placeholder="Select a question bank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {banks?.map((bank) => (
+                        <SelectItem key={bank.id} value={bank.id}>
+                          {bank.title} ({bank._count?.items || 0} questions)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedBankId && bankDetail && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Select Questions</Label>
+                      <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-3">
+                        {bankDetail.items.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            This bank has no questions yet.
+                          </p>
+                        ) : (
+                          bankDetail.items.map((item) => {
+                            const q = item.questionData;
+                            const choicesCount = Array.isArray(q.choices) ? q.choices.length : 0;
+                            const difficulty = q.metadata?.difficulty;
+
+                            return (
+                              <label
+                                key={item.id}
+                                className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedQuestions.has(item.id)}
+                                  onChange={(e) => {
+                                    const newSet = new Set(selectedQuestions);
+                                    if (e.target.checked) {
+                                      newSet.add(item.id);
+                                    } else {
+                                      newSet.delete(item.id);
+                                    }
+                                    setSelectedQuestions(newSet);
+                                  }}
+                                  className="mt-1 h-4 w-4 rounded border"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-medium text-sm">{q.title || q.name}</p>
+                                    <Badge variant="outline" className="text-xs">
+                                      {q.type}
+                                    </Badge>
+                                    {difficulty && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        Level {difficulty}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {choicesCount} choices
+                                  </p>
+                                </div>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedQuestions.size} question{selectedQuestions.size !== 1 ? 's' : ''}{' '}
+                        selected
+                      </p>
+                      <Button
+                        onClick={handleAddSelectedQuestions}
+                        disabled={selectedQuestions.size === 0}
+                        className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+                      >
+                        Add Selected Questions
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

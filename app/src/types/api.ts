@@ -208,3 +208,30 @@ export interface BugReportSubmission {
   errorStack?: string;
   screenshot?: string; // base64 data
 }
+
+// Question Bank types
+export interface QuestionBank {
+  id: string;
+  title: string;
+  description?: string;
+  subject?: string;
+  createdAt: string;
+  _count?: { items: number };
+}
+
+export interface QuestionBankItem {
+  id: string;
+  bankId: string;
+  questionData: SurveyElement;
+  tags: string[];
+  usageCount: number;
+  lastUsedAt?: string;
+  createdAt: string;
+}
+
+export interface QuestionBankDetail extends QuestionBank {
+  items: QuestionBankItem[];
+  totalItems: number;
+  page: number;
+  limit: number;
+}

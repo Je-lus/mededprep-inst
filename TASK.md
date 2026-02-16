@@ -1,60 +1,105 @@
-# Task 2: Admin Layout with Persistent Navigation
+# Task 3: Question Bank — Full Stack
 
 > Read AGENTS.md first for project context, then implement the task below.
 > After completing, verify your work compiles and passes lint.
 
 ---
 
-Context: MedEdPrep Instructor Tools — React 19, React Router, shadcn/ui, Tailwind. Brand color: #1b5fd0.
+Context: MedEdPrep Instructor Tools — Express 5, Prisma 5, React 19, shadcn/ui, TanStack Query v5, Tailwind. Brand color: #1b5fd0. The QuestionBank and QuestionBankItem models already exist in Prisma (from Task 1). QuestionBankItem has a `questionData` Json field storing a SurveyJS `SurveyElement` object (type, name, title, choices, correctAnswer, metadata).
 
-Problem: There is no shared layout for admin pages. Each page renders its own header with brand name, user email, and sign-out button. There's no way to navigate between pages without the browser back button. This needs a persistent top navigation bar.
+Problem: Instructors rebuild questions from scratch for every assessment. A question bank allows them to store reusable questions and pull them into new assessments.
 
 Current State:
-- `app/src/App.tsx` — Each admin route individually wraps its component with `<ProtectedRoute>`. ProtectedRoute is defined inline (lines 16-20) using `useIsAuthenticated()`. There is also a `StudentProtectedRoute` (lines 22-26).
-- `app/src/pages/Dashboard.tsx` — Has its own `<header>` block with brand "MedEdPrep", user email, and sign out button. Outer wrapper: `<div className="min-h-screen bg-gray-50">`.
-- `app/src/pages/admin/AssessmentList.tsx` — Outer wrapper: `<div className="min-h-screen bg-gray-50">` with `<main>` inside.
-- `app/src/pages/admin/AssessmentCreate.tsx` — Same `min-h-screen bg-gray-50` pattern.
-- `app/src/pages/admin/AssessmentDetail.tsx` — Same pattern. Has its own page title area.
+- `app.ts` — Routes mounted with middleware. Pattern: `app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);`
+- `routes/assessments.ts` — Good pattern to follow for CRUD routes. Uses Zod validation, `findAssessmentOrThrow` helper, `param()` helper, pagination schema.
+- `lib/services/csv-import.ts` — Parses CSV into SurveyJS JSON. Returns `{ surveyJson, questionCount }`. The parsing logic extracts individual `SurveyElement` objects which is exactly what QuestionBankItem.questionData stores.
+- `app/src/components/AdminLayout.tsx` — Has NavLink tabs for Dashboard, Assessments, Bug Reports.
+- `app/src/App.tsx` — Admin routes nested under `<Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>`.
+- `app/src/pages/admin/AssessmentCreate.tsx` — Two tabs: Builder (SurveyJS editor) and CSV import. Form state has title, description, settings. `createPayload()` assembles the POST body.
+- `app/src/types/api.ts` — Has SurveyElement, QuestionMetadata, SurveyChoice types already defined.
 
 Changes Required:
 
-1. Create `app/src/components/AdminLayout.tsx`:
-   - Import `Outlet` from react-router-dom, `useAuthStore` from `@/lib/auth`, `NavLink` from react-router-dom
-   - Sticky header with: "MedEdPrep" brand text (left), user email + "Sign Out" button (right)
-   - Below header: horizontal tab nav with NavLink items — "Dashboard" (to "/") and "Assessments" (to "/assessments")
-   - Use NavLink's active state for styling: active tab gets brand color text + bottom border, inactive gets muted text
-   - Below nav: `<main className="mx-auto max-w-7xl px-6 py-8"><Outlet /></main>`
-   - The layout provides `min-h-screen bg-gray-50` — child pages should NOT provide it
+**Backend:**
 
-2. Restructure `app/src/App.tsx`:
-   - Keep ProtectedRoute and StudentProtectedRoute inline definitions
-   - Wrap admin routes in a layout route: `<Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>`
-   - Child routes: `<Route index element={<Dashboard />} />`, `<Route path="assessments" element={<AssessmentList />} />`, etc.
-   - `/login` stays outside the layout
-   - Public and student routes stay unchanged
-   - QrPresenter (`/assessments/:id/present`) should also be inside the layout
+1. **Question bank routes** — `routes/question-banks.ts`:
+   - GET `/` — List banks for org. Return: `{ id, title, description, subject, _count: { items } }`
+   - POST `/` — Create bank. Schema: `{ title: string, description?: string, subject?: string }`
+   - GET `/:id` — Get bank with items. Return bank + paginated items
+   - PUT `/:id` — Update bank metadata
+   - DELETE `/:id` — Delete bank (cascades to items)
+   - POST `/:id/items` — Add question to bank. Schema: `{ questionData: SurveyElement JSON }`
+   - PUT `/:id/items/:itemId` — Update question
+   - DELETE `/:id/items/:itemId` — Remove question
+   - POST `/:id/import-csv` — Import CSV directly into bank. Reuse `parseCsvToSurveyJson` from `lib/services/csv-import.ts`, then extract individual elements and create QuestionBankItem records for each.
+   - All endpoints scoped to orgId, require auth
 
-3. Strip standalone wrappers from admin pages:
-   - Dashboard.tsx: Remove the `<header>` block, remove the outer `<div className="min-h-screen bg-gray-50">` wrapper, remove the `<main>` wrapper. The component should just return its content cards.
-   - AssessmentList.tsx: Remove outer `min-h-screen bg-gray-50` div and `<main>` wrapper.
-   - AssessmentCreate.tsx: Same — remove outer wrappers.
-   - AssessmentDetail.tsx: Same — remove outer wrappers.
+2. **Mount routes** in `app.ts`:
+   - `app.use('/api/question-banks', generalLimiter, requireAuth, questionBankRoutes);`
+
+**Frontend:**
+
+3. **Types** in `app/src/types/api.ts`:
+   - `QuestionBank` interface: `{ id, title, description?, subject?, createdAt, _count?: { items: number } }`
+   - `QuestionBankItem` interface: `{ id, bankId, questionData: SurveyElement, tags: string[], usageCount, lastUsedAt?, createdAt }`
+
+4. **Hooks** — `app/src/hooks/useQuestionBanks.ts`:
+   - `useQuestionBanks()` — list all banks
+   - `useQuestionBank(id)` — get bank with items
+   - `useCreateQuestionBank()` — create bank
+   - `useUpdateQuestionBank()` — update bank
+   - `useDeleteQuestionBank()` — delete bank
+   - `useAddBankItem()` — add question to bank
+   - `useUpdateBankItem()` — update question
+   - `useDeleteBankItem()` — delete question
+   - `useImportCsvToBank()` — import CSV into bank
+   - Follow exact patterns from `useAssessments.ts`
+
+5. **QuestionBankList page** — `app/src/pages/admin/QuestionBankList.tsx`:
+   - Follow the AssessmentList.tsx pattern
+   - Table: Title, Subject, Questions (count), Created
+   - "New Bank" button (brand color)
+   - Click row → navigate to detail
+
+6. **QuestionBankDetail page** — `app/src/pages/admin/QuestionBankDetail.tsx`:
+   - Bank metadata header (title, subject, description) with edit capability
+   - Questions list showing: question title, type (radiogroup/checkbox), number of choices, difficulty from metadata
+   - "Add Question" button → opens a dialog with a simple form (question text, type, choices, correct answer, metadata fields)
+   - CSV import tab/button — reuses the CSV paste pattern from AssessmentCreate
+   - Each question row has edit/delete actions
+   - Expandable preview showing full question with choices
+
+7. **Admin nav tab** in `AdminLayout.tsx`:
+   - Add "Question Bank" NavLink (to "/question-banks") following the existing pattern
+
+8. **Admin routes** in `App.tsx`:
+   - Add `<Route path="question-banks" element={<QuestionBankList />} />`
+   - Add `<Route path="question-banks/:id" element={<QuestionBankDetail />} />`
+
+9. **Question picker in AssessmentCreate.tsx**:
+   - Add a third tab alongside "Builder" and "CSV": "From Bank"
+   - This tab shows a dropdown to select a bank, then lists its questions with checkboxes
+   - "Add Selected" button takes checked questions, composes them into SurveyJS JSON pages, and sets the surveyJson state
+   - Each question shows title, type, difficulty badge
+   - When questions are added from the bank, increment their `usageCount` (fire-and-forget PATCH, don't block)
 
 What NOT to Do:
-- Do not add a sidebar — this is a horizontal top nav only
-- Do not modify student routes or public routes
-- Do not add dropdown menus or user profile pages
-- Do not touch any tab content components (OverviewTab, ResponsesTab, etc.)
+- Do not modify the SurveyJS editor component itself
+- Do not add sharing/permissions between orgs (future feature)
+- Do not add tagging UI (future feature — tags field exists but UI deferred)
+- Do not modify existing assessment routes or models
 
 Acceptance Criteria:
-- [ ] AdminLayout renders header with brand, user email, sign out
-- [ ] Tab nav shows "Dashboard" and "Assessments" with active state styling
-- [ ] All admin pages render inside the layout with persistent nav
-- [ ] No admin page has its own header/sign-out/bg-gray-50 wrapper anymore
-- [ ] Login page is NOT inside the layout
-- [ ] Student and public routes are unaffected
+- [ ] CRUD routes for question banks and items work
+- [ ] CSV import into bank creates individual QuestionBankItem records
+- [ ] Admin can browse, create, edit, delete banks and questions
+- [ ] "Question Bank" tab visible in admin nav
+- [ ] "From Bank" tab in assessment create lets instructor select questions
+- [ ] Selected questions correctly compose into SurveyJS JSON
 - [ ] `cd app && npx tsc --noEmit` passes
+- [ ] `npm run lint` passes
 
 Verification:
 cd app && npx tsc --noEmit
+npm run lint
 cd app && npx vite build
