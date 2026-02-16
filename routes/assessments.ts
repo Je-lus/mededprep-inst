@@ -383,7 +383,12 @@ router.get('/:id/responses', async (req: Request, res: Response, next: NextFunct
       prisma.assessmentResponse.count({ where }),
     ]);
 
-    res.json({ success: true, data: { responses, total, page, limit } });
+    const totalPages = Math.ceil(total / limit);
+    res.json({
+      success: true,
+      data: responses,
+      pagination: { page, limit, total, totalPages },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return next(new ValidationError('Invalid query parameters', formatZodErrors(error)));

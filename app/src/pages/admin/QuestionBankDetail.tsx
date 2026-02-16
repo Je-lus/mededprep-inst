@@ -12,6 +12,7 @@ import {
   useImportCsvToBank,
 } from '@/hooks/useQuestionBanks';
 import type { QuestionBankItem, SurveyElement } from '@/types/api';
+import EmptyState from '@/components/EmptyState';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,11 +74,7 @@ function QuestionRow({
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
-            {expanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
             <Edit className="h-4 w-4" />
@@ -121,7 +118,8 @@ function QuestionRow({
 export default function QuestionBankDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data, isLoading, isError, error } = useQuestionBank(id!, 1, 100);
+  const { data: bankResult, isLoading, isError, error } = useQuestionBank(id!, 1, 100);
+  const data = bankResult?.data;
   const updateBank = useUpdateQuestionBank();
   const deleteBank = useDeleteQuestionBank();
   const addItem = useAddBankItem();
@@ -339,11 +337,18 @@ export default function QuestionBankDetail() {
 
   if (isError) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Unable to load question bank</AlertTitle>
-        <AlertDescription>{error instanceof Error ? error.message : 'Try again.'}</AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Unable to load question bank</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Try again.'}
+          </AlertDescription>
+        </Alert>
+        <Button variant="outline" onClick={() => navigate('/question-banks')}>
+          Back to Question Banks
+        </Button>
+      </div>
     );
   }
 
@@ -469,13 +474,11 @@ export default function QuestionBankDetail() {
           </div>
 
           {data.items.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  No questions yet. Add questions manually or import from CSV.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              compact
+              title="No questions yet"
+              description="Add questions manually or import from CSV."
+            />
           ) : (
             <div className="space-y-3">
               {data.items.map((item) => (
@@ -504,8 +507,8 @@ export default function QuestionBankDetail() {
                 <AlertTitle>Sample format</AlertTitle>
                 <AlertDescription>
                   <code className="block overflow-x-auto rounded bg-muted p-2 text-xs">
-                    Chapter{'\t'}Question Code{'\t'}Question{'\t'}Question Choice{'\t'}Answer
-                    1{'\t'}Answer 2{'\t'}Answer 3{'\t'}Answer 4{'\t'}Correct Answer
+                    Chapter{'\t'}Question Code{'\t'}Question{'\t'}Question Choice{'\t'}Answer 1
+                    {'\t'}Answer 2{'\t'}Answer 3{'\t'}Answer 4{'\t'}Correct Answer
                   </code>
                 </AlertDescription>
               </Alert>
@@ -584,9 +587,7 @@ export default function QuestionBankDetail() {
               ))}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="q-correct">
-                Correct Answer * (e.g., A or A, B for multiple)
-              </Label>
+              <Label htmlFor="q-correct">Correct Answer * (e.g., A or A, B for multiple)</Label>
               <Input
                 id="q-correct"
                 value={questionForm.correctAnswer}
@@ -663,9 +664,7 @@ export default function QuestionBankDetail() {
               ))}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="eq-correct">
-                Correct Answer * (e.g., A or A, B for multiple)
-              </Label>
+              <Label htmlFor="eq-correct">Correct Answer * (e.g., A or A, B for multiple)</Label>
               <Input
                 id="eq-correct"
                 value={questionForm.correctAnswer}

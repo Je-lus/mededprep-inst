@@ -29,6 +29,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AttendeeSection from './session-detail/AttendeeSection';
 import QrCodeSection from './session-detail/QrCodeSection';
 
+function toLocalDatetimeValue(iso: string): string {
+  const d = new Date(iso);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 export default function SessionDetail() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
@@ -53,12 +60,8 @@ export default function SessionDetail() {
     setForm({
       name: session.name,
       description: session.description || '',
-      startDateTime: session.startDateTime
-        ? new Date(session.startDateTime).toISOString().slice(0, 16)
-        : '',
-      endDateTime: session.endDateTime
-        ? new Date(session.endDateTime).toISOString().slice(0, 16)
-        : '',
+      startDateTime: session.startDateTime ? toLocalDatetimeValue(session.startDateTime) : '',
+      endDateTime: session.endDateTime ? toLocalDatetimeValue(session.endDateTime) : '',
     });
   }, [session]);
 
@@ -68,8 +71,8 @@ export default function SessionDetail() {
         id,
         name: form.name,
         description: form.description || undefined,
-        startDateTime: form.startDateTime || undefined,
-        endDateTime: form.endDateTime || undefined,
+        startDateTime: form.startDateTime ? new Date(form.startDateTime).toISOString() : undefined,
+        endDateTime: form.endDateTime ? new Date(form.endDateTime).toISOString() : undefined,
       },
       {
         onSuccess: () => toast.success('Session updated'),
@@ -150,11 +153,19 @@ export default function SessionDetail() {
         </div>
         <div className="flex gap-2">
           {!session.isPublished && (
-            <Button onClick={handlePublish} className="bg-primary-500 hover:bg-primary-500/90">
-              Publish Session
+            <Button
+              onClick={handlePublish}
+              disabled={publishSession.isPending}
+              className="bg-primary-500 hover:bg-primary-500/90"
+            >
+              {publishSession.isPending ? 'Publishing...' : 'Publish Session'}
             </Button>
           )}
-          <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
+          <Button
+            variant="destructive"
+            disabled={deleteSession.isPending}
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
             <Trash2 className="h-4 w-4 mr-1" />
             Delete
           </Button>
@@ -229,7 +240,10 @@ export default function SessionDetail() {
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <p>Publish this session to generate QR codes for check-in and check-out.</p>
-                <Button onClick={handlePublish} className="mt-4 bg-primary-500 hover:bg-primary-500/90">
+                <Button
+                  onClick={handlePublish}
+                  className="mt-4 bg-primary-500 hover:bg-primary-500/90"
+                >
                   Publish Session
                 </Button>
               </CardContent>

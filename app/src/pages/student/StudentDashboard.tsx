@@ -10,7 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { PaginationControls } from '@/components/PaginationControls';
 import { EmptyState } from '@/components/EmptyState';
 
@@ -36,10 +43,10 @@ export default function StudentDashboard() {
   const [page, setPage] = useState(1);
   const limit = 10;
   const assessmentsQuery = useStudentAssessments(page, limit);
-  const assessments = assessmentsQuery.data?.responses ?? [];
-  const total = assessmentsQuery.data?.total ?? 0;
-  const currentPage = assessmentsQuery.data?.page ?? page;
-  const currentLimit = assessmentsQuery.data?.limit ?? limit;
+  const assessments = assessmentsQuery.data?.data ?? [];
+  const total = assessmentsQuery.data?.pagination?.total ?? 0;
+  const currentPage = assessmentsQuery.data?.pagination?.page ?? page;
+  const currentLimit = assessmentsQuery.data?.pagination?.limit ?? limit;
   const handleLogout = () => {
     logout();
     toast.success('Logged out');
@@ -52,13 +59,20 @@ export default function StudentDashboard() {
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Student Portal</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Student Portal
+              </p>
               <CardTitle className="text-2xl">My Assessments</CardTitle>
               <CardDescription>
                 Signed in as {student?.firstName} {student?.lastName}
               </CardDescription>
             </div>
-            <Button type="button" variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLogout}
+              className="w-full sm:w-auto"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -84,119 +98,119 @@ export default function StudentDashboard() {
           </Alert>
         )}
 
-        {!assessmentsQuery.isPending &&
-          !assessmentsQuery.isError &&
-          total === 0 && (
-            <EmptyState
-              title="No assessments yet"
-              description="Complete an assessment from a QR code link and your results will appear here."
-            />
-          )}
+        {!assessmentsQuery.isPending && !assessmentsQuery.isError && total === 0 && (
+          <EmptyState
+            title="No assessments yet"
+            description="Complete an assessment from a QR code link and your results will appear here."
+          />
+        )}
 
-        {!assessmentsQuery.isPending &&
-          !assessmentsQuery.isError &&
-          total > 0 && (
-            <>
-              <Card className="hidden md:block">
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Assessment</TableHead>
-                        <TableHead>Attempt</TableHead>
-                        <TableHead>Score</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Completed</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+        {!assessmentsQuery.isPending && !assessmentsQuery.isError && total > 0 && (
+          <>
+            <Card className="hidden md:block">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Assessment</TableHead>
+                      <TableHead>Attempt</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Completed</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {assessments.map((assessment) => (
+                      <TableRow key={assessment.id}>
+                        <TableCell className="font-medium">{assessment.assessmentTitle}</TableCell>
+                        <TableCell>{assessment.attempt ?? '-'}</TableCell>
+                        <TableCell>{scoreLabel(assessment.scorePercentage)}</TableCell>
+                        <TableCell>
+                          {assessment.passed === undefined ? (
+                            <Badge variant="secondary">Pending</Badge>
+                          ) : (
+                            <Badge
+                              className={
+                                assessment.passed
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-rose-600 text-white'
+                              }
+                            >
+                              {assessment.passed ? 'Passed' : 'Failed'}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>{formatCompletedDate(assessment.completedAt)}</TableCell>
+                        <TableCell className="text-right">
+                          {assessment.resultsReleased ? (
+                            <Button asChild size="sm">
+                              <Link to={`/student/review/${assessment.id}`}>Review</Link>
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Results pending</span>
+                          )}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {assessments.map((assessment) => (
-                        <TableRow key={assessment.id}>
-                          <TableCell className="font-medium">{assessment.assessmentTitle}</TableCell>
-                          <TableCell>{assessment.attempt ?? '-'}</TableCell>
-                          <TableCell>{scoreLabel(assessment.scorePercentage)}</TableCell>
-                          <TableCell>
-                            {assessment.passed === undefined ? (
-                              <Badge variant="secondary">Pending</Badge>
-                            ) : (
-                              <Badge
-                                className={
-                                  assessment.passed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
-                                }
-                              >
-                                {assessment.passed ? 'Passed' : 'Failed'}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>{formatCompletedDate(assessment.completedAt)}</TableCell>
-                          <TableCell className="text-right">
-                            {assessment.resultsReleased ? (
-                              <Button asChild size="sm">
-                                <Link to={`/student/review/${assessment.id}`}>Review</Link>
-                              </Button>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Results pending</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-              <div className="grid gap-4 md:hidden">
-                {assessments.map((assessment) => (
-                  <Card key={assessment.id}>
-                    <CardHeader className="space-y-2">
-                      <CardTitle className="text-base">{assessment.assessmentTitle}</CardTitle>
-                      <CardDescription>{formatCompletedDate(assessment.completedAt)}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Attempt</span>
-                        <span className="font-medium">{assessment.attempt ?? '-'}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Score</span>
-                        <span className="font-medium">{scoreLabel(assessment.scorePercentage)}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Status</span>
-                        {assessment.passed === undefined ? (
-                          <Badge variant="secondary">Pending</Badge>
-                        ) : (
-                          <Badge
-                            className={
-                              assessment.passed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
-                            }
-                          >
-                            {assessment.passed ? 'Passed' : 'Failed'}
-                          </Badge>
-                        )}
-                      </div>
-                      {assessment.resultsReleased ? (
-                        <Button asChild className="w-full">
-                          <Link to={`/student/review/${assessment.id}`}>Review</Link>
-                        </Button>
+            <div className="grid gap-4 md:hidden">
+              {assessments.map((assessment) => (
+                <Card key={assessment.id}>
+                  <CardHeader className="space-y-2">
+                    <CardTitle className="text-base">{assessment.assessmentTitle}</CardTitle>
+                    <CardDescription>{formatCompletedDate(assessment.completedAt)}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Attempt</span>
+                      <span className="font-medium">{assessment.attempt ?? '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Score</span>
+                      <span className="font-medium">{scoreLabel(assessment.scorePercentage)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Status</span>
+                      {assessment.passed === undefined ? (
+                        <Badge variant="secondary">Pending</Badge>
                       ) : (
-                        <p className="text-sm text-muted-foreground">Results pending</p>
+                        <Badge
+                          className={
+                            assessment.passed
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-rose-600 text-white'
+                          }
+                        >
+                          {assessment.passed ? 'Passed' : 'Failed'}
+                        </Badge>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    </div>
+                    {assessment.resultsReleased ? (
+                      <Button asChild className="w-full">
+                        <Link to={`/student/review/${assessment.id}`}>Review</Link>
+                      </Button>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Results pending</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-              <PaginationControls
-                total={total}
-                page={currentPage}
-                limit={currentLimit}
-                onPrevious={() => setPage((current) => Math.max(current - 1, 1))}
-                onNext={() => setPage((current) => current + 1)}
-              />
-            </>
-          )}
+            <PaginationControls
+              total={total}
+              page={currentPage}
+              limit={currentLimit}
+              onPrevious={() => setPage((current) => Math.max(current - 1, 1))}
+              onNext={() => setPage((current) => current + 1)}
+            />
+          </>
+        )}
       </div>
     </div>
   );

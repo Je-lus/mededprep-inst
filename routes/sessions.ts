@@ -29,8 +29,8 @@ async function findSessionOrThrow(id: string, orgId: string, include?: Record<st
 const createSessionSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  startDateTime: z.string().datetime().optional(),
-  endDateTime: z.string().datetime().optional(),
+  startDateTime: z.string().optional(),
+  endDateTime: z.string().optional(),
 });
 
 const updateSessionSchema = createSessionSchema.partial();

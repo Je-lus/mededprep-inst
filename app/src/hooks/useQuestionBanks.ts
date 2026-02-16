@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ensureSuccess } from '../lib/api';
+import { api, ensureSuccess, ensurePaginatedSuccess } from '../lib/api';
 import type { QuestionBank, QuestionBankDetail, QuestionBankItem } from '../types/api';
 
 export function useQuestionBanks() {
@@ -13,7 +13,7 @@ export function useQuestionBank(id: string, page = 1, limit = 50) {
   return useQuery({
     queryKey: ['question-banks', id, page, limit],
     queryFn: async () =>
-      ensureSuccess(
+      ensurePaginatedSuccess(
         await api.get<QuestionBankDetail>(`/api/question-banks/${id}?page=${page}&limit=${limit}`),
       ),
     enabled: !!id,

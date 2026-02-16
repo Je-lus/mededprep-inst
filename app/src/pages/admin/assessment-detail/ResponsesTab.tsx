@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PaginationControls } from '@/components/PaginationControls';
+import EmptyState from '@/components/EmptyState';
 import { cn } from '@/lib/utils';
 import type { AssessmentResponse } from '@/types/api';
 import { formatDateTime, formatTimeTaken } from './utils';
@@ -68,9 +69,11 @@ export function ResponsesTab({
         )}
 
         {!isLoading && !isError && total === 0 && (
-          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-            No responses yet. Student submissions will appear here once the assessment is taken.
-          </div>
+          <EmptyState
+            compact
+            title="No responses yet"
+            description="Student submissions will appear here once the assessment is taken."
+          />
         )}
 
         {!isLoading && !isError && total > 0 && (

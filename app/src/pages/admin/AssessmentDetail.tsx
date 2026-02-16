@@ -59,10 +59,10 @@ export default function AssessmentDetail() {
     responsesLimit,
     isActiveAssessment ? 10000 : undefined,
   );
-  const responses = responsesQuery.data?.responses ?? [];
-  const totalResponses = responsesQuery.data?.total ?? 0;
-  const responsePage = responsesQuery.data?.page ?? responsesPage;
-  const responseLimit = responsesQuery.data?.limit ?? responsesLimit;
+  const responses = responsesQuery.data?.data ?? [];
+  const totalResponses = responsesQuery.data?.pagination?.total ?? 0;
+  const responsePage = responsesQuery.data?.pagination?.page ?? responsesPage;
+  const responseLimit = responsesQuery.data?.pagination?.limit ?? responsesLimit;
   const hasResponses = totalResponses > 0;
   const qrQuery = useAssessmentQrCode(isActiveAssessment ? id : '');
   const analysisQuery = useItemAnalysis(
@@ -261,18 +261,18 @@ export default function AssessmentDetail() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-semibold">{assessment.title}</h1>
-              <StatusBadge status={assessment.status} />
-              {isActiveAssessment && (
-                <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Live
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-semibold">{assessment.title}</h1>
+            <StatusBadge status={assessment.status} />
+            {isActiveAssessment && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
             Created {new Date(assessment.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -319,11 +319,11 @@ export default function AssessmentDetail() {
           )}
 
           {assessment.status === 'closed' && (
-              <Button
-                onClick={handleReactivate}
-                disabled={reactivateAssessment.isPending}
-                className="bg-primary-500 hover:bg-primary-500/90"
-              >
+            <Button
+              onClick={handleReactivate}
+              disabled={reactivateAssessment.isPending}
+              className="bg-primary-500 hover:bg-primary-500/90"
+            >
               {reactivateAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Reactivate
             </Button>

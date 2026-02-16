@@ -21,11 +21,11 @@ export interface AssessmentDetail extends Assessment {
   surveyJson: SurveyJson;
 }
 
-export interface PaginatedResponse<T> {
-  responses: T[];
-  total: number;
+export interface Pagination {
   page: number;
   limit: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface AssessmentResponse {
@@ -231,9 +231,6 @@ export interface QuestionBankItem {
 
 export interface QuestionBankDetail extends QuestionBank {
   items: QuestionBankItem[];
-  totalItems: number;
-  page: number;
-  limit: number;
 }
 
 // Attendance & Session types

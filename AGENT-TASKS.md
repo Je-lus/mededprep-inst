@@ -1,508 +1,455 @@
-# Agent Tasks — Features Batch 2 (Live Results, Question Bank, Attendance)
+# Agent Tasks — Eval Batch 1: Critical Fixes & Backend Cleanup
 
 ## Overview
 
-Adds three features: live results polling for active assessments, a question bank with CRUD + assessment integration, and standalone QR-based attendance tracking (ported from mededprep-ce).
+Addresses all 5 critical issues and key high-priority items from the 2026-02-15 eval report: schema integrity gaps, type mismatches, duplicated backend utilities, broken bug report workflow, React anti-pattern, and brand color sprawl.
 
 ## Wave Plan
 
-- **Wave 1:** Tasks 1, 2 (parallel — no shared files)
-- **Wave 2:** Task 3 (question bank full stack)
-- **Wave 3:** Tasks 4, 5 (parallel — no shared files)
+- **Wave 1:** Tasks 1, 2, 3, 4 (parallel — no shared files)
+- **Wave 2:** Tasks 5, 6 (parallel — no shared files, depend on Wave 1)
 
 ## Integration Checks (after each wave)
 
 ```bash
-cd app && npx tsc --noEmit && npx vite build
+npm run db:push                            # Wave 1 only (schema changes)
 npm run lint
+cd app && npx tsc --noEmit && npx vite build
 ```
 
 ---
 
-### Task 1: Schema — Question Bank + Attendance Models
+### Task 1: Schema Hardening — Cascade Deletes, Indexes, Bug Status Default
 
 - **Agent:** Codex
-- **Branch:** task-1-batch2-schema
+- **Branch:** task-1-schema-hardening
 - **Depends on:** nothing
 - **Files to modify:** `prisma/schema.prisma`
 
 #### Prompt
 
 ```
-Context: MedEdPrep Instructor Tools — Prisma 5, PostgreSQL.
+## Context
+MedEdPrep Instructor Tools — Prisma 5, PostgreSQL. Multi-tenant app where every record belongs to an Organization.
 
-Problem: Two new features need schema support: a question bank for reusable questions, and standalone attendance tracking.
+## Problem
+The Prisma schema has 9 relations missing onDelete policies, 2 missing performance indexes, and a BugReport status default that contradicts application code.
 
-Current State: See `prisma/schema.prisma`. The Organization model has relations to users, students, assessments, bugReports. The Student model has id, orgId, email, firstName, lastName, password, isActive. There is an AssessmentStatus enum (draft, active, closed).
+## Current State
+File: `prisma/schema.prisma`
 
-Changes Required:
+Missing onDelete policies on these relations:
+- Line 52: BugReport → Organization
+- Line 75: OrgUser → Organization
+- Line 98: Student → Organization
+- Line 128: Assessment → Organization
+- Line 129: Assessment → OrgUser (createdBy)
+- Line 166: AssessmentResponse → Student
+- Line 187: QuestionBank → Organization
+- Line 188: QuestionBank → OrgUser (createdBy)
+- Line 234: Session → Organization
+- Line 235: Session → OrgUser (createdBy)
 
-1. Add QuestionBank model:
-   model QuestionBank {
-     id          String   @id @default(uuid())
-     orgId       String
-     createdById String
-     title       String
-     description String?
-     subject     String?
-     createdAt   DateTime @default(now())
-     updatedAt   DateTime @updatedAt
-     org         Organization      @relation(fields: [orgId], references: [id])
-     createdBy   OrgUser           @relation("QuestionBankCreator", fields: [createdById], references: [id])
-     items       QuestionBankItem[]
-     @@index([orgId])
-   }
+BugReport status default at line 48: `status String @default("open")` — but route validation at `routes/bug-reports.ts:32` accepts only `['pending', 'acknowledged', 'resolved', 'closed']`. The value "open" never appears in route code.
 
-2. Add QuestionBankItem model:
-   model QuestionBankItem {
-     id           String    @id @default(uuid())
-     bankId       String
-     questionData Json
-     tags         String[]  @default([])
-     usageCount   Int       @default(0)
-     lastUsedAt   DateTime?
-     createdAt    DateTime  @default(now())
-     updatedAt    DateTime  @updatedAt
-     bank         QuestionBank @relation(fields: [bankId], references: [id], onDelete: Cascade)
-     @@index([bankId])
-   }
+Missing indexes:
+- SessionAttendee: no single-field index on sessionId (queried alone in `routes/sessions.ts:181,252,282,309`)
+- AssessmentResponse: no composite index on [assessmentId, completedAt] (used for sorted pagination in `routes/assessments.ts:378,478`)
 
-3. Add AttendanceStatus enum:
-   enum AttendanceStatus {
-     registered
-     checked_in
-     attended
-     no_show
-     cancelled
-   }
+## Changes Required
 
-4. Add Session model:
-   model Session {
-     id            String    @id @default(uuid())
-     orgId         String
-     createdById   String
-     name          String
-     description   String?
-     publicHash    String    @unique @default(uuid())
-     isPublished   Boolean   @default(false)
-     startDateTime DateTime?
-     endDateTime   DateTime?
-     createdAt     DateTime  @default(now())
-     updatedAt     DateTime  @updatedAt
-     org           Organization     @relation(fields: [orgId], references: [id])
-     createdBy     OrgUser          @relation("SessionCreator", fields: [createdById], references: [id])
-     attendees     SessionAttendee[]
-     @@index([orgId])
-     @@index([publicHash])
-   }
+1. Fix BugReport default: change `@default("open")` to `@default("pending")`
 
-5. Add SessionAttendee model:
-   model SessionAttendee {
-     id           String           @id @default(uuid())
-     sessionId    String
-     studentId    String
-     status       AttendanceStatus @default(registered)
-     checkedInAt  DateTime?
-     checkedOutAt DateTime?
-     notes        String?
-     createdAt    DateTime         @default(now())
-     updatedAt    DateTime         @updatedAt
-     session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-     student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-     @@unique([sessionId, studentId])
-   }
+2. Add onDelete policies using this strategy:
+   - All → Organization relations: `onDelete: Cascade` (deleting an org removes all its data)
+   - AssessmentResponse → Student (line 166): `onDelete: SetNull` (studentId is nullable String?, keep response data for analytics)
+   - All → OrgUser createdBy relations (lines 129, 188, 235): `onDelete: Restrict` (createdById is required String, prevent deleting a user who owns content)
 
-6. Add relations to existing models:
-   - Organization: add `questionBanks QuestionBank[]` and `sessions Session[]`
-   - OrgUser: add `questionBanks QuestionBank[] @relation("QuestionBankCreator")` and `sessions Session[] @relation("SessionCreator")`
-   - Student: add `attendances SessionAttendee[]`
+3. Add missing indexes:
+   - `@@index([sessionId])` on SessionAttendee model
+   - `@@index([assessmentId, completedAt])` on AssessmentResponse model
 
-What NOT to Do:
-- Do not modify Assessment, AssessmentResponse, or BugReport models
-- Do not add seed data
-- Do not add any route files
+## What NOT to Do
+- Do not change any model field types or names
+- Do not add new models or fields
+- Do not touch any file except schema.prisma
+- Do not create migration files — project uses `prisma db push`
 
-Acceptance Criteria:
-- [ ] QuestionBank and QuestionBankItem models exist with all fields
-- [ ] Session and SessionAttendee models exist with all fields
-- [ ] AttendanceStatus enum exists
-- [ ] All relations added to Organization, OrgUser, Student
-- [ ] Schema validates
+## Acceptance Criteria
+- [ ] BugReport status defaults to "pending"
+- [ ] All 9+ relations have explicit onDelete policies
+- [ ] SessionAttendee has @@index([sessionId])
+- [ ] AssessmentResponse has @@index([assessmentId, completedAt])
+- [ ] `npx prisma validate` passes
 
-Verification:
+## Verification Commands
 npx prisma validate
-npx prisma db push
+npx prisma format
 ```
 
 ---
 
-### Task 2: Live Results Polling
+### Task 2: Deduplicate Route Utilities — Extract param() and Export formatZodErrors()
+
+- **Agent:** Claude Sonnet
+- **Branch:** task-2-route-utils-dedup
+- **Depends on:** nothing
+- **Files to modify:** `lib/validate.ts`, `lib/route-utils.ts` (new), `routes/assessments.ts`, `routes/question-banks.ts`, `routes/sessions.ts`, `routes/student-auth.ts`, `routes/public.ts`, `routes/public-attendance.ts`
+
+#### Prompt
+
+```
+## Context
+MedEdPrep Instructor Tools — Express 5 backend. Routes in `routes/`, shared libs in `lib/`.
+
+## Problem
+Two utility functions are copy-pasted across route files instead of shared:
+- `param()` — identical in 6 route files
+- `formatZodErrors()` — identical in 3 route files (canonical version exists in lib/validate.ts but is not exported)
+
+## Current State
+
+`param()` defined locally in:
+- routes/assessments.ts:13-16
+- routes/question-banks.ts:10-13
+- routes/sessions.ts:10-12
+- routes/student-auth.ts:17-19
+- routes/public.ts:11-13
+- routes/public-attendance.ts:9-11
+
+All identical: `function param(value: string | string[]): string { return Array.isArray(value) ? value[0] : value; }`
+
+`formatZodErrors()` defined locally in:
+- routes/assessments.ts:81-90
+- routes/question-banks.ts:63-72
+- routes/student-auth.ts:39-48
+
+The canonical version is internal at lib/validate.ts:9-19 but NOT in the export list at line 57: `export { z, validate, validateQuery, validateParams }`.
+
+## Changes Required
+
+1. Create `lib/route-utils.ts` — export the `param()` function. Include a brief JSDoc: Express 5 compatibility helper for req.params/req.query values.
+
+2. In `lib/validate.ts` — add `formatZodErrors` to the export list at line 57.
+
+3. In all 6 route files — remove local `param()` definition, add `import { param } from '../lib/route-utils';`
+
+4. In routes/assessments.ts, routes/question-banks.ts, routes/student-auth.ts — remove local `formatZodErrors()` definition, add `import { formatZodErrors } from '../lib/validate';`
+
+## What NOT to Do
+- Do not change any route handler logic — only change imports
+- Do not touch routes/bug-reports.ts (separate task)
+- Do not refactor findXOrThrow() helpers — they're model-specific
+- Do not change function signatures or behavior
+
+## Acceptance Criteria
+- [ ] lib/route-utils.ts exports param()
+- [ ] lib/validate.ts exports formatZodErrors
+- [ ] No local param() definitions remain in any route file
+- [ ] No local formatZodErrors() definitions remain in any route file
+- [ ] npm run lint passes
+- [ ] npx tsc --noEmit passes
+
+## Verification Commands
+npm run lint
+npx tsc --noEmit
+grep -rn "function param" routes/
+grep -rn "function formatZodErrors" routes/
+```
+
+---
+
+### Task 3: Fix scorePercentage Type Mismatch
 
 - **Agent:** Codex
-- **Branch:** task-2-live-results
+- **Branch:** task-3-score-percentage-type
 - **Depends on:** nothing
-- **Files to modify:** `app/src/hooks/useAssessments.ts`, `app/src/pages/admin/AssessmentDetail.tsx`
+- **Files to modify:** `app/src/types/api.ts`
 
 #### Prompt
 
 ```
-Context: MedEdPrep Instructor Tools — React 19, TanStack Query v5, shadcn/ui. Brand color: #1b5fd0.
+## Context
+MedEdPrep Instructor Tools — React 19 frontend, TypeScript.
 
-Problem: Instructors want to watch student responses come in while an assessment is active. Currently the responses and item analysis tabs only show data at page load — no auto-refresh.
+## Problem
+Backend sends scorePercentage as a number (Prisma Decimal type at schema.prisma:157, converted to number in lib/services/quiz-scoring.ts:50). Frontend types incorrectly declare it as string, causing silent type mismatches.
 
-Current State:
-- `app/src/hooks/useAssessments.ts`:
-  - `useAssessmentResponses(id, page, limit)` — standard useQuery, no refetchInterval
-  - `useItemAnalysis(id)` — standard useQuery, no refetchInterval
-- `app/src/pages/admin/AssessmentDetail.tsx`:
-  - Calls `useAssessmentResponses(id, responsesPage, responsesLimit)` and `useItemAnalysis(hasResponses ? id : '')`
-  - Has assessment object with `assessment.status` available
-  - Tabs: overview, qr (active only), responses, analysis
+## Current State
+File: app/src/types/api.ts — four interfaces declare scorePercentage as string:
+- Line 39 in AssessmentResponse: `scorePercentage?: string;`
+- Line 136 in AssessmentSubmitResult: `scorePercentage?: string;`
+- Line 156 in AssessmentReviewData: `scorePercentage: string;` (non-optional)
+- Line 166 in ResponseDetail: `scorePercentage?: string;`
 
-Changes Required:
+## Changes Required
+Change all four declarations from string to number, preserving optionality:
+- Lines 39, 136, 166: `scorePercentage?: number;`
+- Line 156: `scorePercentage: number;`
 
-1. **Add refetchInterval parameter** to `useAssessmentResponses` and `useItemAnalysis` in `useAssessments.ts`:
-   - Add an optional `refetchInterval` parameter to each hook
-   - Pass it through to the useQuery options
-   - Example: `export function useAssessmentResponses(id: string, page = 1, limit = 10, refetchInterval?: number)`
+## What NOT to Do
+- Do not change any other types in this file
+- Do not modify component files
+- Do not change field optionality
 
-2. **Pass refetchInterval from AssessmentDetail.tsx**:
-   - When `assessment.status === 'active'`, pass `refetchInterval: 10000` (10 seconds) to both hooks
-   - When not active, pass `undefined` (no polling)
+## Acceptance Criteria
+- [ ] All 4 scorePercentage declarations use number type
+- [ ] cd app && npx tsc --noEmit passes
 
-3. **Add a "Live" indicator** on the AssessmentDetail page:
-   - When the assessment is active, show a small pulsing green dot with "Live" text next to the assessment title
-   - Use: `<span className="inline-flex items-center gap-1.5 text-sm text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />Live</span>`
-   - Only show when status is 'active'
-
-What NOT to Do:
-- Do not add WebSocket support — polling is sufficient for this scale
-- Do not change the hook return types or query keys
-- Do not modify ResponsesTab or ItemAnalysisTab components
-- Do not add a manual toggle — just auto-poll when active
-
-Acceptance Criteria:
-- [ ] Responses tab auto-refreshes every 10 seconds when assessment is active
-- [ ] Item analysis tab auto-refreshes every 10 seconds when assessment is active
-- [ ] No polling when assessment is draft or closed
-- [ ] "Live" indicator visible next to title for active assessments
-- [ ] `cd app && npx tsc --noEmit` passes
-
-Verification:
+## Verification Commands
 cd app && npx tsc --noEmit
-cd app && npx vite build
+grep -n "scorePercentage" app/src/types/api.ts
 ```
 
 ---
 
-### Task 3: Question Bank — Full Stack
+### Task 4: Fix QuestionBankDetail setState-in-Render Anti-Pattern
+
+- **Agent:** Codex
+- **Branch:** task-4-question-bank-setstate
+- **Depends on:** nothing
+- **Files to modify:** `app/src/pages/admin/QuestionBankDetail.tsx`
+
+#### Prompt
+
+````
+## Context
+MedEdPrep Instructor Tools — React 19 frontend.
+
+## Problem
+setBankForm() is called directly in the render path, causing unnecessary re-renders and potential infinite loops.
+
+## Current State
+File: app/src/pages/admin/QuestionBankDetail.tsx, lines 333-339:
+
+The component body contains this outside any hook or handler:
+```tsx
+if (!editMode) {
+  setBankForm({
+    title: data.title,
+    description: data.description || '',
+    subject: data.subject || '',
+  });
+}
+````
+
+This runs every render when editMode is false, triggering another render via setState.
+
+## Changes Required
+
+Move this logic into a useEffect that syncs bankForm state from data when not in edit mode. The effect should depend on [data, editMode] and only set form state when editMode is false and data has changed. Remove the bare conditional from the render path.
+
+## What NOT to Do
+
+- Do not refactor the rest of the component
+- Do not change the bankForm state shape
+- Do not add dependencies or libraries
+- Do not touch other files
+
+## Acceptance Criteria
+
+- [ ] setBankForm is no longer called in the render path
+- [ ] Form state syncs from server data via useEffect
+- [ ] Entering editMode preserves user changes (effect doesn't overwrite during edit)
+- [ ] cd app && npx tsc --noEmit passes
+
+## Verification Commands
+
+cd app && npx tsc --noEmit
+cd app && npm run lint
+
+```
+
+---
+
+### Task 5: Bug Report Status Management — Endpoint, Auth, Pagination, and UI
 
 - **Agent:** Claude Sonnet
-- **Branch:** task-3-question-bank
-- **Depends on:** Task 1 (schema)
-- **Files to modify:** `routes/question-banks.ts` (new), `app.ts`, `app/src/hooks/useQuestionBanks.ts` (new), `app/src/types/api.ts`, `app/src/pages/admin/QuestionBankList.tsx` (new), `app/src/pages/admin/QuestionBankDetail.tsx` (new), `app/src/components/AdminLayout.tsx`, `app/src/App.tsx`, `app/src/pages/admin/AssessmentCreate.tsx`
+- **Branch:** task-5-bug-report-status
+- **Depends on:** Task 1 (schema default fix should land first)
+- **Files to modify:** `routes/bug-reports.ts`, `app/src/hooks/useBugReports.ts`, `app/src/pages/admin/BugReports.tsx`
 
 #### Prompt
 
 ```
-Context: MedEdPrep Instructor Tools — Express 5, Prisma 5, React 19, shadcn/ui, TanStack Query v5, Tailwind. Brand color: #1b5fd0. The QuestionBank and QuestionBankItem models already exist in Prisma (from Task 1). QuestionBankItem has a `questionData` Json field storing a SurveyJS `SurveyElement` object (type, name, title, choices, correctAnswer, metadata).
 
-Problem: Instructors rebuild questions from scratch for every assessment. A question bank allows them to store reusable questions and pull them into new assessments.
+## Context
 
-Current State:
-- `app.ts` — Routes mounted with middleware. Pattern: `app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);`
-- `routes/assessments.ts` — Good pattern to follow for CRUD routes. Uses Zod validation, `findAssessmentOrThrow` helper, `param()` helper, pagination schema.
-- `lib/services/csv-import.ts` — Parses CSV into SurveyJS JSON. Returns `{ surveyJson, questionCount }`. The parsing logic extracts individual `SurveyElement` objects which is exactly what QuestionBankItem.questionData stores.
-- `app/src/components/AdminLayout.tsx` — Has NavLink tabs for Dashboard, Assessments, Bug Reports.
-- `app/src/App.tsx` — Admin routes nested under `<Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>`.
-- `app/src/pages/admin/AssessmentCreate.tsx` — Two tabs: Builder (SurveyJS editor) and CSV import. Form state has title, description, settings. `createPayload()` assembles the POST body.
-- `app/src/types/api.ts` — Has SurveyElement, QuestionMetadata, SurveyChoice types already defined.
+MedEdPrep Instructor Tools — Express 5, Prisma 5, React 19, shadcn/ui, TanStack Query v5. Bug reports submitted by anyone, managed by admins.
 
-Changes Required:
+## Problem
 
-**Backend:**
+Three issues with bug reports:
 
-1. **Question bank routes** — `routes/question-banks.ts`:
-   - GET `/` — List banks for org. Return: `{ id, title, description, subject, _count: { items } }`
-   - POST `/` — Create bank. Schema: `{ title: string, description?: string, subject?: string }`
-   - GET `/:id` — Get bank with items. Return bank + paginated items
-   - PUT `/:id` — Update bank metadata
-   - DELETE `/:id` — Delete bank (cascades to items)
-   - POST `/:id/items` — Add question to bank. Schema: `{ questionData: SurveyElement JSON }`
-   - PUT `/:id/items/:itemId` — Update question
-   - DELETE `/:id/items/:itemId` — Remove question
-   - POST `/:id/import-csv` — Import CSV directly into bank. Reuse `parseCsvToSurveyJson` from `lib/services/csv-import.ts`, then extract individual elements and create QuestionBankItem records for each.
-   - All endpoints scoped to orgId, require auth
+1. No endpoint to update bug report status — admins can see reports but can't act on them
+2. GET response puts pagination at top level (`{ success, data, pagination }`) instead of inside data like other endpoints
+3. GET endpoint needs requireAuth inline since the router uses optionalAuth (correct for POST, wrong for GET)
 
-2. **Mount routes** in `app.ts`:
-   - `app.use('/api/question-banks', generalLimiter, requireAuth, questionBankRoutes);`
+## Current State
 
-**Frontend:**
+Backend — routes/bug-reports.ts:
 
-3. **Types** in `app/src/types/api.ts`:
-   - `QuestionBank` interface: `{ id, title, description?, subject?, createdAt, _count?: { items: number } }`
-   - `QuestionBankItem` interface: `{ id, bankId, questionData: SurveyElement, tags: string[], usageCount, lastUsedAt?, createdAt }`
+- Lines 29-33: listBugReportsSchema with status enum ['pending', 'acknowledged', 'resolved', 'closed']
+- Lines 39-135: POST / — submit bug report (uses optionalAuth correctly)
+- Lines 140-186: GET / — list reports. Uses validateQuery middleware. Response at lines 172-181 returns `{ success: true, data: reports, pagination: { page, limit, total, totalPages } }`
+- No PUT/PATCH endpoint exists
+- requireAuth is available from lib/auth.ts
 
-4. **Hooks** — `app/src/hooks/useQuestionBanks.ts`:
-   - `useQuestionBanks()` — list all banks
-   - `useQuestionBank(id)` — get bank with items
-   - `useCreateQuestionBank()` — create bank
-   - `useUpdateQuestionBank()` — update bank
-   - `useDeleteQuestionBank()` — delete bank
-   - `useAddBankItem()` — add question to bank
-   - `useUpdateBankItem()` — update question
-   - `useDeleteBankItem()` — delete question
-   - `useImportCsvToBank()` — import CSV into bank
-   - Follow exact patterns from `useAssessments.ts`
+Frontend hook — app/src/hooks/useBugReports.ts:
 
-5. **QuestionBankList page** — `app/src/pages/admin/QuestionBankList.tsx`:
-   - Follow the AssessmentList.tsx pattern
-   - Table: Title, Subject, Questions (count), Created
-   - "New Bank" button (brand color)
-   - Click row → navigate to detail
+- Lines 5-13: BugReportsResponse type: `{ data: BugReport[], pagination: { page, limit, total, totalPages } }`
+- Lines 41-47: useQuery fetches and parses this format
 
-6. **QuestionBankDetail page** — `app/src/pages/admin/QuestionBankDetail.tsx`:
-   - Bank metadata header (title, subject, description) with edit capability
-   - Questions list showing: question title, type (radiogroup/checkbox), number of choices, difficulty from metadata
-   - "Add Question" button → opens a dialog with a simple form (question text, type, choices, correct answer, metadata fields)
-   - CSV import tab/button — reuses the CSV paste pattern from AssessmentCreate
-   - Each question row has edit/delete actions
-   - Expandable preview showing full question with choices
+Frontend page — app/src/pages/admin/BugReports.tsx:
 
-7. **Admin nav tab** in `AdminLayout.tsx`:
-   - Add "Question Bank" NavLink (to "/question-banks") following the existing pattern
+- Lines 86-87: Extracts data?.data and data?.pagination
+- Lines 101-123: Status filter dropdown (read-only)
+- Lines 197-199: Status shown as read-only Badge in table
 
-8. **Admin routes** in `App.tsx`:
-   - Add `<Route path="question-banks" element={<QuestionBankList />} />`
-   - Add `<Route path="question-banks/:id" element={<QuestionBankDetail />} />`
+Pattern to follow for paginated response: routes/assessments.ts:401 returns `{ success: true, data: { responses, total, page, limit } }`
+Pattern to follow for mutation + toast: app/src/pages/admin/AssessmentDetail.tsx:153-162
 
-9. **Question picker in AssessmentCreate.tsx**:
-   - Add a third tab alongside "Builder" and "CSV": "From Bank"
-   - This tab shows a dropdown to select a bank, then lists its questions with checkboxes
-   - "Add Selected" button takes checked questions, composes them into SurveyJS JSON pages, and sets the surveyJson state
-   - Each question shows title, type, difficulty badge
-   - When questions are added from the bank, increment their `usageCount` (fire-and-forget PATCH, don't block)
+## Changes Required
 
-What NOT to Do:
-- Do not modify the SurveyJS editor component itself
-- Do not add sharing/permissions between orgs (future feature)
-- Do not add tagging UI (future feature — tags field exists but UI deferred)
-- Do not modify existing assessment routes or models
+1. In routes/bug-reports.ts — add PATCH /:id endpoint:
+   - Add requireAuth middleware inline on this route (import from lib/auth.ts)
+   - Validate body: `{ status: z.enum(['pending', 'acknowledged', 'resolved', 'closed']) }`
+   - Find report by id AND orgId (multi-tenancy), throw NotFoundError if missing
+   - Update status, return `{ success: true, data: updatedReport }`
 
-Acceptance Criteria:
-- [ ] CRUD routes for question banks and items work
-- [ ] CSV import into bank creates individual QuestionBankItem records
-- [ ] Admin can browse, create, edit, delete banks and questions
-- [ ] "Question Bank" tab visible in admin nav
-- [ ] "From Bank" tab in assessment create lets instructor select questions
-- [ ] Selected questions correctly compose into SurveyJS JSON
-- [ ] `cd app && npx tsc --noEmit` passes
-- [ ] `npm run lint` passes
+2. In routes/bug-reports.ts — add requireAuth inline on GET / route
 
-Verification:
-cd app && npx tsc --noEmit
+3. In routes/bug-reports.ts — fix GET pagination response to: `{ success: true, data: { reports, total, page, limit, totalPages } }`
+
+4. In app/src/hooks/useBugReports.ts:
+   - Update BugReportsResponse type to match new `{ data: { reports, total, page, limit, totalPages } }` shape
+   - Add useUpdateBugReport mutation hook — PATCH /api/bug-reports/:id
+   - Invalidate ['bug-reports'] query key on success
+
+5. In app/src/pages/admin/BugReports.tsx:
+   - Update data extraction to match new response shape
+   - In each table row, replace the read-only status Badge with a Select dropdown (same options as the filter: pending, acknowledged, resolved, closed)
+   - On change, call update mutation. Show toast on success/error.
+
+## What NOT to Do
+
+- Do not modify the POST (create) endpoint or the BugReportDialog component
+- Do not touch app.ts middleware mounting
+- Do not add delete functionality
+- Do not change the bug report Zod create schema
+
+## Acceptance Criteria
+
+- [ ] PATCH /api/bug-reports/:id updates status with auth + orgId check
+- [ ] GET endpoint requires authentication via inline middleware
+- [ ] GET response uses `{ success, data: { reports, total, page, limit, totalPages } }` format
+- [ ] Frontend hook parses new response format correctly
+- [ ] Admin can change bug report status via dropdown in the table
+- [ ] npm run lint passes
+- [ ] cd app && npx tsc --noEmit passes
+
+## Verification Commands
+
 npm run lint
+cd app && npx tsc --noEmit
 cd app && npx vite build
+
 ```
 
 ---
 
-### Task 4: Attendance — Full Stack (Copy from mededprep-ce)
-
-- **Agent:** Claude Sonnet
-- **Branch:** task-4-attendance
-- **Depends on:** Task 1 (schema), Task 3 (for AdminLayout.tsx and App.tsx state after question bank routes are added)
-- **Files to modify:** `routes/sessions.ts` (new), `routes/public-attendance.ts` (new), `app.ts`, `app/src/hooks/useAttendance.ts` (new), `app/src/hooks/usePublicAttendance.ts` (new), `app/src/types/api.ts`, `app/src/pages/admin/SessionList.tsx` (new), `app/src/pages/admin/SessionDetail.tsx` (new), `app/src/pages/admin/session-detail/AttendeeSection.tsx` (new), `app/src/pages/admin/session-detail/QrCodeSection.tsx` (new), `app/src/pages/public/AttendSession.tsx` (new), `app/src/pages/public/CheckOutSession.tsx` (new), `app/src/components/AdminLayout.tsx`, `app/src/App.tsx`
-
-#### Prompt
-
-```
-Context: MedEdPrep Instructor Tools — Express 5, Prisma 5, React 19, shadcn/ui, TanStack Query v5, Tailwind. Brand color: #1b5fd0. The Session, SessionAttendee, and AttendanceStatus models already exist in Prisma (from Task 1). This feature is ported from mededprep-ce which has a nearly identical attendance system — use those files as your starting point.
-
-Problem: Instructors need standalone attendance tracking with QR-based check-in/check-out, independent of assessments.
-
-IMPORTANT: Copy from mededprep-ce and adapt. The sibling project has working attendance code. Reference these files directly:
-
-**Backend files to copy from:**
-- `../../mededprep-ce/routes/public.js` lines 25-317 — Public attendance endpoints (register, lookup, checkout). Strip survey references. Convert JS→TS.
-- `../../mededprep-ce/routes/classes.js` lines 513-693 — Admin attendee management (list, add, update status, manual check-in/out, QR generation). Strip certificate logic. Convert JS→TS.
-
-**Frontend files to copy from:**
-- `../../mededprep-ce/app/src/pages/public/AttendClass.tsx` (382 lines) — Multi-step check-in wizard. Strip survey redirect logic from "done" step. Otherwise copy verbatim.
-- `../../mededprep-ce/app/src/pages/public/CheckOutClass.tsx` (181 lines) — Check-out page. Copy verbatim, no CE-specific code.
-- `../../mededprep-ce/app/src/pages/admin/class-detail/AttendeeSection.tsx` (247 lines) — Admin attendee table with stats. Copy verbatim, no CE-specific code.
-- `../../mededprep-ce/app/src/pages/admin/class-detail/QrCodeSection.tsx` (137 lines) — Dual QR code display (check-in + checkout). Copy verbatim.
-- `../../mededprep-ce/app/src/hooks/usePublic.ts` lines 13-64 — Public attendance hooks. Copy, skip survey hooks.
-- `../../mededprep-ce/app/src/hooks/useClasses.ts` lines 202-279 — Admin attendee mutation hooks. Copy verbatim.
-
-**Adaptations needed when copying:**
-- Model names: `Class` → `Session`, `ClassAttendee` → `SessionAttendee`, `classId` → `sessionId`
-- Route paths: `/attend/:hash` stays the same
-- API paths: `/api/classes/:id/attendees` → `/api/sessions/:id/attendees`
-- Port: 2000 → 9000 (dev mode QR URLs)
-- JS → TypeScript: Add type annotations, use Zod validation
-- Remove all survey and certificate references
-- Import paths: Update to mededprep-inst's lib/prisma, lib/errors, lib/validate
-
-Changes Required:
-
-**Backend:**
-
-1. **Session CRUD routes** — `routes/sessions.ts`:
-   - GET `/` — List sessions with attendee counts
-   - POST `/` — Create session. Schema: `{ name, description?, startDateTime?, endDateTime? }`
-   - GET `/:id` — Get session with attendee list
-   - PUT `/:id` — Update session
-   - DELETE `/:id` — Delete session (cascade deletes attendees)
-   - POST `/:id/publish` — Set isPublished=true (enables QR/check-in)
-   - GET `/:id/attendees` — List attendees (copy from mededprep-ce)
-   - POST `/:id/attendees` — Add attendee manually (copy from mededprep-ce)
-   - PUT `/:id/attendees/:aid` — Update attendee status/notes (copy from mededprep-ce)
-   - POST `/:id/attendees/:aid/check-in` — Manual check-in (copy from mededprep-ce)
-   - POST `/:id/attendees/:aid/check-out` — Manual check-out (copy from mededprep-ce)
-   - GET `/:id/qr-codes` — Generate check-in + checkout QR codes (copy pattern from mededprep-ce, update port to 9000)
-   - All endpoints scoped to orgId, require auth
-
-2. **Public attendance routes** — `routes/public-attendance.ts`:
-   - GET `/attend/:hash` — Get session info + check-in window status (copy from mededprep-ce, strip surveys)
-   - POST `/attend/:hash/register` — Register + auto check-in (copy, strip surveys from response)
-   - POST `/attend/:hash/lookup` — Returning student email lookup (copy verbatim)
-   - POST `/attend/:hash/checkout` — Self-service checkout (copy verbatim)
-   - Include the `getAttendanceWindow()` helper from mededprep-ce
-
-3. **Mount routes** in `app.ts`:
-   - `app.use('/api/sessions', generalLimiter, requireAuth, sessionRoutes);`
-   - `app.use('/api/public', generalLimiter, publicAttendanceRoutes);` — add to existing public route mounting area
-
-**Frontend:**
-
-4. **Types** in `app/src/types/api.ts`:
-   - `Session` interface: `{ id, name, description?, publicHash, isPublished, startDateTime?, endDateTime?, createdAt, _count?: { attendees } }`
-   - `SessionAttendee` interface: `{ id, sessionId, studentId, status: AttendanceStatus, checkedInAt?, checkedOutAt?, notes?, student?: { firstName, lastName, email } }`
-   - `AttendanceStatus` type: `'registered' | 'checked_in' | 'attended' | 'no_show' | 'cancelled'`
-
-5. **Admin hooks** — `app/src/hooks/useAttendance.ts`:
-   - Copy attendee hooks from mededprep-ce's useClasses.ts lines 202-279, rename class→session
-   - Add: `useSessions()`, `useSession(id)`, `useCreateSession()`, `useUpdateSession()`, `useDeleteSession()`, `usePublishSession()`
-
-6. **Public hooks** — `app/src/hooks/usePublicAttendance.ts`:
-   - Copy from mededprep-ce's usePublic.ts lines 13-64, rename class→session
-   - `useSessionInfo(hash)`, `useRegisterAttendee(hash)`, `useLookupStudent(hash)`, `useCheckOutSelf(hash)`
-
-7. **Admin pages**:
-   - `SessionList.tsx` — Follow AssessmentList.tsx pattern. Table: Name, Status (Published/Draft), Attendees, Date
-   - `SessionDetail.tsx` — Tabs: Overview, Attendance, QR Codes. Follow AssessmentDetail.tsx pattern
-   - `session-detail/AttendeeSection.tsx` — Copy from mededprep-ce, rename class→session
-   - `session-detail/QrCodeSection.tsx` — Copy from mededprep-ce, rename class→session
-
-8. **Public pages**:
-   - `AttendSession.tsx` — Copy from mededprep-ce's AttendClass.tsx, strip survey redirect, rename class→session
-   - `CheckOutSession.tsx` — Copy from mededprep-ce's CheckOutClass.tsx, rename class→session
-
-9. **Admin nav** in `AdminLayout.tsx`:
-   - Add "Attendance" NavLink (to "/sessions")
-
-10. **Routes** in `App.tsx`:
-    - Admin: `<Route path="sessions" element={<SessionList />} />`, `<Route path="sessions/:id" element={<SessionDetail />} />`
-    - Public: `<Route path="/attend/:hash" element={<AttendSession />} />`, `<Route path="/attend/:hash/checkout" element={<CheckOutSession />} />`
-
-What NOT to Do:
-- Do not implement certificates or surveys
-- Do not add time-window enforcement on the backend (copy it from mededprep-ce as-is, but don't add new logic beyond what CE has)
-- Do not modify assessment routes or the existing public quiz-taking flow
-- Do not add attendance export/reports (future feature)
-
-Acceptance Criteria:
-- [ ] Session CRUD works (create, list, update, delete, publish)
-- [ ] QR codes generated for check-in and checkout
-- [ ] Public check-in flow works: scan QR → enter info → checked in
-- [ ] Public checkout flow works: scan QR → enter email → checked out
-- [ ] Admin can view attendee list, manually check in/out, update status
-- [ ] "Attendance" tab in admin nav
-- [ ] `cd app && npx tsc --noEmit` passes
-- [ ] `npm run lint` passes
-
-Verification:
-cd app && npx tsc --noEmit
-npm run lint
-cd app && npx vite build
-```
-
----
-
-### Task 5: Assessment Create — Question Bank Picker Enhancement
+### Task 6: Centralize Brand Color — Replace Hardcoded #1b5fd0
 
 - **Agent:** Gemini
-- **Branch:** task-5-question-picker-polish
-- **Depends on:** Task 3 (question bank routes and types must exist)
-- **Files to modify:** `app/src/pages/admin/AssessmentCreate.tsx`
+- **Branch:** task-6-brand-color-cleanup
+- **Depends on:** nothing (can run in Wave 1 or Wave 2)
+- **Files to modify:** All files under `app/src/` containing `#1b5fd0` (15+ files)
 
 #### Prompt
 
 ```
-Context: MedEdPrep Instructor Tools — React 19, shadcn/ui, TanStack Query v5, Tailwind. Brand color: #1b5fd0. The question bank feature is already built (Task 3) with routes, hooks, and types. The assessment create page already has a "From Bank" tab added by Task 3.
 
-Problem: The "From Bank" tab in AssessmentCreate needs polish — preview of selected questions before adding, question count summary, and ability to deselect.
+## Context
 
-Current State: After Task 3, `app/src/pages/admin/AssessmentCreate.tsx` has three tabs: Builder, CSV, and "From Bank". The "From Bank" tab has a bank selector dropdown and question checkboxes. But it may need UX refinement.
+MedEdPrep Instructor Tools — React 19, Tailwind CSS. Brand color is #1b5fd0.
 
-Changes Required:
+## Problem
 
-1. **Selected questions preview panel**:
-   - Below the question list, show a "Selected Questions (N)" summary
-   - List selected question titles in a compact format with X buttons to remove individual selections
-   - Show total count prominently
+The brand color is hardcoded as arbitrary Tailwind values (bg-[#1b5fd0], text-[#1b5fd0], etc.) in 35+ places across 15+ files. It's already defined in the Tailwind theme at app/tailwind.config.js:17 as primary.500, so utility classes like bg-primary-500, text-primary-500, border-primary-500 are available but unused.
 
-2. **Question preview expansion**:
-   - Each question in the list should be expandable (click to expand)
-   - Expanded view shows: full question text, all choices with correct answer highlighted in green, metadata (chapter, difficulty, explanation)
+## Current State
 
-3. **Bulk actions**:
-   - "Select All" / "Deselect All" buttons
-   - "Add N Questions to Assessment" button disabled when nothing selected
+Tailwind config at app/tailwind.config.js:14-20 defines:
+primary: {
+DEFAULT: 'hsl(var(--primary))',
+foreground: 'hsl(var(--primary-foreground))',
+50: '#eff5ff',
+100: '#dbeafe',
+500: '#1b5fd0',
+600: '#1651b8',
+700: '#1143a0',
+}
 
-4. **Question count validation**:
-   - After adding questions from bank, show a toast with "Added N questions to assessment"
-   - If questions were already in the builder (from SurveyJS editor), warn: "This will replace existing questions. Continue?"
+Known files with hardcoded values (non-exhaustive list):
 
-What NOT to Do:
-- Do not modify the question bank routes or hooks
-- Do not change the Builder or CSV tabs
-- Do not add drag-and-drop reordering (future feature)
-- Do not modify the SurveyEditor component
+- app/src/components/AdminLayout.tsx (lines 26, 36, 46, 56, 66)
+- app/src/components/BugReportDialog.tsx
+- app/src/components/ToggleSwitch.tsx
+- app/src/components/StatusBadge.tsx
+- app/src/pages/public/AttendSession.tsx
+- app/src/pages/public/CheckOutSession.tsx
+- Plus assessment, question bank, session, student, and dashboard pages
 
-Acceptance Criteria:
-- [ ] Selected questions shown in preview panel with remove buttons
-- [ ] Questions expandable to show full details
-- [ ] Select all / deselect all works
-- [ ] Replacement warning when builder already has questions
-- [ ] `cd app && npx tsc --noEmit` passes
+Replacement patterns:
 
-Verification:
+- bg-[#1b5fd0] → bg-primary-500
+- bg-[#1b5fd0]/90 → bg-primary-500/90
+- hover:bg-[#1b5fd0]/90 → hover:bg-primary-500/90
+- hover:bg-[#1b5fd0] → hover:bg-primary-500
+- text-[#1b5fd0] → text-primary-500
+- border-[#1b5fd0] → border-primary-500
+- Inline style color/backgroundColor '#1b5fd0' → convert to Tailwind className
+- SVG stroke/fill="#1b5fd0" → use currentColor with text-primary-500 on parent, or keep hex if unreachable by Tailwind
+
+## Changes Required
+
+Search ALL files under app/src/ for #1b5fd0 (case-insensitive). Replace every occurrence with the corresponding primary-500 Tailwind utility class. Verify zero occurrences remain after changes.
+
+## What NOT to Do
+
+- Do not modify app/tailwind.config.js
+- Do not change app/src/index.css CSS variables
+- Do not change component behavior or layout
+- Do not introduce new CSS classes or utilities
+- Do not touch files outside app/src/
+
+## Acceptance Criteria
+
+- [ ] Zero occurrences of #1b5fd0 in app/src/
+- [ ] All replacements use primary-500 Tailwind classes
+- [ ] Visual appearance unchanged (same color)
+- [ ] cd app && npx tsc --noEmit && npx vite build passes
+- [ ] cd app && npm run lint passes
+
+## Verification Commands
+
+cd app && npm run lint
 cd app && npx tsc --noEmit
 cd app && npx vite build
+grep -ri "#1b5fd0" app/src/
+
 ```
 
 ---
 
-## Dispatch
+## Remaining Items (follow-up batch)
 
-Run the setup script to create worktrees:
+These items from the eval report are deferred:
 
-```bash
-../workflow/setup-worktrees.sh all
+- **Seed data expansion** — Needs assessments, students, responses, sessions, bug reports. Large standalone task.
+- **Standardize all pagination formats** — Assessment responses and question bank item lists also differ from each other.
+- **Inconsistent empty state components** — Some pages use EmptyState, others use bare divs.
+- **Missing loading indicators** — SessionDetail and other pages missing isPending feedback on mutations.
+- **Dead-end page navigation** — CheckOutSession success screen, QuestionBankDetail error states, CreateAccount page lack back buttons.
+- **requireRole middleware activation** — Decide if owner/admin should differ, then apply.
 ```
-
-Or by wave:
-
-```bash
-../workflow/setup-worktrees.sh 1,2     # Wave 1
-../workflow/setup-worktrees.sh 3       # Wave 2
-../workflow/setup-worktrees.sh 4,5     # Wave 3
-```
-
-## Merge Order
-
-1. Merge Wave 1 (Tasks 1, 2) into main — no shared files, clean merges
-2. Merge Wave 2 (Task 3) — touches app.ts, AdminLayout, App.tsx
-3. Merge Wave 3 (Tasks 4, 5) — Task 4 touches app.ts/AdminLayout (merge after Task 3); Task 5 only touches AssessmentCreate (merge anytime after Task 3)

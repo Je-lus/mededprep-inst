@@ -2,131 +2,125 @@
 
 ## Critical (fix before shipping)
 
-- **Assessment ownership not enforced**: `routes/assessments.ts:54-62` — `findAssessmentOrThrow()` only checks `id` and `orgId`, never `createdById`. Any admin in the same org can view, edit, delete, publish, close, and see all student responses for assessments they didn't create. 10 endpoints affected (lines 162, 180, 214, 230, 255, 274, 301, 338, 383, 430). Student PII (names, emails, scores) exposed cross-instructor. FERPA/privacy risk.
+- **Bug report status enum mismatch**: `prisma/schema.prisma:48` defaults to `'open'`, but `routes/bug-reports.ts:32` validates `['pending', 'acknowledged', 'resolved', 'closed']` and creates with `'pending'` at line 116 — Schema default contradicts application logic; status filter queries will miss records created with the default value.
 
-- **ReviewQuestion type mismatch (studentAnswer/correctAnswer)**: `app/src/types/api.ts:139-148` vs `routes/student-auth.ts:52-61` — Backend returns `unknown` (can be string or array for multi-select questions), but frontend types declare `string`. Causes runtime errors when calling string methods on array values in `app/src/pages/student/AssessmentReview.tsx`.
+- **No bug report status update endpoint**: `routes/bug-reports.ts` only defines POST (create) and GET (list) — Admins can view bug reports and filter by status, but cannot change status (`pending` → `acknowledged` → `resolved` → `closed`). The entire bug triage workflow is broken.
 
-- **Missing CASCADE delete rules on 4 relations**: `prisma/schema.prisma` — Organization deletion orphans all child records. Affected lines: OrgUser→Organization (line 44), Student→Organization (line 65), Assessment→Organization (line 93), Assessment→OrgUser (line 94). No `onDelete: Cascade` on any of these. Only AssessmentResponse→Assessment (line 130) has cascade.
+- **`scorePercentage` type mismatch (backend number vs frontend string)**: Backend sends `number` (`lib/services/quiz-scoring.ts:50-51`, `prisma/schema.prisma:157` Decimal type). Frontend types declare `string` at `app/src/types/api.ts:39,136,156,166` — Score comparisons, sorting, and display may silently fail or produce incorrect results.
 
-- **Seed data covers only 2 records (1 org, 1 admin user)**: `prisma/seed.ts:17-41` — Zero assessments, questions, students, or responses seeded. 78% of major features are untestable without manual data creation. QR Code tab (AssessmentDetail.tsx:298) and Item Analysis tab (AssessmentDetail.tsx:300) never render due to conditional logic requiring active assessments and completed responses respectively.
+- **Missing cascading delete: AssessmentResponse → Student**: `prisma/schema.prisma:166` — No `onDelete` clause. Deleting a Student leaves orphaned AssessmentResponse records with dangling `studentId` foreign keys. Compare to SessionAttendee (line 254) which correctly has `onDelete: Cascade`.
+
+- **setState called during render (infinite re-render risk)**: `app/src/pages/admin/QuestionBankDetail.tsx:333-339` — `setBankForm()` called unconditionally in the render path when `!editMode`. Should use `useEffect`. Causes unnecessary re-renders and potential infinite loops.
 
 ## High Priority (causes user confusion or data bugs)
 
-- **requireRole() middleware defined but never used**: `lib/auth.ts:208-219` — Role-based authorization function exported but zero route uses it. All authenticated admins can access all admin endpoints regardless of role. Token includes role (line 68) but verification never checks it.
+- **Missing cascading deletes on Organization relations**: `prisma/schema.prisma` — BugReport (line 52), OrgUser (line 75), Student (line 98), Assessment (line 128), QuestionBank (line 187), Session (line 234) all reference Organization without `onDelete: Cascade`. Deleting an org orphans all child records.
 
-- **formatZodErrors() duplicated in 3 files**: Central export at `lib/validate.ts:9-19` exists but ignored. Redefined in `routes/assessments.ts:79-88` and `routes/student-auth.ts:94-103`. Maintenance risk: changes must be made in 3 places.
+- **Missing cascading deletes on createdBy (OrgUser) relations**: `prisma/schema.prisma` — Assessment (line 129), QuestionBank (line 188), Session (line 235) reference OrgUser without `onDelete` clause. Deleting an instructor orphans their created records.
 
-- **GET /api/auth/me missing try-catch**: `routes/auth.ts:70-86` — Async route with Prisma query has no error handling wrapper. If DB query fails, unhandled error bypasses global error handler and returns raw Node error instead of standard `{ success: false, error }` format.
+- **`requireRole` middleware defined but never used**: `lib/auth.ts:208-219` — Role-based access control is implemented but not applied to any route. Both "owner" and "admin" roles have identical access. If roles are meant to differ, this is a permission gap.
 
-- **Missing database indexes on foreign keys**: `prisma/schema.prisma` — `Assessment.createdById` (line 78) and `AssessmentResponse.studentId` (line 114) lack indexes despite being used in queries. Affects join performance and student-specific response lookups.
+- **`allowStudentReview` flag has no UI toggle**: `prisma/schema.prisma:120` — Field exists and is enforced in `routes/student-auth.ts:289`, but no frontend control lets instructors toggle it. Students may be blocked from review with no way for admins to enable it through the UI.
 
-- **Survey data lost on page refresh**: `app/src/pages/admin/AssessmentCreate.tsx:45-46` — SurveyEditor auto-saves only to React state. No localStorage persistence, no `beforeunload` warning. Instructor loses all question work if they accidentally refresh or navigate away.
+- **Inconsistent pagination response format**: `routes/bug-reports.ts:172-181` puts `pagination` at top level (`{ success, data, pagination }`). All other paginated routes put pagination inside `data` (`routes/assessments.ts:401`, `routes/question-banks.ts:138-147`). Frontend hooks may not parse correctly.
 
-- **Accessibility: form error messages not linked to inputs**: `app/src/pages/public/CreateAccount.tsx:74-82`, `app/src/pages/Login.tsx:59-66`, `app/src/pages/student/StudentLogin.tsx:69-77` — Error `<p>` tags lack `id` and inputs lack `aria-describedby`. Screen readers don't announce which input has the error. WCAG 2.1 1.3.1 violation.
+- **Hardcoded brand color `#1b5fd0` in 35+ locations**: `app/src/components/AdminLayout.tsx:26,36,46,56,66`, `app/src/components/BugReportDialog.tsx:233`, `app/src/components/StatusBadge.tsx:7`, `app/src/components/ToggleSwitch.tsx`, plus 15+ page files — Rebranding requires global search-replace. Should be a CSS variable or Tailwind theme token.
 
-- **Accessibility: interactive table rows not keyboard navigable**: `app/src/pages/admin/AssessmentList.tsx:110-114`, `app/src/pages/admin/assessment-detail/ItemAnalysisTab.tsx:162-166` — Rows have `onClick` but no `tabIndex` or `onKeyDown`. Keyboard users cannot interact. WCAG 2.1 2.1.1 violation.
+- **Seed data creates only 1 org + 1 admin user**: `prisma/seed.ts:17-41` — No assessments, question banks, sessions, students, responses, or bug reports. Every feature page shows empty states. Major UI paths (assessment lifecycle, attendance tracking, item analysis, student review) are completely untestable without manual data creation.
 
-- **Accessibility: ToggleSwitch hidden from assistive technology**: `app/src/components/ToggleSwitch.tsx:12-25` — Checkbox uses `sr-only` class which hides from screen readers. No `aria-label` for state context. Screen reader users cannot determine toggle state.
+- **Duplicated `param()` helper in 6 route files**: `routes/assessments.ts:14-16`, `routes/question-banks.ts:11-13`, `routes/sessions.ts:10-12`, `routes/student-auth.ts:17-19`, `routes/public.ts:11-13`, `routes/public-attendance.ts:9-11` — Identical function copy-pasted. Should be a shared utility.
 
-- **Error states missing retry buttons**: `app/src/pages/admin/assessment-detail/QrCodeTab.tsx:67-76` and `app/src/pages/student/StudentDashboard.tsx:76-84` — Error alerts display message but have no retry/refetch action. User must manually refresh the entire page.
+- **Duplicated `formatZodErrors()` in 3 files (centralized version exists)**: `routes/assessments.ts:81-90`, `routes/question-banks.ts:63-72`, `routes/student-auth.ts:39-48` — Centralized version already exists at `lib/validate.ts:9-19` but isn't used by these routes.
 
 ## Medium (inconsistency or tech debt)
 
-- **normalizeAnswer() duplicated in 2 files**: `routes/student-auth.ts:38-43` and `lib/services/item-analysis.ts:47-50` — Identical logic for normalizing answers (handling arrays vs strings). Should be extracted to shared utility.
+- **Missing index: SessionAttendee.sessionId**: `prisma/schema.prisma:242-257` — Queried by sessionId alone in `routes/sessions.ts:181,252,282,309`. The composite unique `[sessionId, studentId]` doesn't optimize single-field lookups. Add `@@index([sessionId])`.
 
-- **param() helper duplicated in 3 route files**: `routes/assessments.ts:12-14`, `routes/public.ts:10-13`, `routes/student-auth.ts:15-18` — Same `Array.isArray(value) ? value[0] : value` pattern. Should be centralized.
+- **Missing index: AssessmentResponse.completedAt**: `prisma/schema.prisma:146-171` — Used for ORDER BY in `routes/assessments.ts:378,478`. Add `@@index([assessmentId, completedAt])` for paginated response queries.
 
-- **User role field is unconstrained string**: `prisma/schema.prisma:38` — `role String @default("admin")` allows any string value. Seed uses "owner" (seed.ts:39), default is "admin", but no enum validates values. Could lead to inconsistent role data.
+- **Inconsistent query validation pattern**: `routes/bug-reports.ts:140-186` uses `validateQuery` middleware. All other routes (`routes/assessments.ts:365-408`, `routes/question-banks.ts:122-154`, `routes/student-auth.ts:186-249`) do inline `schema.parse()` with manual ZodError catch. Should standardize on middleware.
 
-- **No migration history tracked**: `prisma/` — No `migrations/` directory exists. Using `prisma db push` instead of `prisma migrate`. Cannot review schema change history. Risk for production deployments.
+- **Inconsistent delete confirmation UX**: `app/src/pages/admin/QuestionBankDetail.tsx:164,257` uses native `window.confirm()`. `app/src/pages/admin/AssessmentDetail.tsx:420-439` and `app/src/pages/admin/SessionDetail.tsx:242-260` use styled `AlertDialog` component. User experience is jarring.
 
-- **Brand color #1b5fd0 hardcoded in 14+ locations**: Dashboard.tsx:78,85; AssessmentList.tsx:50,84; AssessmentCreate.tsx:265,283; AssessmentDetail.tsx:241; EditAssessmentDialog.tsx:67; ItemAnalysisTab.tsx:65; QrCodeTab.tsx:86; QrPresenter.tsx:49,94; StatusBadge.tsx:6; ToggleSwitch.tsx:22 — Should use Tailwind theme variable `bg-primary`.
+- **Inconsistent empty state patterns**: Some pages use `EmptyState` component (`app/src/pages/admin/AssessmentList.tsx:78-91`). Others use plain `Card/CardContent` (`app/src/pages/admin/BugReports.tsx:148-154`) or bare `<div>` (`app/src/pages/admin/assessment-detail/ResponsesTab.tsx:70-74`).
 
-- **publicLimiter rate limiter defined but never applied**: `middleware/rate-limiter.ts:20-30` — Configured for 30 req/min but not used in any `app.use()` call in `app.ts`. Either implement or remove.
+- **CheckOutSession has no forward navigation**: `app/src/pages/public/CheckOutSession.tsx:150-170` — After successful checkout, users land on a success screen with no next action or exit path.
 
-- **scorePercentage type chain undocumented**: `prisma/schema.prisma:122` (Decimal) → `lib/services/quiz-scoring.ts:50-51` (number) → `app/src/types/api.ts:38` (string) — Implicit Decimal→number→string conversion chain with no documentation.
+- **QuestionBankDetail error states lack navigation**: `app/src/pages/admin/QuestionBankDetail.tsx:301-303` renders `<div>Invalid bank ID</div>` with no back button. Line 330 renders `<div>No data</div>` similarly.
 
-- **Form fields not disabled during submission**: `app/src/pages/admin/AssessmentCreate.tsx:50-51,264` — Submit button disabled but input fields remain editable during async submission, creating potential race condition.
+- **Missing loading indicators on mutations**: `app/src/pages/admin/SessionDetail.tsx:65-79` — `handleUpdate()` mutates without showing loading state. Button text doesn't change during mutation.
 
-- **No unsaved changes warning on edit dialog**: `app/src/pages/admin/assessment-detail/EditAssessmentDialog.tsx:35-62` — Cancel/Escape discards form changes silently.
+- **Missing empty state for Item Analysis tab**: `app/src/pages/admin/assessment-detail/ItemAnalysisTab.tsx:148-214` — No explicit handling for `questions.length === 0`. Falls through silently.
 
-- **Assessment detail tab state not persisted to URL**: `app/src/pages/admin/AssessmentDetail.tsx:32` — Active tab stored in React state only. Refreshing page always resets to "overview" tab.
+- **Bug report GET endpoint uses `optionalAuth`**: `app.ts:130` — The GET endpoint at `routes/bug-reports.ts:140-186` is behind `optionalAuth` but should require full auth since it lists all org bug reports.
 
-- **Health endpoints use non-standard response format**: `routes/health.ts:26-142` — Returns `{ status, timestamp }` instead of standard `{ success: true, data }`. Inconsistent with all other API responses.
-
-- **Item analysis loads all responses into memory**: `routes/assessments.ts:387-423` — Fetches all responses then filters in JavaScript for latest-per-student. Works for typical class sizes but won't scale to 10K+ responses.
-
-- **Public URL generation may fail in subdomain architecture**: `app/src/pages/admin/assessment-detail/utils.ts:16` — Uses `window.location.origin` which returns subdomain origin. May generate incorrect public assessment URLs.
-
-- **Hardcoded form defaults not configurable**: `app/src/pages/admin/AssessmentCreate.tsx:37-44` — Passing score defaults to 70, time limit fallback to 60 (AssessmentDetail.tsx:122). Should be org-level settings.
+- **Duplicated entity finder functions**: `routes/assessments.ts:56-64` (`findAssessmentOrThrow`), `routes/question-banks.ts:40-48` (`findBankOrThrow`), `routes/sessions.ts:18-26` (`findSessionOrThrow`) — Identical patterns that could use a generic utility.
 
 ## Low (cleanup, nice-to-have)
 
-- **Logout endpoints missing auth middleware**: `routes/auth.ts:88-91` and `routes/student-auth.ts:227-230` — Cookie clearing is idempotent so low risk, but inconsistent with security pattern.
+- **Unused schema field: `QuestionBankItem.tags`**: `prisma/schema.prisma:198` — Defined as `String[] @default([])` but never populated or queried by any route.
 
-- **verifyToken() exported but only used internally**: `lib/auth.ts:88-94` — Only called by requireAuth and requireStudentAuth. Should be module-private.
+- **Unused schema field: `SessionAttendee.notes`**: `prisma/schema.prisma:249` — Accepted in update validation (`routes/sessions.ts:240`) but never retrieved or displayed in UI.
 
-- **cloneJson() utility candidate**: `routes/public.ts:28-30` — Generic deep-clone function defined inline. Could be centralized for future reuse.
+- **Hardcoded pagination limits**: `app/src/pages/admin/AssessmentDetail.tsx:48` (10), `app/src/pages/admin/BugReports.tsx:82` (20), `app/src/pages/student/StudentDashboard.tsx:37` (10) — Should be centralized in a config.
 
-- **Empty state styling inconsistency**: `app/src/components/EmptyState.tsx` component used in some pages, but `app/src/pages/admin/assessment-detail/ResponsesTab.tsx:66` uses inline styled div instead.
+- **Hardcoded defaults**: Passing score 70% at `app/src/pages/admin/AssessmentCreate.tsx:62`, time limit default 60 min at `app/src/pages/admin/AssessmentDetail.tsx:168`, difficulty range 1-5 at `app/src/pages/admin/QuestionBankDetail.tsx:584-589`, QR polling interval 5000ms at `app/src/pages/admin/QrPresenter.tsx:21`.
 
-- **Pagination state not synced to URL**: `app/src/pages/student/StudentDashboard.tsx:36` and `app/src/pages/admin/AssessmentDetail.tsx:36` — Page number stored in React state, resets on refresh, not shareable.
+- **Hardcoded question choice count**: `app/src/pages/admin/QuestionBankDetail.tsx:140` — Always initializes 4 choices. Not configurable.
 
-- **Login page has no recovery path**: `app/src/pages/Login.tsx:47-89` — No "Forgot password?" link, no "Create account" link, no help/support link.
+- **Health check uses non-standard response format**: `routes/health.ts:26-33` — Returns `{ status, timestamp, version }` instead of `{ success, data }`. Intentional but inconsistent.
 
-- **No audit logging for assessment modifications**: No tracking of who modified or deleted assessments across the application.
+- **Inconsistent hook structure**: `app/src/hooks/useBugReports.ts` defines inline `BugReportsResponse` interface despite centralized types existing in `app/src/types/api.ts`.
 
-- **EmptyState title uses `<p>` instead of semantic heading**: `app/src/components/EmptyState.tsx:12-20` — Should use `<h2>` or `<h3>` for proper document outline.
-
-- **Student logout has no confirmation dialog**: `app/src/pages/student/StudentDashboard.tsx:43-46` — Immediate logout on click with no "Are you sure?" prompt.
-
-- **ForbiddenError class defined but never used**: `lib/errors.ts:53` — Error class for 403 responses exists but no code throws it.
+- **`student-auth.ts:289-299` bypasses error handler**: Returns `res.status(403).json(...)` directly instead of throwing `ForbiddenError` — Inconsistent with centralized error handling pattern.
 
 ## Seed Data Gaps
 
-| Record Type                   | Seeded? | UI Renders It?                     | Notes                                              |
-| ----------------------------- | ------- | ---------------------------------- | -------------------------------------------------- |
-| Organization                  | Yes (1) | Yes — Dashboard, tenant resolver   | slug: "demo"                                       |
-| OrgUser (admin)               | Yes (1) | Yes — Login, Dashboard             | role: "owner", email: admin@demo.org               |
-| OrgUser (other roles)         | No      | No role-based UI exists            | Only "owner" seeded; "admin" default never tested  |
-| Assessment (draft)            | No      | Empty list on AssessmentList.tsx   | Cannot test edit/publish workflow                  |
-| Assessment (active)           | No      | QR Code tab never renders          | Cannot test student-facing assessment flow         |
-| Assessment (closed)           | No      | Closed status badge never displays | Cannot test closed state                           |
-| Assessment (with questions)   | No      | Question display never renders     | Cannot test TakeAssessment, grading, randomization |
-| Student                       | No      | StudentLogin always fails          | No student credentials to test                     |
-| AssessmentResponse            | No      | ResponsesTab always empty          | Cannot test scoring, pass/fail, item analysis      |
-| AssessmentResponse (released) | No      | AssessmentReview inaccessible      | Cannot test student review with explanations       |
-| Question metadata             | No      | Explanation/pageNumber never shown | Cannot test educational metadata display           |
+| Record Type        | Seeded? | UI Renders It?   | Notes                                                      |
+| ------------------ | ------- | ---------------- | ---------------------------------------------------------- |
+| Organization       | Yes (1) | Yes — Dashboard  | `demo` org with slug and subdomain                         |
+| OrgUser (Admin)    | Yes (1) | Yes — Dashboard  | `admin@demo.org` / `password123` / role: `owner`           |
+| Assessment         | No      | Empty state only | Cannot test lifecycle: draft → active → closed             |
+| AssessmentResponse | No      | Empty state only | Cannot test responses tab, item analysis, or scoring       |
+| QuestionBank       | No      | Empty state only | Cannot test bank detail, question picker, CSV import       |
+| QuestionBankItem   | No      | N/A              | No banks to hold items                                     |
+| Session            | No      | Empty state only | Cannot test attendance tracking or QR check-in/check-out   |
+| SessionAttendee    | No      | N/A              | No sessions to attend                                      |
+| Student            | No      | N/A              | Cannot test student login, dashboard, or review flows      |
+| BugReport          | No      | Empty state only | Cannot test status filters, categories, or severity badges |
 
 ## Role Coverage Matrix
 
-| Feature/Page            | Admin (owner)                | Student                   | Public (unauthenticated) | Notes                                 |
-| ----------------------- | ---------------------------- | ------------------------- | ------------------------ | ------------------------------------- |
-| Login                   | Yes (auth.ts:24)             | Yes (student-auth.ts:180) | N/A                      | Both work                             |
-| Dashboard               | Yes (requireAuth)            | Yes (requireStudentAuth)  | N/A                      | Separate dashboards                   |
-| Assessment CRUD         | Yes — all ops                | No access                 | N/A                      | **No ownership check between admins** |
-| Assessment Responses    | Yes — sees all org responses | Own responses only        | N/A                      | Cross-admin data leak                 |
-| Item Analysis           | Yes — any org assessment     | No access                 | N/A                      | Cross-admin data leak                 |
-| Take Assessment         | N/A                          | N/A                       | Yes (public.ts:108)      | Only active assessments               |
-| Review Results          | N/A                          | Yes if resultsReleased    | N/A                      | Properly gated                        |
-| QR Code                 | Yes if active                | N/A                       | N/A                      | Correct                               |
-| Role-based restrictions | None enforced                | N/A                       | N/A                      | requireRole() exists but unused       |
+| Feature/Page                | Admin (owner)        | Admin (admin)              | Student                 | Anonymous     | Notes                                              |
+| --------------------------- | -------------------- | -------------------------- | ----------------------- | ------------- | -------------------------------------------------- |
+| Login                       | POST /api/auth/login | Same                       | POST /api/student/login | N/A           | Separate auth flows + tokens                       |
+| Dashboard                   | /dashboard           | Same (no role distinction) | /student                | N/A           | `requireRole` exists but unused                    |
+| Create Assessment           | /assessments/create  | Same                       | No access               | N/A           | No role-based restrictions                         |
+| Manage Assessment           | /assessments/:id     | Same                       | No access               | N/A           |                                                    |
+| Take Assessment             | N/A                  | N/A                        | N/A                     | /take/:hash   | Public via QR code                                 |
+| Review Assessment           | N/A                  | N/A                        | /student/review/:id     | N/A           | Only if `resultsReleased` AND `allowStudentReview` |
+| Question Banks              | /question-banks      | Same                       | No access               | N/A           |                                                    |
+| Sessions                    | /sessions            | Same                       | No access               | N/A           |                                                    |
+| Attend Session              | N/A                  | N/A                        | N/A                     | /attend/:hash | Public via QR code                                 |
+| Bug Reports (view)          | /bug-reports         | Same                       | No access               | N/A           | Behind `optionalAuth` — should be `requireAuth`    |
+| Bug Reports (submit)        | Via dialog           | Via dialog                 | Via dialog              | Via dialog    | All roles can submit                               |
+| Bug Reports (update status) | **NOT POSSIBLE**     | **NOT POSSIBLE**           | N/A                     | N/A           | No PUT/PATCH endpoint exists                       |
 
 ## Architecture Notes
 
 **Strengths:**
 
-- Multi-tenancy enforcement is excellent — 100% of Prisma queries include orgId scoping with no gaps found
-- API response format (`{ success, data/error }`) is consistently applied across all 22+ endpoints
-- Route handler pattern (try/catch/next) is consistent across all route files
-- Input validation via Zod schemas covers all POST/PUT endpoints
-- Security headers (Helmet CSP), CORS, rate limiting, and cookie options are properly configured
-- Sensitive data (correctAnswer, metadata) properly stripped before sending to students via `stripSensitiveData()`
-- TanStack Query hooks follow consistent patterns with proper cache invalidation
+- Multi-tenancy is well-implemented — every Prisma query includes `orgId` scoping with no violations found
+- Centralized error handling via `middleware/errorHandler.ts` with custom error classes (`NotFoundError`, `ValidationError`, `ForbiddenError`)
+- No N+1 query patterns detected — item analysis correctly processes in-memory
+- All defined backend routes are consumed by frontend — no dead endpoints
+- Student and admin auth are properly separated with distinct token types and cookie names
+- Cross-org data access is properly prevented
 
 **Systemic Issues:**
 
-- Authentication vs Authorization gap: Authentication (who are you) is solid; authorization (what can you do) is missing. `requireRole()` was designed but never wired in. `findAssessmentOrThrow()` enforces tenant isolation but not resource ownership.
-- Seed-to-feature coverage gap: The minimal seed (2 records) means 78% of the application cannot be exercised without manual setup. This hides bugs and makes onboarding new developers slow.
-- Frontend type safety gap: Types in `app/src/types/api.ts` are manually defined, not generated from backend. At least one critical mismatch exists (ReviewQuestion). Consider using a shared types package or code generation.
-- Hardcoded UI values: Brand color appears 14+ times as raw hex. Form defaults, thresholds, and fallback values are scattered across components instead of centralized config.
+- **No shared route utilities** — `param()`, `formatZodErrors()`, and `findXOrThrow()` patterns are duplicated across 6+ files instead of being centralized
+- **Validation pattern split** — `validateQuery` middleware exists but most routes use inline parsing. Should pick one approach.
+- **Brand color sprawl** — `#1b5fd0` hardcoded in 35+ places instead of being defined once in Tailwind config or CSS variables
+- **Minimal seed data** — Only org + admin user seeded. Every feature beyond login shows empty states, making it impossible to test or demo the application without manual data entry.
+- **Role system incomplete** — `requireRole` middleware exists at `lib/auth.ts:208-219` but is never applied. The `role` field on OrgUser is a plain `String` with no enum constraint. "owner" vs "admin" distinction has no functional impact.

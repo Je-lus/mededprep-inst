@@ -201,19 +201,3 @@ export async function requireStudentAuth(
   };
   next();
 }
-
-/**
- * Middleware: require admin role (owner or admin)
- */
-export function requireRole(...roles: string[]) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      res.status(403).json({
-        success: false,
-        error: { code: 'FORBIDDEN', message: 'Insufficient permissions' },
-      });
-      return;
-    }
-    next();
-  };
-}

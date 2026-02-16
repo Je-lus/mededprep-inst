@@ -1,8 +1,11 @@
+import type { Pagination } from '../types/api';
+
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
+  pagination?: Pagination;
   error?: {
     code: string;
     message: string;
@@ -26,6 +29,15 @@ export class ApiError extends Error {
 export function ensureSuccess<T>(res: ApiResponse<T>, fallback = 'Request failed'): T {
   if (!res.success) throw new ApiError(res.error || { code: 'UNKNOWN', message: fallback });
   return res.data!;
+}
+
+/** Throw ApiError if response is not successful; otherwise return data + pagination. */
+export function ensurePaginatedSuccess<T>(
+  res: ApiResponse<T>,
+  fallback = 'Request failed',
+): { data: T; pagination: Pagination } {
+  if (!res.success) throw new ApiError(res.error || { code: 'UNKNOWN', message: fallback });
+  return { data: res.data!, pagination: res.pagination! };
 }
 
 /** Extract field-level errors from an error (returns empty object if none). */

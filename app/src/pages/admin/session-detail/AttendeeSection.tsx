@@ -142,6 +142,7 @@ export default function AttendeeSection({ session }: AttendeeSectionProps) {
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 h-7 text-xs"
+                        disabled={checkInAttendee.isPending}
                         onClick={() =>
                           checkInAttendee.mutate(
                             { sessionId: session.id, attendeeId: a.id },
@@ -151,7 +152,7 @@ export default function AttendeeSection({ session }: AttendeeSectionProps) {
                           )
                         }
                       >
-                        Check In
+                        {checkInAttendee.isPending ? 'Checking in...' : 'Check In'}
                       </Button>
                     )}
                     {a.status === 'checked_in' && !a.checkedOutAt && (
@@ -159,6 +160,7 @@ export default function AttendeeSection({ session }: AttendeeSectionProps) {
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs"
+                        disabled={checkOutAttendee.isPending}
                         onClick={() =>
                           checkOutAttendee.mutate(
                             { sessionId: session.id, attendeeId: a.id },
@@ -168,7 +170,7 @@ export default function AttendeeSection({ session }: AttendeeSectionProps) {
                           )
                         }
                       >
-                        Check Out
+                        {checkOutAttendee.isPending ? 'Checking out...' : 'Check Out'}
                       </Button>
                     )}
                   </TableCell>

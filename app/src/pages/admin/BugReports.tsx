@@ -6,6 +6,7 @@ import type { BugReport } from '@/types/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import EmptyState from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -85,15 +86,8 @@ export default function BugReports() {
   const { data, isLoading, isError, error } = useBugReports(page, limit, status);
   const updateBugReport = useUpdateBugReport();
 
-  const reports = data?.data.reports || [];
-  const pagination = data?.data
-    ? {
-        page: data.data.page,
-        limit: data.data.limit,
-        total: data.data.total,
-        totalPages: data.data.totalPages,
-      }
-    : undefined;
+  const reports = data?.data || [];
+  const pagination = data?.pagination;
 
   const handleStatusChange = async (
     reportId: string,
@@ -167,11 +161,10 @@ export default function BugReports() {
         )}
 
         {!isLoading && !isError && reports.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No bug reports found.</p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="No bug reports found"
+            description="Bug reports, feedback, and feature requests from users will appear here."
+          />
         )}
 
         {!isLoading && !isError && reports.length > 0 && (

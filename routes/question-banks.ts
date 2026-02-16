@@ -120,15 +120,11 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
       prisma.questionBankItem.count({ where: { bankId: bank.id } }),
     ]);
 
+    const totalPages = Math.ceil(totalItems / limit);
     res.json({
       success: true,
-      data: {
-        ...bank,
-        items,
-        totalItems,
-        page,
-        limit,
-      },
+      data: { ...bank, items },
+      pagination: { page, limit, total: totalItems, totalPages },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -269,24 +265,27 @@ router.post(
 );
 
 // PATCH /:id/items/:itemId/increment-usage - Increment usage count
-router.patch('/:id/items/:itemId/increment-usage', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const bankId = param(req.params.id);
-    const itemId = param(req.params.itemId);
-    await findItemOrThrow(bankId, itemId, req.orgId);
+router.patch(
+  '/:id/items/:itemId/increment-usage',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const bankId = param(req.params.id);
+      const itemId = param(req.params.itemId);
+      await findItemOrThrow(bankId, itemId, req.orgId);
 
-    await prisma.questionBankItem.update({
-      where: { id: itemId },
-      data: {
-        usageCount: { increment: 1 },
-        lastUsedAt: new Date(),
-      },
-    });
+      await prisma.questionBankItem.update({
+        where: { id: itemId },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsedAt: new Date(),
+        },
+      });
 
-    res.json({ success: true, data: { incremented: true } });
-  } catch (error) {
-    next(error);
-  }
-});
+      res.json({ success: true, data: { incremented: true } });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

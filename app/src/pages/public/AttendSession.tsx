@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AttendeeRegistrationResult } from '../../types/api';
 
 export default function AttendSession() {
   const { hash } = useParams<{ hash: string }>();
@@ -27,14 +26,13 @@ export default function AttendSession() {
   const register = useRegisterAttendee(hash!);
   const lookupStudent = useLookupStudent(hash!);
 
-  const [step, setStep] = useState<'info' | 'lookup' | 'register' | 'done'>('info');
+  const [step, setStep] = useState<'info' | 'lookup' | 'confirm' | 'register' | 'done'>('info');
   const [lookupEmail, setLookupEmail] = useState('');
   const [form, setForm] = useState({
     email: '',
     firstName: '',
     lastName: '',
   });
-  const [, setResult] = useState<AttendeeRegistrationResult | null>(null);
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -49,12 +47,19 @@ export default function AttendSession() {
             firstName: data.student.firstName,
             lastName: data.student.lastName,
           });
-          toast.success(`Welcome back, ${data.student.firstName}!`);
+          setStep('confirm');
         } else {
           setForm((f) => ({ ...f, email: lookupEmail }));
+          setStep('register');
         }
-        setStep('register');
       },
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
+  const handleCheckIn = () => {
+    register.mutate(form, {
+      onSuccess: () => setStep('done'),
       onError: (err) => toast.error(err.message),
     });
   };
@@ -62,10 +67,7 @@ export default function AttendSession() {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     register.mutate(form, {
-      onSuccess: (data) => {
-        setResult(data);
-        setStep('done');
-      },
+      onSuccess: () => setStep('done'),
       onError: (err) => toast.error(err.message),
     });
   };
@@ -147,10 +149,10 @@ export default function AttendSession() {
           ) : (
             <div className="space-y-3">
               <Button size="lg" className="w-full" onClick={() => setStep('lookup')}>
-                Register &amp; Check In
+                Check In
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Attended a session before? We'll look you up by email to speed things up.
+                Enter your email to check in. New students will be registered automatically.
               </p>
             </div>
           ))}
@@ -159,10 +161,8 @@ export default function AttendSession() {
           <Card>
             <form onSubmit={handleLookup}>
               <CardHeader>
-                <CardTitle className="text-lg">Quick Check-In</CardTitle>
-                <CardDescription>
-                  Enter your email to see if we already have your info on file.
-                </CardDescription>
+                <CardTitle className="text-lg">Check In</CardTitle>
+                <CardDescription>Enter your email to get started.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1">
@@ -190,16 +190,44 @@ export default function AttendSession() {
           </Card>
         )}
 
+        {step === 'confirm' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Welcome back, {form.firstName}!</CardTitle>
+              <CardDescription>Confirm this is you to check in.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted rounded-lg p-4 space-y-1">
+                <p className="font-medium">
+                  {form.firstName} {form.lastName}
+                </p>
+                <p className="text-sm text-muted-foreground">{form.email}</p>
+              </div>
+            </CardContent>
+            <CardFooter className="space-x-3">
+              <Button onClick={handleCheckIn} disabled={register.isPending}>
+                {register.isPending ? 'Checking in...' : 'Check In'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setForm((f) => ({ ...f, email: lookupEmail }));
+                  setStep('register');
+                }}
+              >
+                Not me
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+
         {step === 'register' && (
           <Card>
             <form onSubmit={handleRegister}>
               <CardHeader>
-                <CardTitle className="text-lg">Registration</CardTitle>
-                {form.firstName && (
-                  <CardDescription>
-                    Welcome back, {form.firstName}! Confirm your details below.
-                  </CardDescription>
-                )}
+                <CardTitle className="text-lg">New Student Registration</CardTitle>
+                <CardDescription>Fill in your details to check in.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -237,7 +265,7 @@ export default function AttendSession() {
               </CardContent>
               <CardFooter className="space-x-3">
                 <Button type="submit" disabled={register.isPending}>
-                  {register.isPending ? 'Registering...' : 'Submit & Check In'}
+                  {register.isPending ? 'Registering...' : 'Register & Check In'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setStep('lookup')}>
                   Back
@@ -252,8 +280,11 @@ export default function AttendSession() {
             <CardContent className="p-8 text-center">
               <div className="text-green-600 text-4xl mb-4">&#10003;</div>
               <h2 className="text-xl font-bold mb-2">You're Checked In!</h2>
-              <p className="text-gray-500 mb-4">
-                You have been registered and checked in for this session.
+              <p className="text-gray-600 mb-1">
+                {form.firstName} {form.lastName}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Your attendance has been recorded for this session.
               </p>
             </CardContent>
           </Card>

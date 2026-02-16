@@ -208,21 +208,18 @@ router.get(
         prisma.assessmentResponse.count({ where }),
       ]);
 
+      const totalPages = Math.ceil(total / limit);
       return res.json({
         success: true,
-        data: {
-          responses: responses.map((response) => ({
-            id: response.id,
-            assessmentTitle: response.assessment.title,
-            scorePercentage: response.scorePercentage,
-            passed: response.passed,
-            completedAt: response.completedAt,
-            resultsReleased: response.assessment.resultsReleased,
-          })),
-          total,
-          page,
-          limit,
-        },
+        data: responses.map((response) => ({
+          id: response.id,
+          assessmentTitle: response.assessment.title,
+          scorePercentage: response.scorePercentage,
+          passed: response.passed,
+          completedAt: response.completedAt,
+          resultsReleased: response.assessment.resultsReleased,
+        })),
+        pagination: { page, limit, total, totalPages },
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

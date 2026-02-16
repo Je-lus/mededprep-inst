@@ -54,8 +54,8 @@ export default function SessionList() {
       {
         name: form.name,
         description: form.description || undefined,
-        startDateTime: form.startDateTime || undefined,
-        endDateTime: form.endDateTime || undefined,
+        startDateTime: form.startDateTime ? new Date(form.startDateTime).toISOString() : undefined,
+        endDateTime: form.endDateTime ? new Date(form.endDateTime).toISOString() : undefined,
       },
       {
         onSuccess: (session) => {

@@ -161,6 +161,9 @@ export default function CheckOutSession() {
               <p className="text-sm text-muted-foreground mt-4">
                 Thank you for attending! Your attendance has been recorded.
               </p>
+              <Button variant="outline" className="mt-4" onClick={() => window.close()}>
+                Close
+              </Button>
             </CardContent>
           </Card>
         )}

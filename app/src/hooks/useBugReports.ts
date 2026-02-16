@@ -1,16 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ensureSuccess } from '../lib/api';
+import { api, ensureSuccess, ensurePaginatedSuccess } from '../lib/api';
 import type { BugReport, BugReportSubmission } from '../types/api';
-
-interface BugReportsResponse {
-  data: {
-    reports: BugReport[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
 
 /**
  * Submit a bug report (no auth required)
@@ -44,7 +34,7 @@ export function useBugReports(
   return useQuery({
     queryKey: ['bug-reports', page, limit, status],
     queryFn: async () =>
-      ensureSuccess(await api.get<BugReportsResponse>(`/api/bug-reports?${params.toString()}`)),
+      ensurePaginatedSuccess(await api.get<BugReport[]>(`/api/bug-reports?${params.toString()}`)),
   });
 }
 
