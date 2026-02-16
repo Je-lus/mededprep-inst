@@ -23,6 +23,35 @@ model Organization {
   users       OrgUser[]
   students    Student[]
   assessments Assessment[]
+  bugReports  BugReport[]
+}
+
+model BugReport {
+  id               String         @id @default(uuid())
+  orgId            String
+  reporterType     String
+  reporterId       String?
+  reporterEmail    String?
+  reporterName     String?
+  category         String
+  severity         String         @default("medium")
+  description      String
+  stepsToReproduce String?
+  url              String?
+  userAgent        String?
+  viewport         String?
+  errorMessage     String?
+  errorStack       String?
+  screenshotUrl    String?
+  status           String         @default("open")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -83,6 +112,7 @@ model Assessment {
   publicHash         String           @unique @default(uuid())
   resultsReleased    Boolean          @default(false)
   showScoreFeedback  Boolean          @default(true)
+  allowStudentReview Boolean          @default(false)
   passingScore       Int?             @default(70)
   timeLimitMinutes   Int?
   randomizeQuestions Boolean          @default(true)
