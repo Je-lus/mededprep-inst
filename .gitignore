@@ -31,6 +31,10 @@ e2e/.auth/
 *.tmp
 *.temp
 
+# Keys and certificates
+*.pem
+*.key
+
 # Database
 prisma/*.db
 
