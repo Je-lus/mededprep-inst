@@ -25,6 +25,7 @@ const createAssessmentSchema = z.object({
   randomizeQuestions: z.boolean().optional(),
   randomizeChoices: z.boolean().optional(),
   showScoreFeedback: z.boolean().optional(),
+  allowStudentReview: z.boolean().optional(),
 });
 
 const updateAssessmentSchema = createAssessmentSchema.partial();
@@ -133,6 +134,7 @@ router.post(
         randomizeQuestions,
         randomizeChoices,
         showScoreFeedback,
+        allowStudentReview,
       } = req.body;
 
       const assessment = await prisma.assessment.create({
@@ -149,6 +151,7 @@ router.post(
           randomizeQuestions,
           randomizeChoices,
           showScoreFeedback,
+          allowStudentReview,
         },
       });
 
@@ -262,6 +265,29 @@ router.post(
       const updated = await prisma.assessment.update({
         where: { id: assessment.id },
         data: { status: 'closed' },
+      });
+
+      res.json({ success: true, data: updated });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.post(
+  '/:id/reactivate',
+  validate(emptyBodySchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
+
+      if (assessment.status !== 'closed') {
+        throw new ValidationError('Only closed assessments can be reactivated');
+      }
+
+      const updated = await prisma.assessment.update({
+        where: { id: assessment.id },
+        data: { status: 'active' },
       });
 
       res.json({ success: true, data: updated });

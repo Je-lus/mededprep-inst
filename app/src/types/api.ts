@@ -7,6 +7,7 @@ export interface Assessment {
   publicHash: string;
   resultsReleased: boolean;
   showScoreFeedback: boolean;
+  allowStudentReview?: boolean;
   passingScore?: number;
   timeLimitMinutes?: number;
   randomizeQuestions: boolean;
