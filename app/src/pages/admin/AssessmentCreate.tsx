@@ -20,6 +20,7 @@ type FormState = {
   timeLimitMinutes: string;
   randomizeQuestions: boolean;
   randomizeChoices: boolean;
+  allowStudentReview: boolean;
 };
 
 function toOptionalNumber(value: string) {
@@ -41,6 +42,7 @@ export default function AssessmentCreate() {
     timeLimitMinutes: '',
     randomizeQuestions: true,
     randomizeChoices: true,
+    allowStudentReview: false,
   });
   const [activeTab, setActiveTab] = useState<'builder' | 'csv'>('builder');
   const [surveyJson, setSurveyJson] = useState<string | null>(null);
@@ -58,6 +60,7 @@ export default function AssessmentCreate() {
     timeLimitMinutes: toOptionalNumber(form.timeLimitMinutes),
     randomizeQuestions: form.randomizeQuestions,
     randomizeChoices: form.randomizeChoices,
+    allowStudentReview: form.allowStudentReview,
   });
 
   const handleCreateAssessment = async () => {
@@ -199,6 +202,18 @@ export default function AssessmentCreate() {
                 className="h-4 w-4 rounded border"
               />
               Randomize Choices
+            </label>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.allowStudentReview}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, allowStudentReview: event.target.checked }))
+                }
+                className="h-4 w-4 rounded border"
+              />
+              Allow Student Review
             </label>
           </CardContent>
         </Card>

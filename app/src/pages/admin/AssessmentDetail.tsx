@@ -10,10 +10,21 @@ import {
   useDeleteAssessment,
   useItemAnalysis,
   usePublishAssessment,
+  useReactivateAssessment,
   useReleaseResults,
   useUpdateAssessment,
 } from '@/hooks/useAssessments';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,6 +48,7 @@ export default function AssessmentDetail() {
   const responsesLimit = 10;
   const [timeLimitEnabled, setTimeLimitEnabled] = useState(false);
   const [timeLimitInput, setTimeLimitInput] = useState('');
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
 
   const assessmentQuery = useAssessment(id);
   const responsesQuery = useAssessmentResponses(id, responsesPage, responsesLimit);
@@ -50,6 +62,7 @@ export default function AssessmentDetail() {
 
   const publishAssessment = usePublishAssessment();
   const closeAssessment = useCloseAssessment();
+  const reactivateAssessment = useReactivateAssessment();
   const deleteAssessment = useDeleteAssessment();
   const releaseResults = useReleaseResults();
   const updateAssessment = useUpdateAssessment();
@@ -81,8 +94,18 @@ export default function AssessmentDetail() {
     try {
       await closeAssessment.mutateAsync(id);
       toast.success('Assessment closed');
+      setIsCloseDialogOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to close');
+    }
+  };
+
+  const handleReactivate = async () => {
+    try {
+      await reactivateAssessment.mutateAsync(id);
+      toast.success('Assessment reactivated');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to reactivate');
     }
   };
 
@@ -112,6 +135,15 @@ export default function AssessmentDetail() {
       toast.success(showScoreFeedback ? 'Score feedback enabled' : 'Score feedback hidden');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to update score feedback setting');
+    }
+  };
+
+  const handleStudentReviewToggle = async (allowStudentReview: boolean) => {
+    try {
+      await updateAssessment.mutateAsync({ id, allowStudentReview });
+      toast.success(allowStudentReview ? 'Student review enabled' : 'Student review disabled');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update student review setting');
     }
   };
 
@@ -257,14 +289,24 @@ export default function AssessmentDetail() {
                   </Link>
                 </Button>
                 <Button
-                  variant="secondary"
-                  onClick={handleClose}
+                  variant="destructive"
+                  onClick={() => setIsCloseDialogOpen(true)}
                   disabled={closeAssessment.isPending}
                 >
-                  {closeAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Close
+                  Close Assessment
                 </Button>
               </>
+            )}
+
+            {assessment.status === 'closed' && (
+              <Button
+                onClick={handleReactivate}
+                disabled={reactivateAssessment.isPending}
+                className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+              >
+                {reactivateAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Reactivate
+              </Button>
             )}
 
             {responsesQuery.isLoading && <Skeleton className="h-9 w-36" />}
@@ -273,6 +315,12 @@ export default function AssessmentDetail() {
               checked={assessment.showScoreFeedback}
               disabled={updateAssessment.isPending}
               onChange={handleScoreFeedbackToggle}
+            />
+            <ToggleSwitch
+              label="Allow Student Review"
+              checked={assessment.allowStudentReview ?? false}
+              disabled={updateAssessment.isPending}
+              onChange={handleStudentReviewToggle}
             />
             {hasResponses && (
               <ToggleSwitch
@@ -347,6 +395,26 @@ export default function AssessmentDetail() {
             </TabsContent>
           )}
         </Tabs>
+
+      <AlertDialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close Assessment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Students will no longer be able to submit responses. You can reactivate it later if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClose}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Close Assessment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <EditAssessmentDialog
         open={isEditOpen}

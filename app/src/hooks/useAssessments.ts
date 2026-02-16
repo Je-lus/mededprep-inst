@@ -27,7 +27,7 @@ export function useAssessment(id: string) {
 export function useCreateAssessment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
+    mutationFn: async (data: { title: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number; randomizeQuestions?: boolean; randomizeChoices?: boolean; allowStudentReview?: boolean }) =>
       ensureSuccess(await api.post<Assessment>('/api/assessments', data)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assessments'] }),
   });
@@ -36,7 +36,7 @@ export function useCreateAssessment() {
 export function useUpdateAssessment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number | null; resultsReleased?: boolean; showScoreFeedback?: boolean; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number | null; resultsReleased?: boolean; showScoreFeedback?: boolean; allowStudentReview?: boolean; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
       ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}`, data)),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assessments'] });
@@ -71,6 +71,18 @@ export function useCloseAssessment() {
   return useMutation({
     mutationFn: async (id: string) =>
       ensureSuccess(await api.post<Assessment>(`/api/assessments/${id}/close`)),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['assessments'] });
+      qc.invalidateQueries({ queryKey: ['assessments', id] });
+    },
+  });
+}
+
+export function useReactivateAssessment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      ensureSuccess(await api.post<Assessment>(`/api/assessments/${id}/reactivate`)),
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ['assessments'] });
       qc.invalidateQueries({ queryKey: ['assessments', id] });
