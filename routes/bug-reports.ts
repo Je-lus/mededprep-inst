@@ -8,7 +8,7 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { requireAuth } from '../lib/auth.js';
+import { requireAuth, requireRole } from '../lib/auth.js';
 import { validate, validateQuery, z } from '../lib/validate.js';
 import { uploadImage, isImageKitConfigured } from '../lib/imagekit.js';
 import { NotFoundError } from '../lib/errors.js';
@@ -38,6 +38,8 @@ const updateBugReportSchema = z.object({
   status: z.enum(['pending', 'acknowledged', 'resolved', 'closed']),
 });
 
+type UpdateBugReportPayload = z.infer<typeof updateBugReportSchema>;
+
 /**
  * POST /api/bug-reports - Submit bug report
  * No auth required, but identity detected via optionalAuth middleware
@@ -66,13 +68,12 @@ router.post(
         try {
           // Decode base64 screenshot (strip data URL prefix if present)
           const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, '');
-          const buffer = Buffer.from(base64Data, 'base64');
 
           // Upload to ImageKit
           const timestamp = Date.now();
           const fileName = `screenshot-${timestamp}`;
           const folder = `/bug-reports/${req.orgId}`;
-          const result = await uploadImage(buffer, fileName, folder);
+          const result = await uploadImage(base64Data, fileName, folder);
 
           if (result) {
             screenshotUrl = result.url;
@@ -146,6 +147,7 @@ router.post(
 router.get(
   '/',
   requireAuth,
+  requireRole('owner'),
   validateQuery(listBugReportsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -197,11 +199,12 @@ router.get(
 router.patch(
   '/:id',
   requireAuth,
+  requireRole('owner'),
   validate(updateBugReportSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
-      const { status } = req.body;
+      const { id } = req.params as { id: string };
+      const { status } = req.body as UpdateBugReportPayload;
 
       // Find report by id AND orgId (multi-tenancy)
       const report = await prisma.bugReport.findFirst({

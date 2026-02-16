@@ -147,6 +147,33 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 /**
+ * Middleware factory: require specific admin roles after authentication
+ */
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const userRole = req.user?.role;
+
+    if (!userRole) {
+      res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'No user available for role check' },
+      });
+      return;
+    }
+
+    if (!roles.includes(userRole)) {
+      res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Insufficient permissions' },
+      });
+      return;
+    }
+
+    next();
+  };
+}
+
+/**
  * Middleware: require authenticated student scoped to current org
  */
 export async function requireStudentAuth(
