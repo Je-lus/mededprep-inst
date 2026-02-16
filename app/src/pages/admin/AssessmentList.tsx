@@ -38,113 +38,111 @@ export default function AssessmentList() {
   const { data, isLoading, isError, error } = useAssessments();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold">Assessments</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage draft, active, and closed assessments.
-            </p>
-          </div>
-          <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
-            <Link to="/assessments/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Assessment
-            </Link>
-          </Button>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold">Assessments</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage draft, active, and closed assessments.
+          </p>
         </div>
+        <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+          <Link to="/assessments/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Assessment
+          </Link>
+        </Button>
+      </div>
 
-        {isLoading && (
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-56" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        )}
+      {isLoading && (
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-56" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      )}
 
-        {isError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Unable to load assessments</AlertTitle>
-            <AlertDescription>{error instanceof Error ? error.message : 'Try again.'}</AlertDescription>
-          </Alert>
-        )}
+      {isError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Unable to load assessments</AlertTitle>
+          <AlertDescription>{error instanceof Error ? error.message : 'Try again.'}</AlertDescription>
+        </Alert>
+      )}
 
-        {!isLoading && !isError && data && data.length === 0 && (
-          <EmptyState
-            title="No assessments yet"
-            description="Create your first assessment to begin collecting responses."
-            action={
-              <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
-                <Link to="/assessments/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Assessment
-                </Link>
-              </Button>
-            }
-          />
-        )}
+      {!isLoading && !isError && data && data.length === 0 && (
+        <EmptyState
+          title="No assessments yet"
+          description="Create your first assessment to begin collecting responses."
+          action={
+            <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+              <Link to="/assessments/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Assessment
+              </Link>
+            </Button>
+          }
+        />
+      )}
 
-        {!isLoading && !isError && data && data.length > 0 && (
-          <Card>
-            <CardContent className="pt-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[120px] text-right">Questions</TableHead>
-                    <TableHead className="w-[120px] text-right">Responses</TableHead>
-                    <TableHead className="w-[140px]">Created</TableHead>
-                    <TableHead className="w-[110px] text-right">Actions</TableHead>
+      {!isLoading && !isError && data && data.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[120px] text-right">Questions</TableHead>
+                  <TableHead className="w-[120px] text-right">Responses</TableHead>
+                  <TableHead className="w-[140px]">Created</TableHead>
+                  <TableHead className="w-[110px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((assessment) => (
+                  <TableRow
+                    key={assessment.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/assessments/${assessment.id}`)}
+                  >
+                    <TableCell>
+                      <p className="font-medium">{assessment.title}</p>
+                      {assessment.description && (
+                        <p className="line-clamp-1 text-xs text-muted-foreground">
+                          {assessment.description}
+                        </p>
+                      )}
+                    </TableCell>
+                    <TableCell><StatusBadge status={assessment.status} /></TableCell>
+                    <TableCell className="text-right">{getQuestionCount(assessment)}</TableCell>
+                    <TableCell className="text-right">{assessment._count?.responses ?? 0}</TableCell>
+                    <TableCell>{formatDate(assessment.createdAt)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/assessments/${assessment.id}`);
+                        }}
+                      >
+                        Open
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((assessment) => (
-                    <TableRow
-                      key={assessment.id}
-                      className="cursor-pointer"
-                      onClick={() => navigate(`/assessments/${assessment.id}`)}
-                    >
-                      <TableCell>
-                        <p className="font-medium">{assessment.title}</p>
-                        {assessment.description && (
-                          <p className="line-clamp-1 text-xs text-muted-foreground">
-                            {assessment.description}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell><StatusBadge status={assessment.status} /></TableCell>
-                      <TableCell className="text-right">{getQuestionCount(assessment)}</TableCell>
-                      <TableCell className="text-right">{assessment._count?.responses ?? 0}</TableCell>
-                      <TableCell>{formatDate(assessment.createdAt)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            navigate(`/assessments/${assessment.id}`);
-                          }}
-                        >
-                          Open
-                          <ArrowRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-      </main>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
