@@ -12,7 +12,11 @@ import QuestionBankList from './pages/admin/QuestionBankList';
 import QuestionBankCreate from './pages/admin/QuestionBankCreate';
 import QuestionBankDetail from './pages/admin/QuestionBankDetail';
 import BugReports from './pages/admin/BugReports';
+import SessionList from './pages/admin/SessionList';
+import SessionDetail from './pages/admin/SessionDetail';
 import TakeAssessment from './pages/public/TakeAssessment';
+import AttendSession from './pages/public/AttendSession';
+import CheckOutSession from './pages/public/CheckOutSession';
 import CreateAccount from './pages/public/CreateAccount';
 import StudentLogin from './pages/student/StudentLogin';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -52,11 +56,15 @@ export default function App() {
           <Route path="question-banks" element={<QuestionBankList />} />
           <Route path="question-banks/new" element={<QuestionBankCreate />} />
           <Route path="question-banks/:id" element={<QuestionBankDetail />} />
+          <Route path="sessions" element={<SessionList />} />
+          <Route path="sessions/:id" element={<SessionDetail />} />
           <Route path="bug-reports" element={<BugReports />} />
         </Route>
 
         {/* Public routes (no auth) */}
         <Route path="/take/:hash" element={<TakeAssessment />} />
+        <Route path="/attend/:hash" element={<AttendSession />} />
+        <Route path="/attend/:hash/checkout" element={<CheckOutSession />} />
         <Route path="/create-account" element={<CreateAccount />} />
 
         {/* Student routes */}

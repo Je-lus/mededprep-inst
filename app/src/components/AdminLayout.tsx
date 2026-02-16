@@ -50,6 +50,16 @@ export default function AdminLayout() {
             Question Banks
           </NavLink>
           <NavLink
+            to="/sessions"
+            className={({ isActive }) =>
+              isActive
+                ? 'py-3 border-b-2 border-[#1b5fd0] text-[#1b5fd0] font-medium'
+                : 'py-3 text-muted-foreground hover:text-foreground'
+            }
+          >
+            Attendance
+          </NavLink>
+          <NavLink
             to="/bug-reports"
             className={({ isActive }) =>
               isActive
