@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useBugReports } from '@/hooks/useBugReports';
+import { toast } from 'sonner';
+import { useBugReports, useUpdateBugReport } from '@/hooks/useBugReports';
 import type { BugReport } from '@/types/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -82,9 +83,29 @@ export default function BugReports() {
   const limit = 20;
 
   const { data, isLoading, isError, error } = useBugReports(page, limit, status);
+  const updateBugReport = useUpdateBugReport();
 
-  const reports = data?.data || [];
-  const pagination = data?.pagination;
+  const reports = data?.data.reports || [];
+  const pagination = data?.data
+    ? {
+        page: data.data.page,
+        limit: data.data.limit,
+        total: data.data.total,
+        totalPages: data.data.totalPages,
+      }
+    : undefined;
+
+  const handleStatusChange = async (
+    reportId: string,
+    newStatus: 'pending' | 'acknowledged' | 'resolved' | 'closed',
+  ) => {
+    try {
+      await updateBugReport.mutateAsync({ id: reportId, status: newStatus });
+      toast.success('Bug report status updated');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update status');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -194,9 +215,25 @@ export default function BugReports() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {report.status}
-                        </Badge>
+                        <Select
+                          value={report.status}
+                          onValueChange={(value) =>
+                            handleStatusChange(
+                              report.id,
+                              value as 'pending' | 'acknowledged' | 'resolved' | 'closed',
+                            )
+                          }
+                        >
+                          <SelectTrigger className="w-[140px] capitalize">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-sm">{formatDate(report.createdAt)}</TableCell>
                     </TableRow>
