@@ -15,7 +15,8 @@ function param(value: string | string[]): string {
 const router = Router();
 
 const startAssessmentSchema = z.object({
-  studentName: z.string().trim().min(1),
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
   studentEmail: z.string().email(),
 });
 
@@ -43,22 +44,6 @@ function getGradableElements(surveyJson: SurveyJson): SurveyElement[] {
   return elements;
 }
 
-function parseStudentName(studentName: string): { firstName: string; lastName: string } {
-  const parts = studentName.trim().split(/\s+/).filter(Boolean);
-
-  if (parts.length === 0) {
-    return { firstName: 'Student', lastName: '' };
-  }
-
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: '' };
-  }
-
-  return {
-    firstName: parts[0],
-    lastName: parts.slice(1).join(' '),
-  };
-}
 
 function applyTimerConfig(surveyJson: SurveyJson, timeLimitMinutes: number | null): SurveyJson {
   if (timeLimitMinutes) {
@@ -148,8 +133,10 @@ router.post(
   validate(startAssessmentSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const studentName = req.body.studentName.trim();
+      const firstName = req.body.firstName.trim();
+      const lastName = req.body.lastName.trim();
       const studentEmail = req.body.studentEmail.toLowerCase();
+      const studentName = `${firstName} ${lastName}`;
 
       const assessment = await prisma.assessment.findFirst({
         where: {
@@ -211,7 +198,6 @@ router.post(
         },
       });
 
-      const { firstName, lastName } = parseStudentName(studentName);
       const student = await prisma.student.upsert({
         where: { orgId_email: { orgId: req.orgId, email: studentEmail } },
         create: {

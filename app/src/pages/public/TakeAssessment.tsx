@@ -50,7 +50,8 @@ export default function TakeAssessment() {
   const safeHash = hash ?? '';
 
   const [step, setStep] = useState<FlowStep>('info');
-  const [studentName, setStudentName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [responseId, setResponseId] = useState('');
   const [surveyJson, setSurveyJson] = useState<SurveyJson | null>(null);
@@ -116,14 +117,15 @@ export default function TakeAssessment() {
   const handleStart = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!studentName.trim() || !studentEmail.trim()) {
-      toast.error('Please provide your name and email to continue');
+    if (!firstName.trim() || !lastName.trim() || !studentEmail.trim()) {
+      toast.error('Please provide your first name, last name, and email to continue');
       return;
     }
 
     try {
       const result = await startAssessment.mutateAsync({
-        studentName: studentName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         studentEmail: studentEmail.trim(),
       });
 
@@ -236,11 +238,15 @@ export default function TakeAssessment() {
 
         {step === 'info' && (
           <StudentInfoStep
+            title={assessment.title}
+            description={assessment.description}
             questionCount={assessment.questionCount}
             timeLimitMinutes={assessment.timeLimitMinutes}
-            studentName={studentName}
+            firstName={firstName}
+            lastName={lastName}
             studentEmail={studentEmail}
-            onNameChange={setStudentName}
+            onFirstNameChange={setFirstName}
+            onLastNameChange={setLastName}
             onEmailChange={setStudentEmail}
             onSubmit={handleStart}
             isPending={startAssessment.isPending}
@@ -311,7 +317,8 @@ export default function TakeAssessment() {
         {step === 'results' && submitResult && (
           <AssessmentResults
             result={submitResult}
-            studentName={studentName}
+            firstName={firstName}
+            lastName={lastName}
             studentEmail={studentEmail}
           />
         )}

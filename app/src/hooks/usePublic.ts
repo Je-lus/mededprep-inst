@@ -12,7 +12,7 @@ export function usePublicAssessment(hash: string) {
 
 export function useStartAssessment(hash: string) {
   return useMutation({
-    mutationFn: async (data: { studentName: string; studentEmail: string }) =>
+    mutationFn: async (data: { firstName: string; lastName: string; studentEmail: string }) =>
       ensureSuccess(await api.post<{ surveyJson: unknown; questionOrder: string[]; responseId: string }>(`/api/public/assessment/${hash}/start`, data)),
   });
 }
