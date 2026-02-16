@@ -20,7 +20,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { authLimiter, generalLimiter, submitLimiter } from './middleware/rate-limiter.js';
 import { optionalAuth } from './middleware/optionalAuth.js';
 
-import { requireAuth } from './lib/auth.js';
+import { requireAuth, requireRole } from './lib/auth.js';
 import healthRoutes from './routes/health.js';
 import authRoutes from './routes/auth.js';
 import assessmentRoutes from './routes/assessments.js';
@@ -29,6 +29,7 @@ import publicRoutes from './routes/public.js';
 import studentAuthRoutes from './routes/student-auth.js';
 import bugReportRoutes from './routes/bug-reports.js';
 import sessionRoutes from './routes/sessions.js';
+import instructorRoutes from './routes/instructors.js';
 import publicAttendanceRoutes from './routes/public-attendance.js';
 
 const ALLOWED_ORIGINS = new Set((process.env.CORS_ORIGINS || 'http://localhost:9000').split(','));
@@ -124,6 +125,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);
 app.use('/api/question-banks', generalLimiter, requireAuth, questionBankRoutes);
 app.use('/api/sessions', generalLimiter, requireAuth, sessionRoutes);
+app.use('/api/instructors', generalLimiter, requireAuth, requireRole('owner'), instructorRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
 app.use('/api/public', generalLimiter, publicRoutes, publicAttendanceRoutes);
 app.use('/api/student', authLimiter, studentAuthRoutes);
