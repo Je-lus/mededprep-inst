@@ -171,3 +171,39 @@ export interface ResponseDetail {
   };
   questions: ReviewQuestion[];
 }
+
+// Bug Report types
+export interface BugReport {
+  id: string;
+  orgId: string;
+  reporterType: 'admin' | 'student' | 'anonymous';
+  reporterId?: string | null;
+  reporterEmail?: string | null;
+  reporterName?: string | null;
+  category: 'bug' | 'feedback' | 'feature_request';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  stepsToReproduce?: string | null;
+  url?: string | null;
+  userAgent?: string | null;
+  viewport?: string | null;
+  errorMessage?: string | null;
+  errorStack?: string | null;
+  screenshotUrl?: string | null;
+  status: 'pending' | 'acknowledged' | 'resolved' | 'closed';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BugReportSubmission {
+  category: 'bug' | 'feedback' | 'feature_request';
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  stepsToReproduce?: string;
+  url?: string;
+  userAgent?: string;
+  viewport?: string;
+  errorMessage?: string;
+  errorStack?: string;
+  screenshot?: string; // base64 data
+}

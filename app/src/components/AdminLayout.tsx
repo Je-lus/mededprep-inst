@@ -39,6 +39,16 @@ export default function AdminLayout() {
           >
             Assessments
           </NavLink>
+          <NavLink
+            to="/bug-reports"
+            className={({ isActive }) =>
+              isActive
+                ? 'py-3 border-b-2 border-[#1b5fd0] text-[#1b5fd0] font-medium'
+                : 'py-3 text-muted-foreground hover:text-foreground'
+            }
+          >
+            Bug Reports
+          </NavLink>
         </nav>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-8">

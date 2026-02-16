@@ -18,6 +18,7 @@ import { logger } from './lib/logger.js';
 import { tenantResolver } from './middleware/tenantResolver.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authLimiter, generalLimiter, submitLimiter } from './middleware/rate-limiter.js';
+import { optionalAuth } from './middleware/optionalAuth.js';
 
 import { requireAuth } from './lib/auth.js';
 import healthRoutes from './routes/health.js';
@@ -25,6 +26,7 @@ import authRoutes from './routes/auth.js';
 import assessmentRoutes from './routes/assessments.js';
 import publicRoutes from './routes/public.js';
 import studentAuthRoutes from './routes/student-auth.js';
+import bugReportRoutes from './routes/bug-reports.js';
 
 const ALLOWED_ORIGINS = new Set((process.env.CORS_ORIGINS || 'http://localhost:9000').split(','));
 
@@ -120,6 +122,7 @@ app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
 app.use('/api/public', generalLimiter, publicRoutes);
 app.use('/api/student', authLimiter, studentAuthRoutes);
+app.use('/api/bug-reports', submitLimiter, optionalAuth, bugReportRoutes);
 
 // ============================================
 // ERROR HANDLER

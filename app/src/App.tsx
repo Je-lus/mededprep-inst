@@ -8,11 +8,13 @@ import AssessmentList from './pages/admin/AssessmentList';
 import AssessmentCreate from './pages/admin/AssessmentCreate';
 import AssessmentDetail from './pages/admin/AssessmentDetail';
 import QrPresenter from './pages/admin/QrPresenter';
+import BugReports from './pages/admin/BugReports';
 import TakeAssessment from './pages/public/TakeAssessment';
 import CreateAccount from './pages/public/CreateAccount';
 import StudentLogin from './pages/student/StudentLogin';
 import StudentDashboard from './pages/student/StudentDashboard';
 import AssessmentReview from './pages/student/AssessmentReview';
+import BugReportButton from './components/BugReportButton';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsAuthenticated();
@@ -28,28 +30,53 @@ function StudentProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      {/* Admin routes */}
-      <Route path="/login" element={<Login />} />
-      <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-        <Route index element={<Dashboard />} />
-        <Route path="assessments" element={<AssessmentList />} />
-        <Route path="assessments/new" element={<AssessmentCreate />} />
-        <Route path="assessments/:id" element={<AssessmentDetail />} />
-        <Route path="assessments/:id/present" element={<QrPresenter />} />
-      </Route>
+    <>
+      <Routes>
+        {/* Admin routes */}
+        <Route path="/login" element={<Login />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="assessments" element={<AssessmentList />} />
+          <Route path="assessments/new" element={<AssessmentCreate />} />
+          <Route path="assessments/:id" element={<AssessmentDetail />} />
+          <Route path="assessments/:id/present" element={<QrPresenter />} />
+          <Route path="bug-reports" element={<BugReports />} />
+        </Route>
 
-      {/* Public routes (no auth) */}
-      <Route path="/take/:hash" element={<TakeAssessment />} />
-      <Route path="/create-account" element={<CreateAccount />} />
+        {/* Public routes (no auth) */}
+        <Route path="/take/:hash" element={<TakeAssessment />} />
+        <Route path="/create-account" element={<CreateAccount />} />
 
-      {/* Student routes */}
-      <Route path="/student/login" element={<StudentLogin />} />
-      <Route path="/student" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
-      <Route path="/student/review/:responseId" element={<StudentProtectedRoute><AssessmentReview /></StudentProtectedRoute>} />
+        {/* Student routes */}
+        <Route path="/student/login" element={<StudentLogin />} />
+        <Route
+          path="/student"
+          element={
+            <StudentProtectedRoute>
+              <StudentDashboard />
+            </StudentProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/review/:responseId"
+          element={
+            <StudentProtectedRoute>
+              <AssessmentReview />
+            </StudentProtectedRoute>
+          }
+        />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      <BugReportButton />
+    </>
   );
 }
