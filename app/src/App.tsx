@@ -12,6 +12,7 @@ import QuestionBankList from './pages/admin/QuestionBankList';
 import QuestionBankCreate from './pages/admin/QuestionBankCreate';
 import QuestionBankDetail from './pages/admin/QuestionBankDetail';
 import BugReports from './pages/admin/BugReports';
+import InstructorList from './pages/admin/InstructorList';
 import SessionList from './pages/admin/SessionList';
 import SessionDetail from './pages/admin/SessionDetail';
 import TakeAssessment from './pages/public/TakeAssessment';
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="sessions" element={<SessionList />} />
           <Route path="sessions/:id" element={<SessionDetail />} />
           <Route path="bug-reports" element={<BugReports />} />
+          <Route path="instructors" element={<InstructorList />} />
         </Route>
 
         {/* Public routes (no auth) */}

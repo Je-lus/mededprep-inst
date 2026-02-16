@@ -308,3 +308,14 @@ export interface SessionQrCodes {
   checkIn: QrCodeData;
   checkOut: QrCodeData;
 }
+
+// Instructor types
+export interface Instructor {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+}
