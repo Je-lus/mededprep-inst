@@ -36,7 +36,7 @@ export interface AssessmentResponse {
   attempt?: number;
   totalQuestions?: number;
   totalCorrect?: number;
-  scorePercentage?: string;
+  scorePercentage?: number;
   passed?: boolean;
   timeTaken?: number;
   startedAt: string;
@@ -133,7 +133,7 @@ export interface AssessmentSubmitResult {
   responseId: string;
   totalQuestions?: number;
   totalCorrect?: number;
-  scorePercentage?: string;
+  scorePercentage?: number;
   passed?: boolean;
 }
 
@@ -153,7 +153,7 @@ export interface AssessmentReviewData {
   assessment: { title: string; description?: string };
   totalQuestions: number;
   totalCorrect: number;
-  scorePercentage: string;
+  scorePercentage: number;
   questions: ReviewQuestion[];
 }
 
@@ -163,7 +163,7 @@ export interface ResponseDetail {
     id: string;
     studentName: string;
     studentEmail: string;
-    scorePercentage?: string;
+    scorePercentage?: number;
     totalCorrect?: number;
     totalQuestions?: number;
     passed?: boolean;
