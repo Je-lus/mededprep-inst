@@ -60,7 +60,9 @@ export default function AssessmentDetail() {
     if (!assessment) return;
     setEditTitle(assessment.title);
     setEditDescription(assessment.description || '');
-    setTimeLimitEnabled(typeof assessment.timeLimitMinutes === 'number' && assessment.timeLimitMinutes > 0);
+    setTimeLimitEnabled(
+      typeof assessment.timeLimitMinutes === 'number' && assessment.timeLimitMinutes > 0,
+    );
     setTimeLimitInput(assessment.timeLimitMinutes ? String(assessment.timeLimitMinutes) : '');
   }, [assessment]);
 
@@ -111,7 +113,9 @@ export default function AssessmentDetail() {
       await updateAssessment.mutateAsync({ id, showScoreFeedback });
       toast.success(showScoreFeedback ? 'Score feedback enabled' : 'Score feedback hidden');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to update score feedback setting');
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to update score feedback setting',
+      );
     }
   };
 
@@ -328,6 +332,7 @@ export default function AssessmentDetail() {
 
           <TabsContent value="responses">
             <ResponsesTab
+              assessmentId={id}
               responses={responses}
               total={totalResponses}
               page={responsePage}

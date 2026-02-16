@@ -10,7 +10,8 @@ import {
 } from '../lib/auth.js';
 import { z, validate } from '../lib/validate.js';
 import { NotFoundError, UnauthorizedError, ValidationError } from '../lib/errors.js';
-import type { SurveyJson, SurveyElement, SurveyChoice } from '../types/survey.js';
+import type { SurveyJson } from '../types/survey.js';
+import { buildReviewQuestions } from '../lib/services/quiz-scoring.js';
 
 /** Express route params are always strings; cast from string | string[] */
 function param(value: string | string[]): string {
@@ -34,62 +35,6 @@ const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
-
-function normalizeAnswer(answer: unknown): string {
-  if (Array.isArray(answer)) {
-    return JSON.stringify([...answer].sort());
-  }
-  return String(answer ?? '');
-}
-
-function mapChoice(choice: SurveyChoice | string): { value: string; text: string } {
-  if (typeof choice === 'object' && choice !== null) {
-    return { value: choice.value ?? choice.text, text: choice.text ?? choice.value };
-  }
-  return { value: choice, text: String(choice ?? '') };
-}
-
-interface ReviewQuestion {
-  questionName: string;
-  questionTitle: string;
-  choices: { value: string; text: string }[];
-  studentAnswer: unknown;
-  correctAnswer: unknown;
-  isCorrect: boolean;
-  explanation: string | null;
-  pageNumber: string | null;
-}
-
-function buildReviewQuestions(
-  surveyJson: SurveyJson,
-  responseData: Record<string, unknown>,
-): ReviewQuestion[] {
-  const questions: ReviewQuestion[] = [];
-
-  for (const page of surveyJson?.pages || []) {
-    for (const element of (page?.elements || []) as SurveyElement[]) {
-      if (!(element && typeof element === 'object' && 'correctAnswer' in element)) {
-        continue;
-      }
-
-      const studentAnswer = responseData?.[element.name];
-      const correctAnswer = element.correctAnswer;
-
-      questions.push({
-        questionName: element.name,
-        questionTitle: element.title || element.name,
-        choices: (element.choices || []).map(mapChoice),
-        studentAnswer,
-        correctAnswer,
-        isCorrect: normalizeAnswer(studentAnswer) === normalizeAnswer(correctAnswer),
-        explanation: element.metadata?.explanation ?? null,
-        pageNumber: element.metadata?.pageNumber ?? null,
-      });
-    }
-  }
-
-  return questions;
-}
 
 function formatZodErrors(error: z.ZodError): Record<string, string> {
   const details: Record<string, string> = {};

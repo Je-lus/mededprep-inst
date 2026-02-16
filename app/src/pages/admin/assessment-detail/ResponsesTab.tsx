@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +16,10 @@ import { PaginationControls } from '@/components/PaginationControls';
 import { cn } from '@/lib/utils';
 import type { AssessmentResponse } from '@/types/api';
 import { formatDateTime, formatTimeTaken } from './utils';
+import { ResponseDetailDialog } from './ResponseDetailDialog';
 
 export function ResponsesTab({
+  assessmentId,
   responses,
   total,
   page,
@@ -27,6 +30,7 @@ export function ResponsesTab({
   onPrevious,
   onNext,
 }: {
+  assessmentId: string;
   responses: AssessmentResponse[];
   total: number;
   page: number;
@@ -37,6 +41,7 @@ export function ResponsesTab({
   onPrevious: () => void;
   onNext: () => void;
 }) {
+  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
   return (
     <Card>
       <CardHeader>
@@ -83,7 +88,11 @@ export function ResponsesTab({
               </TableHeader>
               <TableBody>
                 {responses.map((response) => (
-                  <TableRow key={response.id}>
+                  <TableRow
+                    key={response.id}
+                    onClick={() => setSelectedResponseId(response.id)}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
                     <TableCell className="font-medium">{response.studentName || '-'}</TableCell>
                     <TableCell>{response.studentEmail || '-'}</TableCell>
                     <TableCell className="text-right">{response.scorePercentage ?? '-'}</TableCell>
@@ -119,6 +128,15 @@ export function ResponsesTab({
           </div>
         )}
       </CardContent>
+
+      {selectedResponseId && (
+        <ResponseDetailDialog
+          open={!!selectedResponseId}
+          onOpenChange={(open) => !open && setSelectedResponseId(null)}
+          assessmentId={assessmentId}
+          responseId={selectedResponseId}
+        />
+      )}
     </Card>
   );
 }

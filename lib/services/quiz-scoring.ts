@@ -3,7 +3,7 @@
  * Scores survey responses against original survey JSON
  */
 
-import type { SurveyJson } from '../../types/survey.js';
+import type { SurveyJson, SurveyElement, SurveyChoice } from '../../types/survey.js';
 
 export interface ScoreResult {
   totalQuestions: number;
@@ -75,4 +75,72 @@ export function stripSensitiveData<T>(obj: T): T {
     }
   }
   return obj;
+}
+
+/**
+ * Normalize answer for comparison (handles arrays and strings)
+ */
+export function normalizeAnswer(answer: unknown): string {
+  if (Array.isArray(answer)) {
+    return JSON.stringify([...answer].sort());
+  }
+  return String(answer ?? '');
+}
+
+/**
+ * Map a SurveyJS choice to a consistent object format
+ */
+export function mapChoice(choice: SurveyChoice | string): { value: string; text: string } {
+  if (typeof choice === 'object' && choice !== null) {
+    return { value: choice.value ?? choice.text, text: choice.text ?? choice.value };
+  }
+  return { value: choice, text: String(choice ?? '') };
+}
+
+/**
+ * Review question interface for student and admin review
+ */
+export interface ReviewQuestion {
+  questionName: string;
+  questionTitle: string;
+  choices: { value: string; text: string }[];
+  studentAnswer: unknown;
+  correctAnswer: unknown;
+  isCorrect: boolean;
+  explanation: string | null;
+  pageNumber: string | null;
+}
+
+/**
+ * Build a question-by-question breakdown for review
+ */
+export function buildReviewQuestions(
+  surveyJson: SurveyJson,
+  responseData: Record<string, unknown>,
+): ReviewQuestion[] {
+  const questions: ReviewQuestion[] = [];
+
+  for (const page of surveyJson?.pages || []) {
+    for (const element of (page?.elements || []) as SurveyElement[]) {
+      if (!(element && typeof element === 'object' && 'correctAnswer' in element)) {
+        continue;
+      }
+
+      const studentAnswer = responseData?.[element.name];
+      const correctAnswer = element.correctAnswer;
+
+      questions.push({
+        questionName: element.name,
+        questionTitle: element.title || element.name,
+        choices: (element.choices || []).map(mapChoice),
+        studentAnswer,
+        correctAnswer,
+        isCorrect: normalizeAnswer(studentAnswer) === normalizeAnswer(correctAnswer),
+        explanation: element.metadata?.explanation ?? null,
+        pageNumber: element.metadata?.pageNumber ?? null,
+      });
+    }
+  }
+
+  return questions;
 }

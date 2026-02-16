@@ -7,6 +7,7 @@ import type {
   ItemAnalysisResult,
   PaginatedResponse,
   QrCodeData,
+  ResponseDetail,
 } from '../types/api';
 
 export function useAssessments() {
@@ -27,8 +28,15 @@ export function useAssessment(id: string) {
 export function useCreateAssessment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
-      ensureSuccess(await api.post<Assessment>('/api/assessments', data)),
+    mutationFn: async (data: {
+      title: string;
+      description?: string;
+      surveyJson?: string;
+      passingScore?: number;
+      timeLimitMinutes?: number;
+      randomizeQuestions?: boolean;
+      randomizeChoices?: boolean;
+    }) => ensureSuccess(await api.post<Assessment>('/api/assessments', data)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assessments'] }),
   });
 }
@@ -36,8 +44,21 @@ export function useCreateAssessment() {
 export function useUpdateAssessment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; surveyJson?: string; passingScore?: number; timeLimitMinutes?: number | null; resultsReleased?: boolean; showScoreFeedback?: boolean; randomizeQuestions?: boolean; randomizeChoices?: boolean }) =>
-      ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}`, data)),
+    mutationFn: async ({
+      id,
+      ...data
+    }: {
+      id: string;
+      title?: string;
+      description?: string;
+      surveyJson?: string;
+      passingScore?: number;
+      timeLimitMinutes?: number | null;
+      resultsReleased?: boolean;
+      showScoreFeedback?: boolean;
+      randomizeQuestions?: boolean;
+      randomizeChoices?: boolean;
+    }) => ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}`, data)),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assessments'] });
       qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
@@ -82,7 +103,11 @@ export function useImportCsv() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, csvContent }: { id: string; csvContent: string }) =>
-      ensureSuccess(await api.post<{ questionCount: number }>(`/api/assessments/${id}/import-csv`, { csvContent })),
+      ensureSuccess(
+        await api.post<{ questionCount: number }>(`/api/assessments/${id}/import-csv`, {
+          csvContent,
+        }),
+      ),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
     },
@@ -110,10 +135,22 @@ export function useAssessmentResponses(id: string, page = 1, limit = 10) {
   });
 }
 
+export function useResponseDetail(assessmentId: string, responseId: string) {
+  return useQuery({
+    queryKey: ['assessments', assessmentId, 'responses', responseId],
+    queryFn: async () =>
+      ensureSuccess(
+        await api.get<ResponseDetail>(`/api/assessments/${assessmentId}/responses/${responseId}`),
+      ),
+    enabled: !!assessmentId && !!responseId,
+  });
+}
+
 export function useItemAnalysis(id: string) {
   return useQuery({
     queryKey: ['assessments', id, 'item-analysis'],
-    queryFn: async () => ensureSuccess(await api.get<ItemAnalysisResult>(`/api/assessments/${id}/item-analysis`)),
+    queryFn: async () =>
+      ensureSuccess(await api.get<ItemAnalysisResult>(`/api/assessments/${id}/item-analysis`)),
     enabled: !!id,
   });
 }
@@ -122,7 +159,9 @@ export function useReleaseResults() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, released }: { id: string; released: boolean }) =>
-      ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}/release-results`, { released })),
+      ensureSuccess(
+        await api.put<Assessment>(`/api/assessments/${id}/release-results`, { released }),
+      ),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
     },

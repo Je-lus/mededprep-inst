@@ -6,6 +6,7 @@ import { NotFoundError, ValidationError } from '../lib/errors.js';
 import { z, validate } from '../lib/validate.js';
 import { parseCsvToSurveyJson } from '../lib/services/csv-import.js';
 import { computeItemAnalysis } from '../lib/services/item-analysis.js';
+import { buildReviewQuestions } from '../lib/services/quiz-scoring.js';
 import type { Prisma } from '@prisma/client';
 import type { SurveyJson, SurveyElement } from '../types/survey.js';
 
@@ -379,6 +380,65 @@ router.get('/:id/responses', async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 });
+
+router.get(
+  '/:id/responses/:responseId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
+      const responseId = param(req.params.responseId);
+
+      const response = await prisma.assessmentResponse.findFirst({
+        where: {
+          id: responseId,
+          assessmentId: assessment.id,
+          assessment: { orgId: req.orgId },
+        },
+        select: {
+          id: true,
+          studentName: true,
+          studentEmail: true,
+          scorePercentage: true,
+          totalCorrect: true,
+          totalQuestions: true,
+          passed: true,
+          timeTaken: true,
+          completedAt: true,
+          responseData: true,
+        },
+      });
+
+      if (!response) {
+        throw new NotFoundError('Response not found');
+      }
+
+      const questions = buildReviewQuestions(
+        assessment.surveyJson as SurveyJson,
+        response.responseData as Record<string, unknown>,
+      );
+
+      res.json({
+        success: true,
+        data: {
+          response: {
+            id: response.id,
+            studentName: response.studentName,
+            studentEmail: response.studentEmail,
+            scorePercentage: response.scorePercentage,
+            totalCorrect: response.totalCorrect,
+            totalQuestions: response.totalQuestions,
+            passed: response.passed,
+            timeTaken: response.timeTaken,
+            completedAt: response.completedAt,
+          },
+          questions,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 router.get('/:id/item-analysis', async (req: Request, res: Response, next: NextFunction) => {
   try {
