@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, ChevronDown, ChevronUp, Edit, Loader2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -143,6 +143,27 @@ export default function QuestionBankDetail() {
     explanation: '',
   });
   const [csvContent, setCsvContent] = useState('');
+
+  useEffect(() => {
+    if (!editMode && data) {
+      const nextForm = {
+        title: data.title,
+        description: data.description || '',
+        subject: data.subject || '',
+      };
+
+      setBankForm((prev) => {
+        if (
+          prev.title === nextForm.title &&
+          prev.description === nextForm.description &&
+          prev.subject === nextForm.subject
+        ) {
+          return prev;
+        }
+        return nextForm;
+      });
+    }
+  }, [data, editMode]);
 
   const handleUpdateBank = async () => {
     if (!id) return;
@@ -328,14 +349,6 @@ export default function QuestionBankDetail() {
 
   if (!data) {
     return <div>No data</div>;
-  }
-
-  if (!editMode) {
-    setBankForm({
-      title: data.title,
-      description: data.description || '',
-      subject: data.subject || '',
-    });
   }
 
   return (
