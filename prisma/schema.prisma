@@ -24,6 +24,8 @@ model Organization {
   students    Student[]
   assessments Assessment[]
   bugReports  BugReport[]
+  questionBanks QuestionBank[]
+  sessions      Session[]
 }
 
 model BugReport {
@@ -72,6 +74,8 @@ model OrgUser {
 
   org         Organization @relation(fields: [orgId], references: [id])
   assessments Assessment[]
+  questionBanks QuestionBank[] @relation("QuestionBankCreator")
+  sessions      Session[]      @relation("SessionCreator")
 
   @@unique([orgId, email])
 }
@@ -93,6 +97,7 @@ model Student {
 
   org       Organization         @relation(fields: [orgId], references: [id])
   responses AssessmentResponse[]
+  attendances SessionAttendee[]
 
   @@unique([orgId, email])
 }
@@ -163,4 +168,90 @@ model AssessmentResponse {
   @@unique([assessmentId, studentEmail, attempt])
   @@index([assessmentId])
   @@index([studentEmail])
+}
+
+// ============================================
+// QUESTION BANK
+// ============================================
+
+model QuestionBank {
+  id          String   @id @default(uuid())
+  orgId       String
+  createdById String
+  title       String
+  description String?
+  subject     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org       Organization @relation(fields: [orgId], references: [id])
+  createdBy OrgUser      @relation("QuestionBankCreator", fields: [createdById], references: [id])
+  items     QuestionBankItem[]
+
+  @@index([orgId])
+}
+
+model QuestionBankItem {
+  id           String    @id @default(uuid())
+  bankId       String
+  questionData Json
+  tags         String[]  @default([])
+  usageCount   Int       @default(0)
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  bank QuestionBank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@index([bankId])
+}
+
+// ============================================
+// ATTENDANCE & SESSIONS
+// ============================================
+
+enum AttendanceStatus {
+  registered
+  checked_in
+  attended
+  no_show
+  cancelled
+}
+
+model Session {
+  id            String    @id @default(uuid())
+  orgId         String
+  createdById   String
+  name          String
+  description   String?
+  publicHash    String    @unique @default(uuid())
+  isPublished   Boolean   @default(false)
+  startDateTime DateTime?
+  endDateTime   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  org       Organization @relation(fields: [orgId], references: [id])
+  createdBy OrgUser      @relation("SessionCreator", fields: [createdById], references: [id])
+  attendees SessionAttendee[]
+
+  @@index([orgId])
+  @@index([publicHash])
+}
+
+model SessionAttendee {
+  id           String           @id @default(uuid())
+  sessionId    String
+  studentId    String
+  status       AttendanceStatus @default(registered)
+  checkedInAt  DateTime?
+  checkedOutAt DateTime?
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
 }
