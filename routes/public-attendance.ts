@@ -6,6 +6,10 @@ import { z, validate } from '../lib/validate.js';
 
 const router = Router();
 
+function param(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 // ============================================
 // ATTENDANCE WINDOW HELPER
 // ============================================
@@ -58,7 +62,7 @@ router.get('/attend/:hash', async (req: Request, res: Response, next: NextFuncti
   try {
     const session = await prisma.session.findFirst({
       where: {
-        publicHash: req.params.hash,
+        publicHash: param(req.params.hash),
         orgId: req.orgId,
       },
       select: {
@@ -110,7 +114,7 @@ router.post(
     try {
       const session = await prisma.session.findFirst({
         where: {
-          publicHash: req.params.hash,
+          publicHash: param(req.params.hash),
           orgId: req.orgId,
         },
       });
@@ -194,7 +198,7 @@ router.post(
     try {
       const session = await prisma.session.findFirst({
         where: {
-          publicHash: req.params.hash,
+          publicHash: param(req.params.hash),
           orgId: req.orgId,
         },
       });
@@ -240,7 +244,7 @@ router.post(
     try {
       const session = await prisma.session.findFirst({
         where: {
-          publicHash: req.params.hash,
+          publicHash: param(req.params.hash),
           orgId: req.orgId,
         },
       });

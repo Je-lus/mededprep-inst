@@ -7,6 +7,10 @@ import { z, validate } from '../lib/validate.js';
 
 const router = Router();
 
+function param(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -64,7 +68,7 @@ router.post(
       const session = await prisma.session.create({
         data: {
           orgId: req.orgId!,
-          createdById: req.userId!,
+          createdById: req.user!.id,
           name,
           description,
           startDateTime: startDateTime ? new Date(startDateTime) : null,
@@ -82,7 +86,7 @@ router.post(
 // GET /:id — Get session with attendee list
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const session = await findSessionOrThrow(req.params.id, req.orgId!, {
+    const session = await findSessionOrThrow(param(req.params.id), req.orgId!, {
       attendees: {
         include: {
           student: {
@@ -110,7 +114,7 @@ router.put(
   validate(updateSessionSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await findSessionOrThrow(req.params.id, req.orgId!);
+      await findSessionOrThrow(param(req.params.id), req.orgId!);
 
       const { name, description, startDateTime, endDateTime } = req.body;
       const data: Record<string, unknown> = {};
@@ -122,7 +126,7 @@ router.put(
       if (endDateTime !== undefined) data.endDateTime = endDateTime ? new Date(endDateTime) : null;
 
       const session = await prisma.session.update({
-        where: { id: req.params.id },
+        where: { id: param(req.params.id) },
         data,
       });
 
@@ -136,10 +140,10 @@ router.put(
 // DELETE /:id — Delete session (cascade deletes attendees)
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await findSessionOrThrow(req.params.id, req.orgId!);
+    await findSessionOrThrow(param(req.params.id), req.orgId!);
 
     await prisma.session.delete({
-      where: { id: req.params.id },
+      where: { id: param(req.params.id) },
     });
 
     res.json({ success: true, data: { message: 'Session deleted' } });
@@ -151,10 +155,10 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 // POST /:id/publish — Set isPublished=true
 router.post('/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await findSessionOrThrow(req.params.id, req.orgId!);
+    await findSessionOrThrow(param(req.params.id), req.orgId!);
 
     const session = await prisma.session.update({
-      where: { id: req.params.id },
+      where: { id: param(req.params.id) },
       data: { isPublished: true },
     });
 
@@ -171,10 +175,10 @@ router.post('/:id/publish', async (req: Request, res: Response, next: NextFuncti
 // GET /:id/attendees — List attendees
 router.get('/:id/attendees', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await findSessionOrThrow(req.params.id, req.orgId!);
+    await findSessionOrThrow(param(req.params.id), req.orgId!);
 
     const attendees = await prisma.sessionAttendee.findMany({
-      where: { sessionId: req.params.id },
+      where: { sessionId: param(req.params.id) },
       include: {
         student: {
           select: {
@@ -204,11 +208,11 @@ router.post(
   validate(addAttendeeSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await findSessionOrThrow(req.params.id, req.orgId!);
+      await findSessionOrThrow(param(req.params.id), req.orgId!);
 
       const attendee = await prisma.sessionAttendee.create({
         data: {
-          sessionId: req.params.id,
+          sessionId: param(req.params.id),
           studentId: req.body.studentId,
         },
         include: {
@@ -241,11 +245,11 @@ router.put(
   validate(updateAttendeeSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await findSessionOrThrow(req.params.id, req.orgId!);
+      await findSessionOrThrow(param(req.params.id), req.orgId!);
 
       // Verify attendee belongs to this session
       const existing = await prisma.sessionAttendee.findFirst({
-        where: { id: req.params.aid, sessionId: req.params.id },
+        where: { id: param(req.params.aid), sessionId: param(req.params.id) },
       });
       if (!existing) throw new NotFoundError('Attendee not found');
 
@@ -255,7 +259,7 @@ router.put(
       }
 
       const attendee = await prisma.sessionAttendee.update({
-        where: { id: req.params.aid },
+        where: { id: param(req.params.aid) },
         data,
       });
 
@@ -271,16 +275,16 @@ router.post(
   '/:id/attendees/:aid/check-in',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await findSessionOrThrow(req.params.id, req.orgId!);
+      await findSessionOrThrow(param(req.params.id), req.orgId!);
 
       // Verify attendee belongs to this session
       const existing = await prisma.sessionAttendee.findFirst({
-        where: { id: req.params.aid, sessionId: req.params.id },
+        where: { id: param(req.params.aid), sessionId: param(req.params.id) },
       });
       if (!existing) throw new NotFoundError('Attendee not found');
 
       const attendee = await prisma.sessionAttendee.update({
-        where: { id: req.params.aid },
+        where: { id: param(req.params.aid) },
         data: {
           status: 'checked_in',
           checkedInAt: new Date(),
@@ -299,15 +303,15 @@ router.post(
   '/:id/attendees/:aid/check-out',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await findSessionOrThrow(req.params.id, req.orgId!);
+      await findSessionOrThrow(param(req.params.id), req.orgId!);
 
       const existing = await prisma.sessionAttendee.findFirst({
-        where: { id: req.params.aid, sessionId: req.params.id },
+        where: { id: param(req.params.aid), sessionId: param(req.params.id) },
       });
       if (!existing) throw new NotFoundError('Attendee not found');
 
       const attendee = await prisma.sessionAttendee.update({
-        where: { id: req.params.aid },
+        where: { id: param(req.params.aid) },
         data: {
           status: 'attended',
           checkedOutAt: new Date(),
@@ -328,7 +332,7 @@ router.post(
 // GET /:id/qr-codes — Generate check-in + checkout QR codes
 router.get('/:id/qr-codes', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const session = await findSessionOrThrow(req.params.id, req.orgId!);
+    const session = await findSessionOrThrow(param(req.params.id), req.orgId!);
 
     const org = await prisma.organization.findUnique({
       where: { id: req.orgId },

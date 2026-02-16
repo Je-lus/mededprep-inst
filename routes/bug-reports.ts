@@ -143,7 +143,8 @@ router.get(
   validateQuery(listBugReportsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page, limit, status } = req.query as {
+      const { page, limit, status } = (req as unknown as Record<string, unknown>)
+        .validatedQuery as {
         page: number;
         limit: number;
         status?: 'pending' | 'acknowledged' | 'resolved' | 'closed';

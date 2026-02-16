@@ -37,7 +37,7 @@ function validateQuery(schema: ZodSchema) {
       const details = formatZodErrors(result.error);
       throw new ValidationError('Invalid query parameters', details);
     }
-    req.query = result.data;
+    (req as unknown as Record<string, unknown>).validatedQuery = result.data;
     next();
   };
 }
