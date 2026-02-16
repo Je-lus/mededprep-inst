@@ -2,15 +2,11 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { NotFoundError, ValidationError } from '../lib/errors.js';
-import { z, validate } from '../lib/validate.js';
+import { z, validate, formatZodErrors } from '../lib/validate.js';
+import { param } from '../lib/route-utils.js';
 import { parseCsvToSurveyJson } from '../lib/services/csv-import.js';
 import type { Prisma } from '@prisma/client';
 import type { SurveyElement } from '../types/survey.js';
-
-/** Express route params are always strings; cast from string | string[] */
-function param(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 const router = Router();
 
@@ -58,17 +54,6 @@ async function findItemOrThrow(bankId: string, itemId: string, orgId: string) {
 
   if (!item) throw new NotFoundError('Question not found');
   return item;
-}
-
-function formatZodErrors(error: z.ZodError): Record<string, string> {
-  const details: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const field = issue.path.join('.') || '_root';
-    if (!details[field]) {
-      details[field] = issue.message;
-    }
-  }
-  return details;
 }
 
 // GET / - List banks for org

@@ -8,15 +8,11 @@ import {
   clearAuthCookie,
   requireStudentAuth,
 } from '../lib/auth.js';
-import { z, validate } from '../lib/validate.js';
+import { z, validate, formatZodErrors } from '../lib/validate.js';
+import { param } from '../lib/route-utils.js';
 import { NotFoundError, UnauthorizedError, ValidationError } from '../lib/errors.js';
 import type { SurveyJson } from '../types/survey.js';
 import { buildReviewQuestions } from '../lib/services/quiz-scoring.js';
-
-/** Express route params are always strings; cast from string | string[] */
-function param(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 const router = Router();
 
@@ -35,17 +31,6 @@ const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
-
-function formatZodErrors(error: z.ZodError): Record<string, string> {
-  const details: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const field = issue.path.join('.') || '_root';
-    if (!details[field]) {
-      details[field] = issue.message;
-    }
-  }
-  return details;
-}
 
 router.post(
   '/register',
