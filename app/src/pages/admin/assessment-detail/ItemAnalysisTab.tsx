@@ -44,7 +44,10 @@ function QuestionDetail({ question }: { question: QuestionAnalysis }) {
           return (
             <div
               key={`${question.questionName}-${choice.value}`}
-              className={cn('rounded border p-2', isCorrect && 'border-emerald-300 bg-emerald-50')}
+              className={cn(
+                'rounded border p-2',
+                isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white'
+              )}
             >
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                 <span className="truncate">
@@ -62,7 +65,7 @@ function QuestionDetail({ question }: { question: QuestionAnalysis }) {
               </div>
               <div className="h-2 rounded bg-muted">
                 <div
-                  className={cn('h-2 rounded bg-[#1b5fd0]', isCorrect && 'bg-emerald-600')}
+                  className={cn('h-2 rounded bg-gray-300', isCorrect && 'bg-emerald-600')}
                   style={{ width: `${Math.min(percent, 100)}%` }}
                 />
               </div>
@@ -169,7 +172,18 @@ export function ItemAnalysisTab({
                         <TableCell className="max-w-[460px] truncate">
                           {question.questionTitle}
                         </TableCell>
-                        <TableCell className="text-right">{percentCorrect.toFixed(1)}%</TableCell>
+                        <TableCell
+                          className={cn(
+                            'text-right font-medium',
+                            percentCorrect >= 70
+                              ? 'text-emerald-700'
+                              : percentCorrect >= 50
+                              ? 'text-amber-600'
+                              : 'text-red-600',
+                          )}
+                        >
+                          {percentCorrect.toFixed(1)}%
+                        </TableCell>
                         <TableCell className="text-right">
                           <span
                             className={cn(
@@ -183,8 +197,12 @@ export function ItemAnalysisTab({
                       </TableRow>
                       {isExpanded && (
                         <TableRow>
-                          <TableCell colSpan={4} className="bg-muted/20">
-                            <QuestionDetail question={question} />
+                          <TableCell colSpan={4} className="bg-muted/20 p-4">
+                            <Card className="bg-white shadow-sm">
+                              <CardContent className="pt-6">
+                                <QuestionDetail question={question} />
+                              </CardContent>
+                            </Card>
                           </TableCell>
                         </TableRow>
                       )}
