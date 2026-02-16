@@ -1,7 +1,8 @@
 /**
  * Bug Report Routes
- * POST /api/bug-reports      - Submit bug report (no auth required, but identity detected)
- * GET  /api/bug-reports      - List bug reports (admin only)
+ * POST  /api/bug-reports     - Submit bug report (no auth required, but identity detected)
+ * GET   /api/bug-reports     - List bug reports (admin only)
+ * PATCH /api/bug-reports/:id - Update bug report status (admin only)
  */
 
 import express from 'express';
@@ -10,6 +11,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth } from '../lib/auth.js';
 import { validate, validateQuery, z } from '../lib/validate.js';
 import { uploadImage, isImageKitConfigured } from '../lib/imagekit.js';
+import { NotFoundError } from '../lib/errors.js';
 
 const router = express.Router();
 
@@ -30,6 +32,10 @@ const listBugReportsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   status: z.enum(['pending', 'acknowledged', 'resolved', 'closed']).optional(),
+});
+
+const updateBugReportSchema = z.object({
+  status: z.enum(['pending', 'acknowledged', 'resolved', 'closed']),
 });
 
 /**
@@ -171,13 +177,53 @@ router.get(
 
       res.json({
         success: true,
-        data: reports,
-        pagination: {
+        data: {
+          reports,
+          total,
           page,
           limit,
-          total,
           totalPages,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * PATCH /api/bug-reports/:id - Update bug report status (admin only)
+ */
+router.patch(
+  '/:id',
+  requireAuth,
+  validate(updateBugReportSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      // Find report by id AND orgId (multi-tenancy)
+      const report = await prisma.bugReport.findFirst({
+        where: {
+          id,
+          orgId: req.orgId,
+        },
+      });
+
+      if (!report) {
+        throw new NotFoundError('Bug report not found');
+      }
+
+      // Update status
+      const updatedReport = await prisma.bugReport.update({
+        where: { id },
+        data: { status },
+      });
+
+      res.json({
+        success: true,
+        data: updatedReport,
       });
     } catch (error) {
       next(error);

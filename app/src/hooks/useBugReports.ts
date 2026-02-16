@@ -1,13 +1,13 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ensureSuccess } from '../lib/api';
 import type { BugReport, BugReportSubmission } from '../types/api';
 
 interface BugReportsResponse {
-  data: BugReport[];
-  pagination: {
+  data: {
+    reports: BugReport[];
+    total: number;
     page: number;
     limit: number;
-    total: number;
     totalPages: number;
   };
 }
@@ -45,5 +45,25 @@ export function useBugReports(
     queryKey: ['bug-reports', page, limit, status],
     queryFn: async () =>
       ensureSuccess(await api.get<BugReportsResponse>(`/api/bug-reports?${params.toString()}`)),
+  });
+}
+
+/**
+ * Update bug report status (admin only)
+ */
+export function useUpdateBugReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: 'pending' | 'acknowledged' | 'resolved' | 'closed';
+    }) => ensureSuccess(await api.patch<BugReport>(`/api/bug-reports/${id}`, { status })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bug-reports'] });
+    },
   });
 }
