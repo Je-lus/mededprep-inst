@@ -46,7 +46,7 @@ export default function AssessmentList() {
             Manage draft, active, and closed assessments.
           </p>
         </div>
-        <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+        <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
           <Link to="/assessments/new">
             <Plus className="mr-2 h-4 w-4" />
             Create Assessment
@@ -80,7 +80,7 @@ export default function AssessmentList() {
           title="No assessments yet"
           description="Create your first assessment to begin collecting responses."
           action={
-            <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+            <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
               <Link to="/assessments/new">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Assessment

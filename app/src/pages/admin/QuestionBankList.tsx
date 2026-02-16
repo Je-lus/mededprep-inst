@@ -34,7 +34,7 @@ export default function QuestionBankList() {
             Manage reusable question banks for assessments.
           </p>
         </div>
-        <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+        <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
           <Link to="/question-banks/new">
             <Plus className="mr-2 h-4 w-4" />
             New Bank
@@ -68,7 +68,7 @@ export default function QuestionBankList() {
           title="No question banks yet"
           description="Create your first question bank to store reusable questions."
           action={
-            <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+            <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
               <Link to="/question-banks/new">
                 <Plus className="mr-2 h-4 w-4" />
                 New Bank

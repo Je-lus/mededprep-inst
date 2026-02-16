@@ -150,7 +150,7 @@ export default function SessionDetail() {
         </div>
         <div className="flex gap-2">
           {!session.isPublished && (
-            <Button onClick={handlePublish} className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+            <Button onClick={handlePublish} className="bg-primary-500 hover:bg-primary-500/90">
               Publish Session
             </Button>
           )}
@@ -229,7 +229,7 @@ export default function SessionDetail() {
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <p>Publish this session to generate QR codes for check-in and check-out.</p>
-                <Button onClick={handlePublish} className="mt-4 bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+                <Button onClick={handlePublish} className="mt-4 bg-primary-500 hover:bg-primary-500/90">
                   Publish Session
                 </Button>
               </CardContent>

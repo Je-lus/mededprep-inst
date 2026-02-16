@@ -107,7 +107,7 @@ export default function QuestionBankCreate() {
         <Button
           onClick={handleCreate}
           disabled={createBank.isPending || !form.title.trim()}
-          className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+          className="bg-primary-500 hover:bg-primary-500/90"
         >
           {createBank.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create Bank

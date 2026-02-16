@@ -63,14 +63,14 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-[#1b5fd0]" />
+                <ClipboardList className="h-5 w-5 text-primary-500" />
                 Assessments
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Create, publish, and monitor assessment performance.
               </p>
             </div>
-            <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+            <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
               <Link to="/assessments">
                 Open
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -117,14 +117,14 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Bug className="h-5 w-5 text-[#1b5fd0]" />
+                <Bug className="h-5 w-5 text-primary-500" />
                 Bug Reports
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 View and manage user-submitted bug reports and feedback.
               </p>
             </div>
-            <Button asChild className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90">
+            <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
               <Link to="/bug-reports">
                 Open
                 <ArrowRight className="ml-2 h-4 w-4" />

@@ -11,8 +11,7 @@ export default function BugReportButton() {
       <Button
         onClick={() => setDialogOpen(true)}
         size="lg"
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-        style={{ backgroundColor: '#1b5fd0' }}
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary-500 hover:bg-primary-500/90"
         aria-label="Report a bug"
       >
         <Bug className="h-6 w-6" />

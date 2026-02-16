@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   useSessionInfo,
   useRegisterAttendee,
   useLookupStudent,
 } from '../../hooks/usePublicAttendance';
-import { formatDate, applyOrgTheme } from '../../lib/utils';
+import { formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import {
   Card,
@@ -26,10 +26,6 @@ export default function AttendSession() {
   const { data: session, isLoading, error } = useSessionInfo(hash!);
   const register = useRegisterAttendee(hash!);
   const lookupStudent = useLookupStudent(hash!);
-
-  useEffect(() => {
-    applyOrgTheme('#1b5fd0');
-  }, []);
 
   const [step, setStep] = useState<'info' | 'lookup' | 'register' | 'done'>('info');
   const [lookupEmail, setLookupEmail] = useState('');

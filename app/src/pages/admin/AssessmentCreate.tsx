@@ -369,7 +369,7 @@ export default function AssessmentCreate() {
                   <Button
                     onClick={handleCreateAndImport}
                     disabled={isCreating || !form.title.trim() || !csvContent.trim()}
-                    className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+                    className="bg-primary-500 hover:bg-primary-500/90"
                   >
                     {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create &amp; Import
@@ -611,7 +611,7 @@ export default function AssessmentCreate() {
                       <Button
                         onClick={() => handleAddSelectedQuestions()}
                         disabled={selectedQuestions.size === 0}
-                        className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+                        className="bg-primary-500 hover:bg-primary-500/90"
                       >
                         Add {selectedQuestions.size} Question
                         {selectedQuestions.size !== 1 ? 's' : ''} to Assessment
@@ -631,7 +631,7 @@ export default function AssessmentCreate() {
           <Button
             onClick={handleCreateAssessment}
             disabled={isCreating || !form.title.trim()}
-            className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+            className="bg-primary-500 hover:bg-primary-500/90"
           >
             {createAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Assessment
@@ -651,7 +651,7 @@ export default function AssessmentCreate() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleAddSelectedQuestions(true)}
-              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+              className="bg-primary-500 hover:bg-primary-500/90"
             >
               Continue
             </AlertDialogAction>
