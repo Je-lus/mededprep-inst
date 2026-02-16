@@ -39,12 +39,10 @@ import { Badge } from '@/components/ui/badge';
 
 function QuestionRow({
   item,
-  bankId,
   onEdit,
   onDelete,
 }: {
   item: QuestionBankItem;
-  bankId: string;
   onEdit: (item: QuestionBankItem) => void;
   onDelete: (itemId: string) => void;
 }) {
@@ -178,7 +176,7 @@ export default function QuestionBankDetail() {
     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
     const choices = questionForm.choices
       .map((text, idx) => (text.trim() ? { value: letters[idx], text: text.trim() } : null))
-      .filter(Boolean);
+      .filter((c): c is { value: string; text: string } => c !== null);
 
     if (choices.length < 2) {
       toast.error('At least 2 choices required');
@@ -223,7 +221,7 @@ export default function QuestionBankDetail() {
     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
     const choices = questionForm.choices
       .map((text, idx) => (text.trim() ? { value: letters[idx], text: text.trim() } : null))
-      .filter(Boolean);
+      .filter((c): c is { value: string; text: string } => c !== null);
 
     if (choices.length < 2) {
       toast.error('At least 2 choices required');
@@ -471,7 +469,6 @@ export default function QuestionBankDetail() {
                 <QuestionRow
                   key={item.id}
                   item={item}
-                  bankId={id}
                   onEdit={openEditDialog}
                   onDelete={handleDeleteQuestion}
                 />

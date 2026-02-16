@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, X, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import SurveyEditor, { type SurveyEditorRef } from '@/components/SurveyEditor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,10 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { getFieldErrors } from '@/lib/api';
 import { useCreateAssessment, useImportCsv } from '@/hooks/useAssessments';
 import { useQuestionBanks, useQuestionBank, useIncrementItemUsage } from '@/hooks/useQuestionBanks';
-import type { QuestionBankItem } from '@/types/api';
 
 type FormState = {
   title: string;
@@ -61,6 +70,8 @@ export default function AssessmentCreate() {
   const [csvContent, setCsvContent] = useState('');
   const [selectedBankId, setSelectedBankId] = useState<string>('');
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [showConfirmReplace, setShowConfirmReplace] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { data: bankDetail } = useQuestionBank(selectedBankId, 1, 200);
@@ -68,10 +79,46 @@ export default function AssessmentCreate() {
   const isCreating =
     createAssessment.isPending || (activeTab === 'csv' && importCsv.isPending);
 
-  const handleAddSelectedQuestions = () => {
+  const toggleExpand = (id: string) => {
+    const newSet = new Set(expandedQuestions);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setExpandedQuestions(newSet);
+  };
+
+  const handleSelectAll = () => {
+    if (!bankDetail) return;
+    const allIds = bankDetail.items.map((i) => i.id);
+    setSelectedQuestions(new Set(allIds));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedQuestions(new Set());
+  };
+
+  const handleAddSelectedQuestions = (confirmed = false) => {
     if (!bankDetail || selectedQuestions.size === 0) {
       toast.error('Select at least one question');
       return;
+    }
+
+    if (!confirmed) {
+      const existingJson = surveyJson ?? surveyEditorRef.current?.getJson();
+      if (existingJson) {
+        try {
+          const parsed = typeof existingJson === 'string' ? JSON.parse(existingJson) : existingJson;
+          const hasQuestions = parsed.pages?.some((p: any) => p.elements?.length > 0);
+          if (hasQuestions) {
+            setShowConfirmReplace(true);
+            return;
+          }
+        } catch (e) {
+          // fallback to no warning if parse fails
+        }
+      }
     }
 
     const items = bankDetail.items.filter((item) => selectedQuestions.has(item.id));
@@ -89,7 +136,7 @@ export default function AssessmentCreate() {
 
     setSurveyJson(JSON.stringify(surveyJsonObj));
     setActiveTab('builder');
-    toast.success(`Added ${elements.length} questions from bank`);
+    toast.success(`Added ${elements.length} questions to assessment`);
 
     // Increment usage count for each question (fire-and-forget)
     items.forEach((item) => {
@@ -340,7 +387,7 @@ export default function AssessmentCreate() {
                   Choose a question bank and select questions to add to this assessment.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="bankSelect">Question Bank</Label>
                   <Select value={selectedBankId} onValueChange={setSelectedBankId}>
@@ -359,11 +406,32 @@ export default function AssessmentCreate() {
 
                 {selectedBankId && bankDetail && (
                   <>
-                    <div className="space-y-2">
-                      <Label>Select Questions</Label>
-                      <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-3">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Available Questions ({bankDetail.items.length})</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSelectAll}
+                            className="h-8 text-xs"
+                          >
+                            Select All
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDeselectAll}
+                            disabled={selectedQuestions.size === 0}
+                            className="h-8 text-xs"
+                          >
+                            Deselect All
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-1">
                         {bankDetail.items.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="p-4 text-sm text-muted-foreground text-center">
                             This bank has no questions yet.
                           </p>
                         ) : (
@@ -371,60 +439,182 @@ export default function AssessmentCreate() {
                             const q = item.questionData;
                             const choicesCount = Array.isArray(q.choices) ? q.choices.length : 0;
                             const difficulty = q.metadata?.difficulty;
+                            const isExpanded = expandedQuestions.has(item.id);
 
                             return (
-                              <label
+                              <div
                                 key={item.id}
-                                className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                                className="border rounded-md overflow-hidden bg-card"
                               >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedQuestions.has(item.id)}
-                                  onChange={(e) => {
-                                    const newSet = new Set(selectedQuestions);
-                                    if (e.target.checked) {
-                                      newSet.add(item.id);
-                                    } else {
-                                      newSet.delete(item.id);
-                                    }
-                                    setSelectedQuestions(newSet);
-                                  }}
-                                  className="mt-1 h-4 w-4 rounded border"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="font-medium text-sm">{q.title || q.name}</p>
-                                    <Badge variant="outline" className="text-xs">
-                                      {q.type}
-                                    </Badge>
-                                    {difficulty && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        Level {difficulty}
-                                      </Badge>
-                                    )}
+                                <div className="flex items-start gap-3 p-3 hover:bg-muted/30 transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedQuestions.has(item.id)}
+                                    onChange={(e) => {
+                                      const newSet = new Set(selectedQuestions);
+                                      if (e.target.checked) {
+                                        newSet.add(item.id);
+                                      } else {
+                                        newSet.delete(item.id);
+                                      }
+                                      setSelectedQuestions(newSet);
+                                    }}
+                                    className="mt-1 h-4 w-4 rounded border shrink-0"
+                                  />
+                                  <div
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                    onClick={() => toggleExpand(item.id)}
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <p className="font-medium text-sm leading-tight">
+                                            {q.title || q.name}
+                                          </p>
+                                          <Badge variant="outline" className="text-[10px] h-4">
+                                            {q.type}
+                                          </Badge>
+                                          {difficulty && (
+                                            <Badge variant="secondary" className="text-[10px] h-4">
+                                              Level {difficulty}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                          {choicesCount} choices{' '}
+                                          {q.metadata?.chapter && `• ${q.metadata.chapter}`}
+                                        </p>
+                                      </div>
+                                      {isExpanded ? (
+                                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                                      ) : (
+                                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                                      )}
+                                    </div>
                                   </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    {choicesCount} choices
-                                  </p>
                                 </div>
-                              </label>
+                                {isExpanded && (
+                                  <div className="px-10 pb-4 text-sm space-y-4 bg-muted/10 border-t">
+                                    <div className="pt-3">
+                                      {q.description && (
+                                        <p className="text-muted-foreground mb-3">
+                                          {q.description}
+                                        </p>
+                                      )}
+
+                                      <div className="space-y-2">
+                                        <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                                          Choices
+                                        </p>
+                                        <ul className="space-y-1.5">
+                                          {Array.isArray(q.choices) &&
+                                            q.choices.map((choice, idx) => {
+                                              const choiceValue =
+                                                typeof choice === 'string' ? choice : choice.value;
+                                              const choiceText =
+                                                typeof choice === 'string' ? choice : choice.text;
+                                              const isCorrect = q.correctAnswer === choiceValue;
+
+                                              return (
+                                                <li
+                                                  key={idx}
+                                                  className={`flex items-start gap-2 p-2 rounded text-xs ${
+                                                    isCorrect
+                                                      ? 'bg-green-50 text-green-700 border border-green-100'
+                                                      : 'bg-muted/20'
+                                                  }`}
+                                                >
+                                                  {isCorrect && (
+                                                    <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                                  )}
+                                                  <span>{choiceText}</span>
+                                                </li>
+                                              );
+                                            })}
+                                        </ul>
+                                      </div>
+
+                                      {(q.metadata?.explanation || q.metadata?.category) && (
+                                        <div className="grid grid-cols-2 gap-4 pt-3 border-t mt-4">
+                                          {q.metadata?.category && (
+                                            <div>
+                                              <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                                                Category
+                                              </p>
+                                              <p className="text-xs">{q.metadata.category}</p>
+                                            </div>
+                                          )}
+                                          {q.metadata?.explanation && (
+                                            <div className="col-span-2">
+                                              <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                                                Explanation
+                                              </p>
+                                              <p className="text-xs italic">
+                                                {q.metadata.explanation}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             );
                           })
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    {selectedQuestions.size > 0 && (
+                      <div className="space-y-3 pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-sm">
+                            Selected Questions ({selectedQuestions.size})
+                          </h4>
+                        </div>
+                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                          {bankDetail.items
+                            .filter((i) => selectedQuestions.has(i.id))
+                            .map((item) => (
+                              <Badge
+                                key={item.id}
+                                variant="secondary"
+                                className="pl-2 pr-1 py-1 flex items-center gap-1 max-w-[300px]"
+                              >
+                                <span className="truncate text-[11px]">
+                                  {item.questionData.title || item.questionData.name}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-4 w-4 rounded-full p-0 hover:bg-muted"
+                                  onClick={() => {
+                                    const newSet = new Set(selectedQuestions);
+                                    newSet.delete(item.id);
+                                    setSelectedQuestions(newSet);
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
                       <p className="text-sm text-muted-foreground">
-                        {selectedQuestions.size} question{selectedQuestions.size !== 1 ? 's' : ''}{' '}
-                        selected
+                        {selectedQuestions.size} question
+                        {selectedQuestions.size !== 1 ? 's' : ''} ready to add
                       </p>
                       <Button
-                        onClick={handleAddSelectedQuestions}
+                        onClick={() => handleAddSelectedQuestions()}
                         disabled={selectedQuestions.size === 0}
                         className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
                       >
-                        Add Selected Questions
+                        Add {selectedQuestions.size} Question
+                        {selectedQuestions.size !== 1 ? 's' : ''} to Assessment
                       </Button>
                     </div>
                   </>
@@ -447,6 +637,27 @@ export default function AssessmentCreate() {
             Create Assessment
           </Button>
         </div>
+
+      <AlertDialog open={showConfirmReplace} onOpenChange={setShowConfirmReplace}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace existing questions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The builder already contains questions. Adding questions from the bank will replace
+              your current questions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleAddSelectedQuestions(true)}
+              className="bg-[#1b5fd0] hover:bg-[#1b5fd0]/90"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
