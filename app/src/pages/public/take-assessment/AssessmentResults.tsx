@@ -12,13 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { AssessmentSubmitResult } from '@/types/api';
 
-function splitName(studentName: string): { firstName: string; lastName: string } {
-  const trimmed = studentName.trim();
-  if (!trimmed) return { firstName: '', lastName: '' };
-  const [firstName, ...rest] = trimmed.split(/\s+/);
-  return { firstName, lastName: rest.join(' ') };
-}
-
 function formatScore(result: AssessmentSubmitResult) {
   const totalCorrect = result.totalCorrect ?? 0;
   const totalQuestions = result.totalQuestions ?? 0;
@@ -37,11 +30,13 @@ function formatScore(result: AssessmentSubmitResult) {
 
 export function AssessmentResults({
   result,
-  studentName,
+  firstName,
+  lastName,
   studentEmail,
 }: {
   result: AssessmentSubmitResult;
-  studentName: string;
+  firstName: string;
+  lastName: string;
   studentEmail: string;
 }) {
   const [password, setPassword] = useState('');
@@ -67,14 +62,12 @@ export function AssessmentResults({
       return;
     }
 
-    const nameParts = splitName(studentName);
-
     try {
       await registerStudent.mutateAsync({
         email: studentEmail.trim(),
         password: trimmedPassword,
-        firstName: nameParts.firstName,
-        lastName: nameParts.lastName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
       });
       setAccountCreated(true);
       setAccountSkipped(false);
@@ -121,8 +114,8 @@ export function AssessmentResults({
 
       <Card className="border-primary/30">
         <CardHeader>
-          <CardTitle className="text-xl">Create an account to save your results and review later</CardTitle>
-          <CardDescription>Use your assessment email to link this attempt to your account.</CardDescription>
+          <CardTitle className="text-xl">Create your account to review your answers and track your progress</CardTitle>
+          <CardDescription>Set a password to secure your account.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {accountCreated ? (
@@ -143,6 +136,36 @@ export function AssessmentResults({
             </p>
           ) : (
             <form onSubmit={handleCreateAccount} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="accountFirstName">First Name</Label>
+                  <Input
+                    id="accountFirstName"
+                    value={firstName}
+                    readOnly
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountLastName">Last Name</Label>
+                  <Input
+                    id="accountLastName"
+                    value={lastName}
+                    readOnly
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountEmail">Email</Label>
+                <Input
+                  id="accountEmail"
+                  type="email"
+                  value={studentEmail}
+                  readOnly
+                  className="bg-muted"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Password</Label>
                 <Input

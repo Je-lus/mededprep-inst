@@ -8,22 +8,30 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 export function StudentInfoStep({
+  title,
+  description,
   questionCount,
   timeLimitMinutes,
-  studentName,
+  firstName,
+  lastName,
   studentEmail,
-  onNameChange,
+  onFirstNameChange,
+  onLastNameChange,
   onEmailChange,
   onSubmit,
   isPending,
   isError,
   error,
 }: {
+  title: string;
+  description?: string;
   questionCount: number;
   timeLimitMinutes?: number;
-  studentName: string;
+  firstName: string;
+  lastName: string;
   studentEmail: string;
-  onNameChange: (value: string) => void;
+  onFirstNameChange: (value: string) => void;
+  onLastNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   isPending: boolean;
@@ -34,8 +42,8 @@ export function StudentInfoStep({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Assessment Info</CardTitle>
-          <CardDescription>Confirm your details to begin the assessment.</CardDescription>
+          <CardTitle className="text-2xl">{title}</CardTitle>
+          {description && <CardDescription className="text-base">{description}</CardDescription>}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -54,16 +62,29 @@ export function StudentInfoStep({
           <Separator />
 
           <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="studentName">Student Name</Label>
-              <Input
-                id="studentName"
-                value={studentName}
-                onChange={(event) => onNameChange(event.target.value)}
-                placeholder="Jane Doe"
-                autoComplete="name"
-                required
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(event) => onFirstNameChange(event.target.value)}
+                  placeholder="Jane"
+                  autoComplete="given-name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(event) => onLastNameChange(event.target.value)}
+                  placeholder="Doe"
+                  autoComplete="family-name"
+                  required
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="studentEmail">Student Email</Label>
@@ -77,8 +98,13 @@ export function StudentInfoStep({
                 required
               />
             </div>
-            <Button type="submit" disabled={isPending} className="w-full">
-              {isPending ? 'Starting...' : 'Start Assessment'}
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full"
+              style={{ backgroundColor: '#1b5fd0' }}
+            >
+              {isPending ? 'Starting...' : 'Begin Assessment'}
             </Button>
           </form>
         </CardContent>
