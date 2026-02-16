@@ -105,9 +105,8 @@ export default function AssessmentCreate() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold">Create Assessment</h1>
             <p className="text-sm text-muted-foreground">
@@ -286,7 +285,6 @@ export default function AssessmentCreate() {
             Create Assessment
           </Button>
         </div>
-      </main>
     </div>
   );
 }

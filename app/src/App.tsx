@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useIsAuthenticated } from './lib/auth';
 import { useIsStudentAuthenticated } from './lib/student-auth';
+import AdminLayout from './components/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AssessmentList from './pages/admin/AssessmentList';
@@ -30,11 +31,13 @@ export default function App() {
     <Routes>
       {/* Admin routes */}
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/assessments" element={<ProtectedRoute><AssessmentList /></ProtectedRoute>} />
-      <Route path="/assessments/new" element={<ProtectedRoute><AssessmentCreate /></ProtectedRoute>} />
-      <Route path="/assessments/:id" element={<ProtectedRoute><AssessmentDetail /></ProtectedRoute>} />
-      <Route path="/assessments/:id/present" element={<ProtectedRoute><QrPresenter /></ProtectedRoute>} />
+      <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+        <Route index element={<Dashboard />} />
+        <Route path="assessments" element={<AssessmentList />} />
+        <Route path="assessments/new" element={<AssessmentCreate />} />
+        <Route path="assessments/:id" element={<AssessmentDetail />} />
+        <Route path="assessments/:id/present" element={<QrPresenter />} />
+      </Route>
 
       {/* Public routes (no auth) */}
       <Route path="/take/:hash" element={<TakeAssessment />} />

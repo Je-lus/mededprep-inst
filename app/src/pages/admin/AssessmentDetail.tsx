@@ -190,38 +190,31 @@ export default function AssessmentDetail() {
 
   if (assessmentQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-          <Skeleton className="h-10 w-72" />
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-[420px] w-full" />
-        </main>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-72" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-[420px] w-full" />
       </div>
     );
   }
 
   if (assessmentQuery.isError || !assessment) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <main className="mx-auto max-w-5xl px-6 py-8">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Unable to load assessment</AlertTitle>
-            <AlertDescription>
-              {assessmentQuery.error instanceof Error
-                ? assessmentQuery.error.message
-                : 'Try again later.'}
-            </AlertDescription>
-          </Alert>
-        </main>
-      </div>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Unable to load assessment</AlertTitle>
+        <AlertDescription>
+          {assessmentQuery.error instanceof Error
+            ? assessmentQuery.error.message
+            : 'Try again later.'}
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <h1 className="text-3xl font-semibold">{assessment.title}</h1>
@@ -354,7 +347,6 @@ export default function AssessmentDetail() {
             </TabsContent>
           )}
         </Tabs>
-      </main>
 
       <EditAssessmentDialog
         open={isEditOpen}
