@@ -97,14 +97,15 @@ export default function AssessmentReview() {
           </CardHeader>
           <CardContent>
             <p className="text-base font-medium">
-              {review.totalCorrect} correct out of {review.totalQuestions} ({review.scorePercentage}%)
+              {review.totalCorrect} correct out of {review.totalQuestions} ({review.scorePercentage}
+              %)
             </p>
           </CardContent>
         </Card>
 
         {review.questions.map((question, index) => {
-          const studentValues = splitAnswer(question.studentAnswer);
-          const correctValues = splitAnswer(question.correctAnswer);
+          const studentValues = splitAnswer(String(question.studentAnswer ?? ''));
+          const correctValues = splitAnswer(String(question.correctAnswer ?? ''));
 
           const studentAnswerText =
             studentValues.length > 0
@@ -170,7 +171,9 @@ export default function AssessmentReview() {
                   <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
                     <p className="font-semibold">Explanation</p>
                     <p className="mt-1">{question.explanation}</p>
-                    {question.pageNumber && <p className="mt-2 text-xs">Reference: {question.pageNumber}</p>}
+                    {question.pageNumber && (
+                      <p className="mt-2 text-xs">Reference: {question.pageNumber}</p>
+                    )}
                   </div>
                 )}
               </CardContent>

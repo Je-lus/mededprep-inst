@@ -141,11 +141,11 @@ export interface ReviewQuestion {
   questionName: string;
   questionTitle: string;
   choices: { value: string; text: string }[];
-  studentAnswer: string;
-  correctAnswer: string;
+  studentAnswer: unknown;
+  correctAnswer: unknown;
   isCorrect: boolean;
-  explanation?: string;
-  pageNumber?: string;
+  explanation: string | null;
+  pageNumber: string | null;
 }
 
 export interface AssessmentReviewData {
@@ -153,5 +153,21 @@ export interface AssessmentReviewData {
   totalQuestions: number;
   totalCorrect: number;
   scorePercentage: string;
+  questions: ReviewQuestion[];
+}
+
+// Admin response detail
+export interface ResponseDetail {
+  response: {
+    id: string;
+    studentName: string;
+    studentEmail: string;
+    scorePercentage?: string;
+    totalCorrect?: number;
+    totalQuestions?: number;
+    passed?: boolean;
+    timeTaken?: number;
+    completedAt?: string;
+  };
   questions: ReviewQuestion[];
 }
