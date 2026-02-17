@@ -318,19 +318,13 @@ router.get('/:id/qr-code', async (req: Request, res: Response, next: NextFunctio
       throw new ValidationError('QR code can only be generated for active assessments');
     }
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction && !req.org?.subdomain) {
-      throw new ValidationError('Organization subdomain is required in production');
-    }
-
     const cached = qrCodeCache.get(assessment.publicHash);
     if (cached) {
       return res.json({ success: true, data: cached });
     }
 
-    const url = isProduction
-      ? `https://${req.org.subdomain}.mededprep.app/take/${assessment.publicHash}`
-      : `http://localhost:9000/take/${assessment.publicHash}`;
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:9000';
+    const url = `${baseUrl}/take/${assessment.publicHash}`;
 
     const qrCode = await QRCode.toDataURL(url, {
       width: 400,

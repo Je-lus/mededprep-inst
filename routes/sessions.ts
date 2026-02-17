@@ -331,16 +331,7 @@ router.get('/:id/qr-codes', async (req: Request, res: Response, next: NextFuncti
   try {
     const session = await findSessionOrThrow(param(req.params.id), req.orgId!);
 
-    const org = await prisma.organization.findUnique({
-      where: { id: req.orgId },
-      select: { subdomain: true },
-    });
-
-    // Build base URL from org subdomain
-    const baseUrl =
-      process.env.NODE_ENV === 'production'
-        ? `https://${org!.subdomain}.mededprep.app`
-        : `http://localhost:9000`;
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:9000';
 
     const checkInUrl = `${baseUrl}/attend/${session.publicHash}`;
     const checkOutUrl = `${baseUrl}/attend/${session.publicHash}/checkout`;
