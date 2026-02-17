@@ -12,6 +12,8 @@ import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { logger } from './lib/logger.js';
 
@@ -111,7 +113,13 @@ app.use(
 app.use('/health', healthRoutes);
 
 // ============================================
-// TENANT RESOLVER (all API routes)
+// ORG-INDEPENDENT PUBLIC ROUTES (before tenant resolver)
+// ============================================
+
+app.use('/api/public', generalLimiter, publicAttendanceRoutes);
+
+// ============================================
+// TENANT RESOLVER (all remaining API routes)
 // ============================================
 
 app.use('/api', tenantResolver);
@@ -127,9 +135,26 @@ app.use('/api/question-banks', generalLimiter, requireAuth, questionBankRoutes);
 app.use('/api/sessions', generalLimiter, requireAuth, sessionRoutes);
 app.use('/api/instructors', generalLimiter, requireAuth, requireRole('owner'), instructorRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
-app.use('/api/public', generalLimiter, publicRoutes, publicAttendanceRoutes);
+app.use('/api/public', generalLimiter, publicRoutes);
 app.use('/api/student', authLimiter, studentAuthRoutes);
 app.use('/api/bug-reports', submitLimiter, optionalAuth, bugReportRoutes);
+
+// ============================================
+// STATIC FRONTEND (production)
+// ============================================
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const frontendDist = path.join(__dirname, 'app', 'dist');
+
+app.use(express.static(frontendDist));
+
+// SPA fallback — serve index.html for all non-API routes
+app.get('*', (_req, res, next) => {
+  if (_req.path.startsWith('/api') || _req.path === '/health') {
+    return next();
+  }
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
 
 // ============================================
 // ERROR HANDLER

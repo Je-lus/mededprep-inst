@@ -57,10 +57,9 @@ function getAttendanceWindow(
 // GET /attend/:hash — Get session info + check-in window status
 router.get('/attend/:hash', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const session = await prisma.session.findFirst({
+    const session = await prisma.session.findUnique({
       where: {
         publicHash: param(req.params.hash),
-        orgId: req.orgId,
       },
       select: {
         id: true,
@@ -109,10 +108,9 @@ router.post(
   validate(registerSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const session = await prisma.session.findFirst({
+      const session = await prisma.session.findUnique({
         where: {
           publicHash: param(req.params.hash),
-          orgId: req.orgId,
         },
       });
 
@@ -193,10 +191,9 @@ router.post(
   validate(lookupSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const session = await prisma.session.findFirst({
+      const session = await prisma.session.findUnique({
         where: {
           publicHash: param(req.params.hash),
-          orgId: req.orgId,
         },
       });
 
@@ -239,10 +236,9 @@ router.post(
   validate(checkoutSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const session = await prisma.session.findFirst({
+      const session = await prisma.session.findUnique({
         where: {
           publicHash: param(req.params.hash),
-          orgId: req.orgId,
         },
       });
 
