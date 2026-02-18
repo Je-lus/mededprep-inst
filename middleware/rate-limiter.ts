@@ -17,10 +17,11 @@ export const authLimiter = rateLimit({
   },
 });
 
-// Public endpoints: 30 requests per minute per IP
+// Public endpoints: 120 requests per minute per IP
+// High limit because classrooms share a single public IP
 export const publicLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 120,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -29,10 +30,11 @@ export const publicLimiter = rateLimit({
   },
 });
 
-// Public submit: 5 submissions per 15 minutes per IP
+// Public submit: 60 submissions per 15 minutes per IP
+// High limit because classrooms share a single public IP
 export const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
