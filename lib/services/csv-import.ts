@@ -23,6 +23,7 @@ const REQUIRED_COLUMNS = ['Question Code', 'Question', 'Answer 1', 'Correct Answ
 export function parseCsvToSurveyJson(csvContent: string): CsvImportResult {
   const records = parse(csvContent, {
     columns: true,
+    delimiter: '\t',
     skip_empty_lines: true,
     trim: true,
     bom: true,
