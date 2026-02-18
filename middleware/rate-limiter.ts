@@ -29,10 +29,11 @@ export const publicLimiter = rateLimit({
   },
 });
 
-// Public submit: 5 submissions per 15 minutes per IP
+// Public submit: 100 submissions per 15 minutes per IP
+// Limit is high because classroom students often share a single public IP
 export const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

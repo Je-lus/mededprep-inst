@@ -96,11 +96,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         showScoreFeedback: true,
         createdAt: true,
         updatedAt: true,
-        _count: {
-          select: {
-            responses: { where: { completedAt: { not: null } } },
-          },
-        },
+        _count: { select: { responses: true } },
       },
     });
 
@@ -155,11 +151,7 @@ router.post(
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId, {
-      _count: {
-        select: {
-          responses: { where: { completedAt: { not: null } } },
-        },
-      },
+      _count: { select: { responses: true } },
     });
 
     res.json({
@@ -358,7 +350,6 @@ router.get('/:id/responses', async (req: Request, res: Response, next: NextFunct
     const where = {
       assessmentId: assessment.id,
       assessment: { orgId: req.orgId },
-      completedAt: { not: null },
     };
     const [responses, total] = await Promise.all([
       prisma.assessmentResponse.findMany({
@@ -467,7 +458,6 @@ router.get('/:id/item-analysis', async (req: Request, res: Response, next: NextF
       where: {
         assessmentId: assessment.id,
         assessment: { orgId: req.orgId },
-        completedAt: { not: null },
       },
       orderBy: { completedAt: 'desc' },
     });
