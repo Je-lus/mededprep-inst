@@ -45,6 +45,15 @@ export interface ScoreBucket {
   passing: boolean;
 }
 
+function toNumber(value: unknown): number | null {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const n = Number(value);
+    return Number.isNaN(n) ? null : n;
+  }
+  return null;
+}
+
 export function computeScoreDistribution(
   responses: AssessmentResponse[],
   passingScore: number,
@@ -56,8 +65,9 @@ export function computeScoreDistribution(
   }));
 
   for (const r of responses) {
-    if (typeof r.scorePercentage !== 'number') continue;
-    const score = normalizePercent(r.scorePercentage);
+    const raw = toNumber(r.scorePercentage);
+    if (raw === null) continue;
+    const score = normalizePercent(raw);
     const idx = score === 0 ? 0 : Math.min(Math.ceil(score / 10) - 1, 9);
     buckets[idx].count++;
   }
@@ -78,9 +88,10 @@ export function computeResponseStats(
   passingScore: number,
 ): ResponseStats {
   const scores = responses
-    .map((r) =>
-      typeof r.scorePercentage === 'number' ? normalizePercent(r.scorePercentage) : null,
-    )
+    .map((r) => {
+      const raw = toNumber(r.scorePercentage);
+      return raw !== null ? normalizePercent(raw) : null;
+    })
     .filter((s): s is number => s !== null)
     .sort((a, b) => a - b);
 

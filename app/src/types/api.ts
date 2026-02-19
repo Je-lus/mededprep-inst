@@ -36,7 +36,7 @@ export interface AssessmentResponse {
   attempt?: number;
   totalQuestions?: number;
   totalCorrect?: number;
-  scorePercentage?: number;
+  scorePercentage?: number | string;
   passed?: boolean;
   timeTaken?: number;
   startedAt: string;
