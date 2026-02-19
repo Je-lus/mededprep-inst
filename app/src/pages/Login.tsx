@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api, getFieldErrors } from '../lib/api';
 import { useAuthStore, type User, type OrgInfo } from '../lib/auth';
 import { toast } from 'sonner';
@@ -82,6 +82,13 @@ export default function Login() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          <p className="text-center text-sm text-muted-foreground pt-2">
+            Are you a student?{' '}
+            <Link to="/student/login" className="font-medium text-primary underline">
+              Sign in here
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

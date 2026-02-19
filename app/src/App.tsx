@@ -23,11 +23,12 @@ import CreateAccount from './pages/public/CreateAccount';
 import StudentLogin from './pages/student/StudentLogin';
 import StudentDashboard from './pages/student/StudentDashboard';
 import AssessmentReview from './pages/student/AssessmentReview';
+import Welcome from './pages/Welcome';
 import BugReportButton from './components/BugReportButton';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsAuthenticated();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/welcome" replace />;
   return <>{children}</>;
 }
 
@@ -41,6 +42,9 @@ export default function App() {
   return (
     <>
       <Routes>
+        {/* Welcome / role selection */}
+        <Route path="/welcome" element={<Welcome />} />
+
         {/* Admin routes */}
         <Route path="/login" element={<Login />} />
         <Route
@@ -91,7 +95,7 @@ export default function App() {
         />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/welcome" replace />} />
       </Routes>
 
       <BugReportButton />

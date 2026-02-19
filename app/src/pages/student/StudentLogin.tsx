@@ -87,7 +87,9 @@ export default function StudentLogin() {
                   onChange={(event) => setPassword(event.target.value)}
                   required
                 />
-                {fieldErrors.password && <p className="text-sm text-rose-600">{fieldErrors.password}</p>}
+                {fieldErrors.password && (
+                  <p className="text-sm text-rose-600">{fieldErrors.password}</p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={loginStudent.isPending}>
@@ -99,6 +101,12 @@ export default function StudentLogin() {
               Need an account?{' '}
               <Link to="/create-account" className="font-medium text-primary underline">
                 Create one
+              </Link>
+            </p>
+            <p className="text-center text-sm text-muted-foreground">
+              Are you an instructor?{' '}
+              <Link to="/login" className="font-medium text-primary underline">
+                Sign in here
               </Link>
             </p>
           </CardContent>
