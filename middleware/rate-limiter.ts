@@ -17,6 +17,19 @@ export const authLimiter = rateLimit({
   },
 });
 
+// Student auth: 50 requests per 15 minutes per IP
+// Higher limit because classrooms share a single public IP
+export const studentAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMITED', message: 'Too many attempts. Please try again later.' },
+  },
+});
+
 // Public endpoints: 120 requests per minute per IP
 // High limit because classrooms share a single public IP
 export const publicLimiter = rateLimit({

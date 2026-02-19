@@ -28,6 +28,7 @@ export function ResponsesTab({
   isLoading,
   isError,
   error,
+  isLive,
   onPrevious,
   onNext,
 }: {
@@ -39,6 +40,7 @@ export function ResponsesTab({
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
+  isLive?: boolean;
   onPrevious: () => void;
   onNext: () => void;
 }) {
@@ -46,7 +48,15 @@ export function ResponsesTab({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Responses</CardTitle>
+        <div className="flex items-center gap-3">
+          <CardTitle>Responses</CardTitle>
+          {isLive && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live &mdash; updating every 10s
+            </span>
+          )}
+        </div>
         <CardDescription>Submitted student assessments and outcomes.</CardDescription>
       </CardHeader>
       <CardContent>

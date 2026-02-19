@@ -13,6 +13,7 @@ import QuestionBankCreate from './pages/admin/QuestionBankCreate';
 import QuestionBankDetail from './pages/admin/QuestionBankDetail';
 import BugReports from './pages/admin/BugReports';
 import InstructorList from './pages/admin/InstructorList';
+import StudentList from './pages/admin/StudentList';
 import SessionList from './pages/admin/SessionList';
 import SessionDetail from './pages/admin/SessionDetail';
 import TakeAssessment from './pages/public/TakeAssessment';
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="sessions" element={<SessionList />} />
           <Route path="sessions/:id" element={<SessionDetail />} />
           <Route path="bug-reports" element={<BugReports />} />
+          <Route path="students" element={<StudentList />} />
           <Route path="instructors" element={<InstructorList />} />
         </Route>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, Loader2, QrCode, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+  useAllAssessmentResponses,
   useAssessment,
   useAssessmentQrCode,
   useAssessmentResponses,
@@ -69,6 +70,11 @@ export default function AssessmentDetail() {
     hasResponses ? id : '',
     isActiveAssessment ? 10000 : undefined,
   );
+  const allResponsesQuery = useAllAssessmentResponses(
+    hasResponses ? id : '',
+    isActiveAssessment ? 10000 : undefined,
+  );
+  const allResponses = allResponsesQuery.data?.data ?? [];
 
   const publishAssessment = usePublishAssessment();
   const closeAssessment = useCloseAssessment();
@@ -357,8 +363,20 @@ export default function AssessmentDetail() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           {assessment.status === 'active' && <TabsTrigger value="qr">QR Code</TabsTrigger>}
-          <TabsTrigger value="responses">Responses</TabsTrigger>
-          {hasResponses && <TabsTrigger value="analysis">Item Analysis</TabsTrigger>}
+          <TabsTrigger value="responses" className="gap-1.5">
+            Responses
+            {isActiveAssessment && (
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            )}
+          </TabsTrigger>
+          {hasResponses && (
+            <TabsTrigger value="analysis" className="gap-1.5">
+              Item Analysis
+              {isActiveAssessment && (
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview">
@@ -397,6 +415,7 @@ export default function AssessmentDetail() {
             isLoading={responsesQuery.isLoading}
             isError={responsesQuery.isError}
             error={responsesQuery.error}
+            isLive={isActiveAssessment}
             onPrevious={() => setResponsesPage((current) => Math.max(current - 1, 1))}
             onNext={() => setResponsesPage((current) => current + 1)}
           />
@@ -412,6 +431,9 @@ export default function AssessmentDetail() {
               isLoading={analysisQuery.isLoading}
               isError={analysisQuery.isError}
               error={analysisQuery.error}
+              isLive={isActiveAssessment}
+              allResponses={allResponses}
+              passingScore={assessment.passingScore ?? 70}
             />
           </TabsContent>
         )}

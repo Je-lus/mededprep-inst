@@ -11,10 +11,10 @@ export default function BugReportButton() {
       <Button
         onClick={() => setDialogOpen(true)}
         size="lg"
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary-500 hover:bg-primary-500/90"
+        className="fixed bottom-20 right-3 md:bottom-6 md:right-6 z-50 h-10 w-10 md:h-14 md:w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary-500 hover:bg-primary-500/90"
         aria-label="Report a bug"
       >
-        <Bug className="h-6 w-6" />
+        <Bug className="h-4 w-4 md:h-6 md:w-6" />
       </Button>
 
       <BugReportDialog open={dialogOpen} onOpenChange={setDialogOpen} />

@@ -309,6 +309,18 @@ export interface SessionQrCodes {
   checkOut: QrCodeData;
 }
 
+// Student types (admin view)
+export interface Student {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  responseCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Instructor types
 export interface Instructor {
   id: string;

@@ -19,7 +19,12 @@ import { logger } from './lib/logger.js';
 
 import { tenantResolver } from './middleware/tenantResolver.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { authLimiter, generalLimiter, submitLimiter } from './middleware/rate-limiter.js';
+import {
+  authLimiter,
+  studentAuthLimiter,
+  generalLimiter,
+  submitLimiter,
+} from './middleware/rate-limiter.js';
 import { optionalAuth } from './middleware/optionalAuth.js';
 
 import { requireAuth, requireRole } from './lib/auth.js';
@@ -32,6 +37,7 @@ import studentAuthRoutes from './routes/student-auth.js';
 import bugReportRoutes from './routes/bug-reports.js';
 import sessionRoutes from './routes/sessions.js';
 import instructorRoutes from './routes/instructors.js';
+import studentRoutes from './routes/students.js';
 import publicAttendanceRoutes from './routes/public-attendance.js';
 
 const ALLOWED_ORIGINS = new Set((process.env.CORS_ORIGINS || 'http://localhost:9000').split(','));
@@ -134,9 +140,10 @@ app.use('/api/assessments', generalLimiter, requireAuth, assessmentRoutes);
 app.use('/api/question-banks', generalLimiter, requireAuth, questionBankRoutes);
 app.use('/api/sessions', generalLimiter, requireAuth, sessionRoutes);
 app.use('/api/instructors', generalLimiter, requireAuth, requireRole('owner'), instructorRoutes);
+app.use('/api/students', generalLimiter, requireAuth, studentRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
 app.use('/api/public', generalLimiter, publicRoutes);
-app.use('/api/student', authLimiter, studentAuthRoutes);
+app.use('/api/student', studentAuthLimiter, studentAuthRoutes);
 app.use('/api/bug-reports', submitLimiter, optionalAuth, bugReportRoutes);
 
 // ============================================

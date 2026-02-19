@@ -135,6 +135,18 @@ export function useAssessmentQrCode(id: string) {
   });
 }
 
+export function useAllAssessmentResponses(id: string, refetchInterval?: number) {
+  return useQuery({
+    queryKey: ['assessments', id, 'responses', 'all'],
+    queryFn: async () =>
+      ensurePaginatedSuccess(
+        await api.get<AssessmentResponse[]>(`/api/assessments/${id}/responses?page=1&limit=1000`),
+      ),
+    enabled: !!id,
+    refetchInterval,
+  });
+}
+
 export function useAssessmentResponses(id: string, page = 1, limit = 10, refetchInterval?: number) {
   return useQuery({
     queryKey: ['assessments', id, 'responses', page, limit],

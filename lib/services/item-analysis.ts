@@ -1,11 +1,15 @@
 /**
  * Item Analysis Service
- * Computes per-question statistics including point-biserial discrimination index (rpb)
+ * Computes per-question statistics including corrected point-biserial discrimination index (rpb)
  *
- * rpb = (M1 - M0) / S * sqrt(p * q)
- * M1 = mean total score of students who got the item RIGHT
- * M0 = mean total score of students who got the item WRONG
- * S  = standard deviation of ALL total scores
+ * Uses the corrected point-biserial: the item being analyzed is removed from
+ * each student's total score before computing the correlation. This avoids the
+ * "part-whole" problem where the item inflates its own discrimination index.
+ *
+ * rpb = (M1 - M0) / S_corrected * sqrt(p * q)
+ * M1 = mean corrected total of students who got the item RIGHT
+ * M0 = mean corrected total of students who got the item WRONG
+ * S_corrected = SD of all corrected totals (total minus this item's score)
  * p  = proportion correct, q = 1 - p
  *
  * Interpretation: >0.3 good, 0.2-0.3 acceptable, <0.2 weak
@@ -95,7 +99,6 @@ export function computeItemAnalysis(
   });
 
   const totalScores = studentScores.map((s) => s.totalCorrect);
-  const sdTotal = standardDeviation(totalScores);
 
   const questionAnalyses: QuestionAnalysis[] = questions.map((q) => {
     const choices = q.choices || [];
@@ -108,17 +111,22 @@ export function computeItemAnalysis(
     let correctCount = 0;
     const scoresCorrect: number[] = [];
     const scoresIncorrect: number[] = [];
+    const correctedTotals: number[] = [];
 
     for (const student of studentScores) {
       const answer = student.responseData[q.name];
       const answerStr = typeof answer === 'string' ? answer : String(answer ?? '');
       if (choiceCounts[answerStr] !== undefined) choiceCounts[answerStr]++;
 
-      if (normalizeAnswer(answer) === normalizeAnswer(q.correctAnswer)) {
+      const isCorrect = normalizeAnswer(answer) === normalizeAnswer(q.correctAnswer);
+      const correctedTotal = student.totalCorrect - (isCorrect ? 1 : 0);
+      correctedTotals.push(correctedTotal);
+
+      if (isCorrect) {
         correctCount++;
-        scoresCorrect.push(student.totalCorrect);
+        scoresCorrect.push(correctedTotal);
       } else {
-        scoresIncorrect.push(student.totalCorrect);
+        scoresIncorrect.push(correctedTotal);
       }
     }
 
@@ -126,10 +134,11 @@ export function computeItemAnalysis(
     const qVal = 1 - p;
     const M1 = mean(scoresCorrect);
     const M0 = mean(scoresIncorrect);
+    const sdCorrected = standardDeviation(correctedTotals);
 
     let rpb = 0;
-    if (sdTotal > 0 && p > 0 && p < 1) {
-      rpb = ((M1 - M0) / sdTotal) * Math.sqrt(p * qVal);
+    if (sdCorrected > 0 && p > 0 && p < 1) {
+      rpb = ((M1 - M0) / sdCorrected) * Math.sqrt(p * qVal);
     }
 
     return {

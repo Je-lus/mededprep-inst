@@ -1,10 +1,12 @@
-import type { AssessmentDetail, SurveyElement } from '@/types/api';
+import type { AssessmentDetail, AssessmentResponse, SurveyElement } from '@/types/api';
 
 export function getQuestionCount(surveyJson: AssessmentDetail['surveyJson']) {
   if (!surveyJson?.pages) return 0;
   return surveyJson.pages.reduce((total, page) => {
     if (!Array.isArray(page?.elements)) return total;
-    return total + page.elements.filter((element: SurveyElement | undefined) => !!element?.name).length;
+    return (
+      total + page.elements.filter((element: SurveyElement | undefined) => !!element?.name).length
+    );
   }, 0);
 }
 
@@ -35,4 +37,72 @@ export function pbsClass(value: number) {
   if (value > 0.3) return 'bg-emerald-50 text-emerald-700';
   if (value >= 0.2) return 'bg-amber-50 text-amber-700';
   return 'bg-red-50 text-red-700';
+}
+
+export interface ScoreBucket {
+  range: string;
+  count: number;
+  passing: boolean;
+}
+
+export function computeScoreDistribution(
+  responses: AssessmentResponse[],
+  passingScore: number,
+): ScoreBucket[] {
+  const buckets: ScoreBucket[] = Array.from({ length: 10 }, (_, i) => ({
+    range: `${i * 10 + (i === 0 ? 0 : 1)}-${(i + 1) * 10}%`,
+    count: 0,
+    passing: (i + 1) * 10 >= passingScore,
+  }));
+
+  for (const r of responses) {
+    if (typeof r.scorePercentage !== 'number') continue;
+    const score = normalizePercent(r.scorePercentage);
+    const idx = score === 0 ? 0 : Math.min(Math.ceil(score / 10) - 1, 9);
+    buckets[idx].count++;
+  }
+
+  return buckets;
+}
+
+export interface ResponseStats {
+  median: number;
+  min: number;
+  max: number;
+  passCount: number;
+  failCount: number;
+}
+
+export function computeResponseStats(
+  responses: AssessmentResponse[],
+  passingScore: number,
+): ResponseStats {
+  const scores = responses
+    .map((r) =>
+      typeof r.scorePercentage === 'number' ? normalizePercent(r.scorePercentage) : null,
+    )
+    .filter((s): s is number => s !== null)
+    .sort((a, b) => a - b);
+
+  if (scores.length === 0) {
+    return { median: 0, min: 0, max: 0, passCount: 0, failCount: 0 };
+  }
+
+  const mid = Math.floor(scores.length / 2);
+  const median = scores.length % 2 === 0 ? (scores[mid - 1] + scores[mid]) / 2 : scores[mid];
+
+  let passCount = 0;
+  let failCount = 0;
+  for (const score of scores) {
+    if (score >= passingScore) passCount++;
+    else failCount++;
+  }
+
+  return {
+    median,
+    min: scores[0],
+    max: scores[scores.length - 1],
+    passCount,
+    failCount,
+  };
 }

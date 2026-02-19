@@ -69,6 +69,16 @@ export default function AdminLayout() {
           >
             Bug Reports
           </NavLink>
+          <NavLink
+            to="/students"
+            className={({ isActive }) =>
+              isActive
+                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                : 'py-3 text-muted-foreground hover:text-foreground'
+            }
+          >
+            Students
+          </NavLink>
           {user?.role === 'owner' && (
             <NavLink
               to="/instructors"

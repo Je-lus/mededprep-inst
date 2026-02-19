@@ -1,5 +1,15 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +23,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import type { QuestionAnalysis } from '@/types/api';
-import { normalizePercent, pbsClass } from './utils';
+import type { AssessmentResponse, QuestionAnalysis } from '@/types/api';
+import {
+  computeResponseStats,
+  computeScoreDistribution,
+  normalizePercent,
+  pbsClass,
+} from './utils';
 
 function QuestionDetail({ question }: { question: QuestionAnalysis }) {
   return (
@@ -46,7 +61,7 @@ function QuestionDetail({ question }: { question: QuestionAnalysis }) {
               key={`${question.questionName}-${choice.value}`}
               className={cn(
                 'rounded border p-2',
-                isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white'
+                isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white',
               )}
             >
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">
@@ -85,6 +100,9 @@ export function ItemAnalysisTab({
   isLoading,
   isError,
   error,
+  isLive,
+  allResponses,
+  passingScore,
 }: {
   questions: QuestionAnalysis[];
   totalResponses: number;
@@ -93,12 +111,42 @@ export function ItemAnalysisTab({
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
+  isLive?: boolean;
+  allResponses?: AssessmentResponse[];
+  passingScore?: number;
 }) {
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
+  const effectivePassingScore = passingScore ?? 70;
+  const normalizedAverage = averageScore ? normalizePercent(averageScore) : 0;
+
+  const distribution = useMemo(
+    () => computeScoreDistribution(allResponses ?? [], effectivePassingScore),
+    [allResponses, effectivePassingScore],
+  );
+
+  const stats = useMemo(
+    () => computeResponseStats(allResponses ?? [], effectivePassingScore),
+    [allResponses, effectivePassingScore],
+  );
+
+  const hasAllResponses = (allResponses?.length ?? 0) > 0;
+  const passRate = hasAllResponses
+    ? (stats.passCount / (stats.passCount + stats.failCount)) * 100
+    : 0;
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
+      {isLive && (
+        <div className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live &mdash; updating every 10s
+          </span>
+        </div>
+      )}
+
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Responses</CardDescription>
@@ -108,9 +156,42 @@ export function ItemAnalysisTab({
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Average Score</CardDescription>
-            <CardTitle>
-              {averageScore ? `${normalizePercent(averageScore).toFixed(1)}%` : '-'}
+            <CardTitle
+              className={cn(
+                normalizedAverage > 0 && normalizedAverage >= effectivePassingScore
+                  ? 'text-emerald-700'
+                  : normalizedAverage > 0
+                    ? 'text-red-600'
+                    : '',
+              )}
+            >
+              {normalizedAverage > 0 ? `${normalizedAverage.toFixed(1)}%` : '-'}
             </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Pass Rate</CardDescription>
+            <CardTitle>{hasAllResponses ? `${passRate.toFixed(1)}%` : '-'}</CardTitle>
+            {hasAllResponses && (
+              <div className="mt-1 h-2 rounded bg-muted">
+                <div
+                  className="h-2 rounded bg-emerald-600"
+                  style={{ width: `${Math.min(passRate, 100)}%` }}
+                />
+              </div>
+            )}
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Score Range</CardDescription>
+            <CardTitle>
+              {hasAllResponses ? `${stats.min.toFixed(0)}% - ${stats.max.toFixed(0)}%` : '-'}
+            </CardTitle>
+            {hasAllResponses && (
+              <p className="text-xs text-muted-foreground">Median: {stats.median.toFixed(1)}%</p>
+            )}
           </CardHeader>
         </Card>
         <Card>
@@ -121,10 +202,41 @@ export function ItemAnalysisTab({
         </Card>
       </div>
 
+      {hasAllResponses && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Score Distribution</CardTitle>
+            <CardDescription>
+              {stats.passCount} passed, {stats.failCount} failed (passing: {effectivePassingScore}%)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={distribution} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="range" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value) => [value, 'Students']}
+                  labelFormatter={(label) => `Score: ${label}`}
+                />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                  {distribution.map((bucket) => (
+                    <Cell key={bucket.range} fill={bucket.passing ? '#059669' : '#dc2626'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Question Analysis</CardTitle>
-          <CardDescription>Click a row to inspect choice distribution and metadata.</CardDescription>
+          <CardDescription>
+            Click a row to inspect choice distribution and metadata.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading && (
@@ -178,8 +290,8 @@ export function ItemAnalysisTab({
                             percentCorrect >= 70
                               ? 'text-emerald-700'
                               : percentCorrect >= 50
-                              ? 'text-amber-600'
-                              : 'text-red-600',
+                                ? 'text-amber-600'
+                                : 'text-red-600',
                           )}
                         >
                           {percentCorrect.toFixed(1)}%
