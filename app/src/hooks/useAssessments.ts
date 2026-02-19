@@ -140,7 +140,7 @@ export function useAllAssessmentResponses(id: string, refetchInterval?: number) 
     queryKey: ['assessments', id, 'responses', 'all'],
     queryFn: async () =>
       ensurePaginatedSuccess(
-        await api.get<AssessmentResponse[]>(`/api/assessments/${id}/responses?page=1&limit=1000`),
+        await api.get<AssessmentResponse[]>(`/api/assessments/${id}/responses?page=1&limit=200`),
       ),
     enabled: !!id,
     refetchInterval,
