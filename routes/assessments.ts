@@ -175,7 +175,13 @@ router.put(
 
       const updateKeys = Object.keys(req.body);
       if (assessment.status !== 'draft' && updateKeys.length > 0) {
-        const allowed = new Set(['title', 'description']);
+        const allowed = new Set([
+          'title',
+          'description',
+          'allowStudentReview',
+          'resultsReleased',
+          'showScoreFeedback',
+        ]);
         const hasDisallowedField = updateKeys.some((key) => !allowed.has(key));
         if (hasDisallowedField) {
           throw new ValidationError(
