@@ -14,6 +14,7 @@ export interface AuthStudent {
   email: string;
   firstName: string;
   lastName: string;
+  emailVerified: boolean;
 }
 
 declare module 'express-serve-static-core' {

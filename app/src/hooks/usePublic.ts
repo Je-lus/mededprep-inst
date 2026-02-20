@@ -42,3 +42,10 @@ export function useSubmitAssessment(hash: string) {
       ),
   });
 }
+
+export function useSaveProgress(hash: string) {
+  return useMutation({
+    mutationFn: async (data: { responseId: string; responseData: Record<string, unknown> }) =>
+      ensureSuccess(await api.post<void>(`/api/public/assessment/${hash}/save-progress`, data)),
+  });
+}

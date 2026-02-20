@@ -34,6 +34,7 @@ import assessmentRoutes from './routes/assessments.js';
 import questionBankRoutes from './routes/question-banks.js';
 import publicRoutes from './routes/public.js';
 import studentAuthRoutes from './routes/student-auth.js';
+import studentStatsRoutes from './routes/student-stats.js';
 import bugReportRoutes from './routes/bug-reports.js';
 import sessionRoutes from './routes/sessions.js';
 import instructorRoutes from './routes/instructors.js';
@@ -143,6 +144,7 @@ app.use('/api/instructors', generalLimiter, requireAuth, requireRole('owner'), i
 app.use('/api/students', generalLimiter, requireAuth, studentRoutes);
 app.use('/api/public/assessment/:hash/submit', submitLimiter);
 app.use('/api/public', generalLimiter, publicRoutes);
+app.use('/api/student', studentAuthLimiter, studentStatsRoutes);
 app.use('/api/student', studentAuthLimiter, studentAuthRoutes);
 app.use('/api/bug-reports', submitLimiter, optionalAuth, bugReportRoutes);
 

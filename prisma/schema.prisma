@@ -85,15 +85,19 @@ model OrgUser {
 // ============================================
 
 model Student {
-  id        String   @id @default(uuid())
-  orgId     String
-  email     String
-  firstName String
-  lastName  String
-  password  String?  // nullable — students can take assessments before creating an account
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String    @id @default(uuid())
+  orgId             String
+  email             String
+  firstName         String
+  lastName          String
+  password          String?   // nullable — students can take assessments before creating an account
+  isActive          Boolean   @default(true)
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   org       Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
   responses AssessmentResponse[]

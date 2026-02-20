@@ -61,7 +61,7 @@ export function StudentInfoStep({
 
           <Separator />
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -72,6 +72,7 @@ export function StudentInfoStep({
                   placeholder="Jane"
                   autoComplete="given-name"
                   required
+                  aria-required="true"
                 />
               </div>
               <div className="space-y-2">
@@ -83,6 +84,7 @@ export function StudentInfoStep({
                   placeholder="Doe"
                   autoComplete="family-name"
                   required
+                  aria-required="true"
                 />
               </div>
             </div>
@@ -96,6 +98,7 @@ export function StudentInfoStep({
                 placeholder="jane@example.com"
                 autoComplete="email"
                 required
+                aria-required="true"
               />
             </div>
             <Button

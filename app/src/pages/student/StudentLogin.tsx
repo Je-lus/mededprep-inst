@@ -46,7 +46,7 @@ export default function StudentLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
+    <main className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto w-full max-w-md">
         <Card>
           <CardHeader className="space-y-2 text-center">
@@ -56,14 +56,14 @@ export default function StudentLogin() {
           </CardHeader>
           <CardContent className="space-y-4">
             {formError && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" role="alert">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Sign-in failed</AlertTitle>
                 <AlertDescription>{formError}</AlertDescription>
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -73,8 +73,15 @@ export default function StudentLogin() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 />
-                {fieldErrors.email && <p className="text-sm text-rose-600">{fieldErrors.email}</p>}
+                {fieldErrors.email && (
+                  <p id="email-error" className="text-sm text-rose-600" role="alert">
+                    {fieldErrors.email}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -86,9 +93,14 @@ export default function StudentLogin() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.password}
+                  aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                 />
                 {fieldErrors.password && (
-                  <p className="text-sm text-rose-600">{fieldErrors.password}</p>
+                  <p id="password-error" className="text-sm text-rose-600" role="alert">
+                    {fieldErrors.password}
+                  </p>
                 )}
               </div>
 
@@ -97,13 +109,18 @@ export default function StudentLogin() {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-gray-600">
+              <Link to="/student/forgot-password" className="font-medium text-primary underline">
+                Forgot password?
+              </Link>
+            </p>
+            <p className="text-center text-sm text-gray-600">
               Need an account?{' '}
               <Link to="/create-account" className="font-medium text-primary underline">
                 Create one
               </Link>
             </p>
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-gray-600">
               Are you an instructor?{' '}
               <Link to="/login" className="font-medium text-primary underline">
                 Sign in here
@@ -112,6 +129,6 @@ export default function StudentLogin() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

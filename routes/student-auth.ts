@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma.js';
 import {
@@ -32,6 +33,19 @@ const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  newPassword: z.string().min(6),
+});
+
+const verifyEmailSchema = z.object({
+  token: z.string().min(1),
+});
+
 router.post(
   '/register',
   validate(registerSchema),
@@ -49,6 +63,8 @@ router.post(
         },
       });
 
+      const verificationToken = crypto.randomUUID();
+
       let student;
       if (existingStudent?.password) {
         throw new ValidationError('Account already exists. Please log in.');
@@ -59,6 +75,8 @@ router.post(
             firstName: req.body.firstName.trim(),
             lastName: req.body.lastName.trim(),
             password: passwordHash,
+            emailVerified: false,
+            verificationToken,
           },
         });
       } else {
@@ -69,6 +87,8 @@ router.post(
             firstName: req.body.firstName.trim(),
             lastName: req.body.lastName.trim(),
             password: passwordHash,
+            emailVerified: false,
+            verificationToken,
           },
         });
       }
@@ -86,6 +106,9 @@ router.post(
         },
       });
 
+      // TODO: In production, send a verification email with a link containing the verificationToken
+      // instead of returning it in the response.
+
       const token = generateStudentToken(student);
       setAuthCookie(res, 'student-token', token);
 
@@ -98,7 +121,10 @@ router.post(
             firstName: student.firstName,
             lastName: student.lastName,
             orgId: student.orgId,
+            emailVerified: student.emailVerified,
           },
+          // DEV ONLY: In production, this token would be sent via email
+          verificationToken,
         },
       });
     } catch (error) {
@@ -145,6 +171,7 @@ router.post(
             firstName: student.firstName,
             lastName: student.lastName,
             orgId: student.orgId,
+            emailVerified: student.emailVerified,
           },
         },
       });
@@ -159,6 +186,18 @@ router.post('/logout', (_req: Request, res: Response) => {
   return res.json({ success: true, data: { loggedOut: true } });
 });
 
+router.post('/refresh', requireStudentAuth, (req: Request, res: Response) => {
+  const student = req.student!;
+  const token = generateStudentToken(student);
+  setAuthCookie(res, 'student-token', token);
+  return res.json({
+    success: true,
+    data: {
+      expiresAt: Date.now() + 4 * 60 * 60 * 1000,
+    },
+  });
+});
+
 router.get('/me', requireStudentAuth, (req: Request, res: Response) => {
   return res.json({
     success: true,
@@ -167,6 +206,53 @@ router.get('/me', requireStudentAuth, (req: Request, res: Response) => {
     },
   });
 });
+
+router.get(
+  '/stats',
+  requireStudentAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const where = {
+        studentId: req.student!.id,
+        completedAt: { not: null },
+        assessment: { orgId: req.orgId },
+      };
+
+      const [aggregations, passedCount] = await Promise.all([
+        prisma.assessmentResponse.aggregate({
+          where,
+          _count: { id: true },
+          _avg: { scorePercentage: true },
+          _max: { scorePercentage: true },
+        }),
+        prisma.assessmentResponse.count({
+          where: { ...where, passed: true },
+        }),
+      ]);
+
+      const totalCompleted = aggregations._count.id;
+      const averageScore = aggregations._avg.scorePercentage
+        ? Number(aggregations._avg.scorePercentage)
+        : 0;
+      const bestScore = aggregations._max.scorePercentage
+        ? Number(aggregations._max.scorePercentage)
+        : 0;
+      const passRate = totalCompleted > 0 ? (passedCount / totalCompleted) * 100 : 0;
+
+      return res.json({
+        success: true,
+        data: {
+          totalCompleted,
+          averageScore: Math.round(averageScore * 100) / 100,
+          bestScore: Math.round(bestScore * 100) / 100,
+          passRate: Math.round(passRate * 100) / 100,
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
 
 router.get(
   '/assessments',
@@ -189,6 +275,8 @@ router.get(
           where,
           select: {
             id: true,
+            assessmentId: true,
+            attempt: true,
             scorePercentage: true,
             passed: true,
             completedAt: true,
@@ -213,6 +301,8 @@ router.get(
         success: true,
         data: responses.map((response) => ({
           id: response.id,
+          assessmentId: response.assessmentId,
+          attempt: response.attempt,
           assessmentTitle: response.assessment.title,
           scorePercentage: response.scorePercentage,
           passed: response.passed,
@@ -298,6 +388,189 @@ router.get(
             questions.reduce((count, question) => count + (question.isCorrect ? 1 : 0), 0),
           scorePercentage: response.scorePercentage,
           questions,
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+
+// ============================================
+// PASSWORD RESET
+// ============================================
+
+router.post(
+  '/forgot-password',
+  validate(forgotPasswordSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const email = req.body.email.toLowerCase();
+
+      const student = await prisma.student.findUnique({
+        where: {
+          orgId_email: {
+            orgId: req.orgId,
+            email,
+          },
+        },
+      });
+
+      let resetToken: string | undefined;
+
+      if (student && student.password && student.isActive) {
+        resetToken = crypto.randomUUID();
+        const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        await prisma.student.update({
+          where: { id: student.id },
+          data: { resetToken, resetTokenExpiry },
+        });
+
+        // TODO: In production, send an email with a link containing the resetToken
+        // (e.g., https://inst.mededprep.app/student/reset-password?token=<resetToken>)
+        // instead of returning it in the response.
+      }
+
+      // Always return success to prevent email enumeration
+      return res.json({
+        success: true,
+        data: {
+          message: 'If an account exists, a reset link has been sent.',
+          // DEV ONLY: In production, do NOT return the token in the response
+          ...(resetToken && { resetToken }),
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+
+router.post(
+  '/reset-password',
+  validate(resetPasswordSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token, newPassword } = req.body;
+
+      const student = await prisma.student.findFirst({
+        where: {
+          orgId: req.orgId,
+          resetToken: token,
+          resetTokenExpiry: {
+            gt: new Date(),
+          },
+        },
+      });
+
+      if (!student) {
+        throw new ValidationError('Invalid or expired reset token.');
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+
+      await prisma.student.update({
+        where: { id: student.id },
+        data: {
+          password: passwordHash,
+          resetToken: null,
+          resetTokenExpiry: null,
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          message: 'Password has been reset successfully.',
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+
+// ============================================
+// EMAIL VERIFICATION
+// ============================================
+
+router.post(
+  '/verify-email',
+  validate(verifyEmailSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.body;
+
+      const student = await prisma.student.findFirst({
+        where: {
+          orgId: req.orgId,
+          verificationToken: token,
+        },
+      });
+
+      if (!student) {
+        throw new ValidationError('Invalid verification token.');
+      }
+
+      await prisma.student.update({
+        where: { id: student.id },
+        data: {
+          emailVerified: true,
+          verificationToken: null,
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          message: 'Email verified successfully.',
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+
+router.post(
+  '/resend-verification',
+  requireStudentAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const student = await prisma.student.findUnique({
+        where: { id: req.student!.id },
+      });
+
+      if (!student) {
+        throw new NotFoundError('Student not found.');
+      }
+
+      if (student.emailVerified) {
+        return res.json({
+          success: true,
+          data: {
+            message: 'Email is already verified.',
+          },
+        });
+      }
+
+      const verificationToken = crypto.randomUUID();
+
+      await prisma.student.update({
+        where: { id: student.id },
+        data: { verificationToken },
+      });
+
+      // TODO: In production, send a verification email with a link containing the verificationToken
+      // instead of returning it in the response.
+
+      return res.json({
+        success: true,
+        data: {
+          message: 'Verification link has been sent.',
+          // DEV ONLY: In production, do NOT return the token in the response
+          verificationToken,
         },
       });
     } catch (error) {

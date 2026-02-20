@@ -1,19 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { Model } from 'survey-core';
 import { Survey } from 'survey-react-ui';
 import {
   usePublicAssessment,
   useStartAssessment,
   useSubmitAssessment,
+  useSaveProgress,
 } from '../../hooks/usePublic';
 import type { AssessmentSubmitResult, SurveyJson } from '../../types/api';
 import { ApiError } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { StudentInfoStep } from './take-assessment/StudentInfoStep';
 import { AssessmentResults } from './take-assessment/AssessmentResults';
 
@@ -35,13 +46,32 @@ export default function TakeAssessment() {
   const [submitResult, setSubmitResult] = useState<AssessmentSubmitResult | null>(null);
   const [surveyModel, setSurveyModel] = useState<Model | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const submittingRef = useRef(false);
   const submitFnRef = useRef<(() => void) | null>(null);
+  const timerExpiredRef = useRef(false);
+  const confirmBypassRef = useRef(false);
+  const timerWarningsRef = useRef<Set<number>>(new Set());
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  // Focus management: move focus to step heading on transitions
+  useEffect(() => {
+    if (step !== 'info') {
+      stepHeadingRef.current?.focus();
+    }
+  }, [step]);
+
+  // Auto-save refs
+  const modelRef = useRef<Model | null>(null);
+  const responseIdRef = useRef<string | null>(null);
+  const lastSavedDataRef = useRef<string>('{}');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const assessmentQuery = usePublicAssessment(safeHash);
   const startAssessment = useStartAssessment(safeHash);
   const submitAssessment = useSubmitAssessment(safeHash);
+  const saveProgress = useSaveProgress(safeHash);
 
   // Cleanup SurveyJS model event listeners and dispose on unmount or model change
   useEffect(() => {
@@ -50,14 +80,85 @@ export default function TakeAssessment() {
     return () => {
       surveyModel.onComplete.clear();
       surveyModel.onTimerTick.clear();
+      surveyModel.onCompleting.clear();
       surveyModel.dispose();
     };
   }, [surveyModel]);
+
+  // beforeunload: warn and send best-effort save via sendBeacon
+  useEffect(() => {
+    if (step !== 'taking') return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+
+      // Best-effort save via sendBeacon
+      const model = modelRef.current;
+      const respId = responseIdRef.current;
+      if (model && respId) {
+        const currentData = JSON.stringify(model.data);
+        if (currentData !== lastSavedDataRef.current) {
+          const payload = JSON.stringify({ responseId: respId, responseData: model.data });
+          navigator.sendBeacon(
+            `/api/public/assessment/${safeHash}/save-progress`,
+            new Blob([payload], { type: 'application/json' }),
+          );
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [step, safeHash]);
+
+  // Auto-save every 30 seconds while taking the assessment
+  useEffect(() => {
+    if (step !== 'taking') return;
+
+    const intervalId = setInterval(() => {
+      const model = modelRef.current;
+      const respId = responseIdRef.current;
+      if (!model || !respId || submittingRef.current) return;
+
+      const currentData = JSON.stringify(model.data);
+      if (currentData === lastSavedDataRef.current) return;
+
+      setSaveStatus('saving');
+      saveProgress
+        .mutateAsync({ responseId: respId, responseData: model.data })
+        .then(() => {
+          lastSavedDataRef.current = currentData;
+          setSaveStatus('saved');
+        })
+        .catch(() => {
+          setSaveStatus('error');
+        });
+    }, 30_000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, safeHash]);
 
   const retrySubmit = useCallback(() => {
     if (!submitFnRef.current) return;
     setSubmitError(null);
     submitFnRef.current();
+  }, []);
+
+  const handleConfirmSubmit = useCallback(() => {
+    setShowConfirmDialog(false);
+    confirmBypassRef.current = true;
+    if (surveyModel) {
+      surveyModel.doComplete();
+    }
+  }, [surveyModel]);
+
+  const handleCancelSubmit = useCallback(() => {
+    setShowConfirmDialog(false);
   }, []);
 
   const handleStart = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -95,6 +196,10 @@ export default function TakeAssessment() {
         model.data = result.responseData;
       }
 
+      // Progress indicator
+      model.showProgressBar = 'bottom';
+      model.progressBarType = 'questions';
+
       // Apply brand theme
       model.applyTheme({
         cssVariables: {
@@ -111,6 +216,11 @@ export default function TakeAssessment() {
       const capturedStartedAt = result.startedAt
         ? new Date(result.startedAt).getTime()
         : Date.now();
+
+      // Reset refs for this new session
+      timerExpiredRef.current = false;
+      confirmBypassRef.current = false;
+      timerWarningsRef.current = new Set();
 
       // Extract submit logic so it can be called from both onComplete and retry.
       // Calling surveyModel.doComplete() on retry would not re-fire onComplete
@@ -148,15 +258,38 @@ export default function TakeAssessment() {
       // Store submit function in ref so retry button can call it directly
       submitFnRef.current = doSubmit;
 
-      // Timer auto-submit
+      // Timer auto-submit and timer warnings
       if (model.timeLimit > 0) {
         model.onTimerTick.add((sender) => {
+          const remaining = sender.timeLimit - sender.timeSpent;
+
+          // Timer warnings at 5 minutes and 1 minute remaining
+          if (remaining <= 300 && remaining > 240 && !timerWarningsRef.current.has(300)) {
+            timerWarningsRef.current.add(300);
+            toast.warning('5 minutes remaining!');
+          }
+          if (remaining <= 60 && remaining > 0 && !timerWarningsRef.current.has(60)) {
+            timerWarningsRef.current.add(60);
+            toast.warning('1 minute remaining!');
+          }
+
           if (sender.timeSpent >= sender.timeLimit && !submittingRef.current) {
+            timerExpiredRef.current = true;
             toast.info('Time is up! Submitting your assessment...');
             sender.doComplete();
           }
         });
       }
+
+      // Submit confirmation dialog - intercept completion
+      model.onCompleting.add((_sender, options) => {
+        // If timer expired or user already confirmed, skip dialog
+        if (timerExpiredRef.current || confirmBypassRef.current) return;
+
+        // Show confirmation dialog and prevent completion
+        options.allow = false;
+        setShowConfirmDialog(true);
+      });
 
       // Handle survey completion
       model.onComplete.add(() => {
@@ -164,6 +297,10 @@ export default function TakeAssessment() {
       });
 
       setSurveyModel(model);
+      modelRef.current = model;
+      responseIdRef.current = capturedResponseId;
+      lastSavedDataRef.current = JSON.stringify(model.data || {});
+      setSaveStatus('idle');
       setSubmitResult(null);
       setSubmitError(null);
       submittingRef.current = false;
@@ -179,27 +316,31 @@ export default function TakeAssessment() {
 
   if (!hash) {
     return (
-      <div className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto max-w-2xl">
+      <main className="min-h-screen bg-background px-4 py-10">
+        <div className="mx-auto max-w-2xl" role="alert">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Invalid Assessment Link</AlertTitle>
             <AlertDescription>The assessment URL is missing a valid hash.</AlertDescription>
           </Alert>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (assessmentQuery.isPending) {
     return (
-      <div className="min-h-screen bg-background px-4 py-10">
+      <main
+        className="min-h-screen bg-background px-4 py-10"
+        aria-busy="true"
+        aria-label="Loading assessment"
+      >
         <div className="mx-auto max-w-3xl space-y-4">
           <Skeleton className="h-8 w-72" />
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-64 w-full" />
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -210,8 +351,8 @@ export default function TakeAssessment() {
         : 'Unable to load assessment details';
 
     return (
-      <div className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto max-w-2xl space-y-4">
+      <main className="min-h-screen bg-background px-4 py-10">
+        <div className="mx-auto max-w-2xl space-y-4" role="alert">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Could Not Load Assessment</AlertTitle>
@@ -221,18 +362,20 @@ export default function TakeAssessment() {
             Try Again
           </Button>
         </div>
-      </div>
+      </main>
     );
   }
 
   const assessment = assessmentQuery.data;
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8 sm:py-10">
+    <main className="min-h-screen bg-background px-4 py-8 sm:py-10">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">MedEdPrep</p>
-          <h1 className="text-3xl font-bold text-slate-900">{assessment.title}</h1>
+          <h1 className="text-3xl font-bold text-slate-900" ref={stepHeadingRef} tabIndex={-1}>
+            {assessment.title}
+          </h1>
           {assessment.description && (
             <p className="text-sm text-slate-600">{assessment.description}</p>
           )}
@@ -259,9 +402,29 @@ export default function TakeAssessment() {
 
         {step === 'taking' && surveyModel && (
           <>
+            <div aria-live="polite" className="flex items-center gap-1.5 text-xs text-gray-600">
+              {saveStatus === 'saving' && (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                  <span>Saving...</span>
+                </>
+              )}
+              {saveStatus === 'saved' && (
+                <>
+                  <CheckCircle2 className="h-3 w-3 text-green-600" aria-hidden="true" />
+                  <span className="text-green-600">Progress saved</span>
+                </>
+              )}
+              {saveStatus === 'error' && (
+                <>
+                  <AlertTriangle className="h-3 w-3 text-amber-500" aria-hidden="true" />
+                  <span className="text-amber-500">Save failed -- will retry</span>
+                </>
+              )}
+            </div>
             <Survey model={surveyModel} />
             {submitError && (
-              <Alert variant="destructive" className="mt-4">
+              <Alert variant="destructive" className="mt-4" role="alert">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Submission Failed</AlertTitle>
                 <AlertDescription className="flex items-center justify-between gap-4">
@@ -285,6 +448,22 @@ export default function TakeAssessment() {
           />
         )}
       </div>
-    </div>
+
+      {/* Submit confirmation dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to submit? You won&apos;t be able to change your answers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelSubmit}>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>Submit</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </main>
   );
 }

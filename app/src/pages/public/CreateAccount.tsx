@@ -24,7 +24,10 @@ export default function CreateAccount() {
     setFieldErrors({});
 
     if (password.length < 6) {
-      setFieldErrors((current) => ({ ...current, password: 'Password must be at least 6 characters' }));
+      setFieldErrors((current) => ({
+        ...current,
+        password: 'Password must be at least 6 characters',
+      }));
       toast.error('Password must be at least 6 characters');
       return;
     }
@@ -59,7 +62,7 @@ export default function CreateAccount() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
+    <main className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto w-full max-w-md">
         <Card>
           <CardHeader className="space-y-2 text-center">
@@ -68,7 +71,7 @@ export default function CreateAccount() {
             <CardDescription>Save results and review your completed assessments.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -78,8 +81,15 @@ export default function CreateAccount() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.email}
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 />
-                {fieldErrors.email && <p className="text-sm text-rose-600">{fieldErrors.email}</p>}
+                {fieldErrors.email && (
+                  <p id="email-error" className="text-sm text-rose-600" role="alert">
+                    {fieldErrors.email}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -91,8 +101,15 @@ export default function CreateAccount() {
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
                     required
+                    aria-required="true"
+                    aria-invalid={!!fieldErrors.firstName}
+                    aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
                   />
-                  {fieldErrors.firstName && <p className="text-sm text-rose-600">{fieldErrors.firstName}</p>}
+                  {fieldErrors.firstName && (
+                    <p id="firstName-error" className="text-sm text-rose-600" role="alert">
+                      {fieldErrors.firstName}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -103,8 +120,15 @@ export default function CreateAccount() {
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
                     required
+                    aria-required="true"
+                    aria-invalid={!!fieldErrors.lastName}
+                    aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
                   />
-                  {fieldErrors.lastName && <p className="text-sm text-rose-600">{fieldErrors.lastName}</p>}
+                  {fieldErrors.lastName && (
+                    <p id="lastName-error" className="text-sm text-rose-600" role="alert">
+                      {fieldErrors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -118,8 +142,15 @@ export default function CreateAccount() {
                   onChange={(event) => setPassword(event.target.value)}
                   minLength={6}
                   required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.password}
+                  aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                 />
-                {fieldErrors.password && <p className="text-sm text-rose-600">{fieldErrors.password}</p>}
+                {fieldErrors.password && (
+                  <p id="password-error" className="text-sm text-rose-600" role="alert">
+                    {fieldErrors.password}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -132,9 +163,16 @@ export default function CreateAccount() {
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   minLength={6}
                   required
+                  aria-required="true"
+                  aria-invalid={!!fieldErrors.confirmPassword}
+                  aria-describedby={
+                    fieldErrors.confirmPassword ? 'confirmPassword-error' : undefined
+                  }
                 />
                 {fieldErrors.confirmPassword && (
-                  <p className="text-sm text-rose-600">{fieldErrors.confirmPassword}</p>
+                  <p id="confirmPassword-error" className="text-sm text-rose-600" role="alert">
+                    {fieldErrors.confirmPassword}
+                  </p>
                 )}
               </div>
 
@@ -143,7 +181,7 @@ export default function CreateAccount() {
               </Button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mt-4 text-center text-sm text-gray-600">
               Already have an account?{' '}
               <Link to="/student/login" className="font-medium text-primary underline">
                 Sign in
@@ -152,6 +190,6 @@ export default function CreateAccount() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

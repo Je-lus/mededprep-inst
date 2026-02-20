@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Trophy, BookOpen, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStudentRegister } from '@/hooks/useStudentAuth';
 import { ApiError } from '@/lib/api';
@@ -28,6 +28,24 @@ function formatScore(result: AssessmentSubmitResult) {
   return { totalCorrect, totalQuestions, percent: percentage };
 }
 
+function scoreColor(percent: number, passed: boolean): string {
+  if (passed) return 'text-emerald-600';
+  if (percent >= 60) return 'text-amber-600';
+  return 'text-rose-600';
+}
+
+function scoreBorderColor(percent: number, passed: boolean): string {
+  if (passed) return 'border-emerald-400';
+  if (percent >= 60) return 'border-amber-400';
+  return 'border-rose-400';
+}
+
+function scoreBgColor(percent: number, passed: boolean): string {
+  if (passed) return 'bg-emerald-50';
+  if (percent >= 60) return 'bg-amber-50';
+  return 'bg-rose-50';
+}
+
 export function AssessmentResults({
   result,
   firstName,
@@ -49,6 +67,9 @@ export function AssessmentResults({
   const registerStudent = useStudentRegister();
   const score = formatScore(result);
   const hasScoreFeedback = typeof result.totalQuestions === 'number';
+  const percentNum = Number(score.percent);
+  const passed = result.passed ?? false;
+  const isExcellent = passed && percentNum >= 90;
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -84,37 +105,102 @@ export function AssessmentResults({
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Assessment Complete</CardTitle>
-          <CardDescription>
-            {hasScoreFeedback
-              ? 'Your score is available now.'
-              : 'Assessment submitted successfully.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {hasScoreFeedback ? (
-            <>
-              <p className="text-base">
-                You scored{' '}
-                <span className="font-semibold">
-                  {score.totalCorrect} out of {score.totalQuestions}
-                </span>{' '}
-                ({score.percent}%)
-              </p>
-              <Badge
-                className={result.passed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}
+    <section aria-label="Assessment results" className="space-y-4">
+      {hasScoreFeedback ? (
+        <Card
+          className={`border-2 ${scoreBorderColor(percentNum, passed)} ${scoreBgColor(percentNum, passed)}`}
+        >
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-3">
+              {passed ? (
+                isExcellent ? (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                    <Star className="h-6 w-6 text-emerald-600" aria-hidden="true" />
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                    <Trophy className="h-6 w-6 text-emerald-600" aria-hidden="true" />
+                  </div>
+                )
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100">
+                  <BookOpen className="h-6 w-6 text-rose-600" aria-hidden="true" />
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-2xl">
+                  {isExcellent
+                    ? 'Excellent Work!'
+                    : passed
+                      ? 'Congratulations! You passed!'
+                      : 'Assessment Complete'}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {isExcellent
+                    ? 'Outstanding performance -- keep it up!'
+                    : passed
+                      ? 'Great job on completing this assessment.'
+                      : "Keep studying -- you'll get there!"}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center gap-3 py-2 sm:flex-row sm:gap-6">
+              <div
+                className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-4 bg-white ${scoreBorderColor(percentNum, passed)}`}
+                aria-label={`Score: ${Math.round(percentNum)} percent`}
               >
-                {result.passed ? 'Passed' : 'Failed'}
-              </Badge>
-            </>
-          ) : (
-            <p className="text-base">Assessment submitted successfully.</p>
-          )}
-        </CardContent>
-      </Card>
+                <span
+                  className={`text-3xl font-bold ${scoreColor(percentNum, passed)}`}
+                  aria-hidden="true"
+                >
+                  {Math.round(percentNum)}%
+                </span>
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="text-base text-slate-700">
+                  You scored{' '}
+                  <span className="font-semibold">
+                    {score.totalCorrect} out of {score.totalQuestions}
+                  </span>{' '}
+                  questions correctly
+                </p>
+                <div className="mt-2">
+                  <Badge
+                    className={
+                      passed
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-rose-600 text-white hover:bg-rose-700'
+                    }
+                  >
+                    {passed ? 'Passed' : 'Did Not Pass'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <CheckCircle2 className="h-6 w-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">Assessment Complete</CardTitle>
+                <CardDescription>Assessment submitted successfully.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-base text-gray-600">
+              Your response has been recorded. Thank you for completing this assessment.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-primary/30">
         <CardHeader>
@@ -127,15 +213,15 @@ export function AssessmentResults({
         </CardHeader>
         <CardContent className="space-y-4">
           {accountCreated ? (
-            <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
-              <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+            <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900" role="status">
+              <CheckCircle2 className="h-4 w-4 text-emerald-700" aria-hidden="true" />
               <AlertTitle>Account Created</AlertTitle>
               <AlertDescription>
                 Your account is ready. Continue to your dashboard to review this result.
               </AlertDescription>
             </Alert>
           ) : accountSkipped ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-600">
               You can create an account later at{' '}
               <Link to="/student/login" className="font-medium text-primary underline">
                 student login
@@ -143,15 +229,27 @@ export function AssessmentResults({
               .
             </p>
           ) : (
-            <form onSubmit={handleCreateAccount} className="space-y-4">
+            <form onSubmit={handleCreateAccount} className="space-y-4" noValidate>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="accountFirstName">First Name</Label>
-                  <Input id="accountFirstName" value={firstName} readOnly className="bg-muted" />
+                  <Input
+                    id="accountFirstName"
+                    value={firstName}
+                    readOnly
+                    className="bg-muted"
+                    aria-readonly="true"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="accountLastName">Last Name</Label>
-                  <Input id="accountLastName" value={lastName} readOnly className="bg-muted" />
+                  <Input
+                    id="accountLastName"
+                    value={lastName}
+                    readOnly
+                    className="bg-muted"
+                    aria-readonly="true"
+                  />
                 </div>
               </div>
               <div className="space-y-2">
@@ -162,6 +260,7 @@ export function AssessmentResults({
                   value={studentEmail}
                   readOnly
                   className="bg-muted"
+                  aria-readonly="true"
                 />
               </div>
               <div className="space-y-2">
@@ -174,6 +273,7 @@ export function AssessmentResults({
                   placeholder="Minimum 6 characters"
                   minLength={6}
                   required
+                  aria-required="true"
                 />
               </div>
               <div className="space-y-2">
@@ -185,6 +285,7 @@ export function AssessmentResults({
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   minLength={6}
                   required
+                  aria-required="true"
                 />
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -210,6 +311,6 @@ export function AssessmentResults({
           )}
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }

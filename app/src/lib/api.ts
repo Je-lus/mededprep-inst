@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import type { Pagination } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -72,10 +73,13 @@ export async function apiClient<T>(
       if (
         !isRedirecting &&
         !endpoint.includes('/auth/login') &&
-        !endpoint.includes('/auth/refresh')
+        !endpoint.includes('/auth/refresh') &&
+        !endpoint.includes('/student/refresh')
       ) {
         isRedirecting = true;
-        window.location.href = '/login';
+        toast.error('Your session has expired. Please sign in again.');
+        const isStudentPath = window.location.pathname.startsWith('/student');
+        window.location.href = isStudentPath ? '/student/login' : '/login';
       }
       return { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' } };
     }

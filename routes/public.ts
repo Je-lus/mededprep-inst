@@ -22,6 +22,11 @@ const submitAssessmentSchema = z.object({
   timeTaken: z.number().int().optional(),
 });
 
+const saveProgressSchema = z.object({
+  responseId: z.string(),
+  responseData: z.record(z.string(), z.unknown()),
+});
+
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
@@ -308,6 +313,41 @@ router.post(
         success: true,
         data: resultData,
       });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+
+router.post(
+  '/assessment/:hash/save-progress',
+  validate(saveProgressSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { responseId, responseData } = req.body;
+
+      const response = await prisma.assessmentResponse.findFirst({
+        where: {
+          id: responseId,
+          completedAt: null,
+          assessment: {
+            publicHash: param(req.params.hash),
+            orgId: req.orgId,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!response) {
+        throw new NotFoundError('In-progress assessment response not found');
+      }
+
+      await prisma.assessmentResponse.update({
+        where: { id: response.id },
+        data: { responseData },
+      });
+
+      return res.json({ success: true });
     } catch (error) {
       return next(error);
     }

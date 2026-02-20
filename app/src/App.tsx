@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useIsAuthenticated } from './lib/auth';
 import { useIsStudentAuthenticated } from './lib/student-auth';
 import AdminLayout from './components/AdminLayout';
+import StudentLayout from './components/StudentLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AssessmentList from './pages/admin/AssessmentList';
@@ -21,9 +22,14 @@ import CreateAccount from './pages/public/CreateAccount';
 import StudentLogin from './pages/student/StudentLogin';
 import StudentDashboard from './pages/student/StudentDashboard';
 import AssessmentReview from './pages/student/AssessmentReview';
+import ForgotPassword from './pages/student/ForgotPassword';
+import ResetPassword from './pages/student/ResetPassword';
+import VerifyEmail from './pages/student/VerifyEmail';
 import Welcome from './pages/Welcome';
+import NotFound from './pages/NotFound';
 import BugReportButton from './components/BugReportButton';
 import ErrorBoundary from './components/ErrorBoundary';
+import SessionExpiryWarning from './components/SessionExpiryWarning';
 
 // Lazy-load heavy pages (SurveyJS, recharts) to reduce initial bundle size
 const TakeAssessment = lazy(() => import('./pages/public/TakeAssessment'));
@@ -50,7 +56,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function StudentProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsStudentAuthenticated();
   if (!isAuthenticated) return <Navigate to="/student/login" replace />;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <SessionExpiryWarning />
+    </>
+  );
 }
 
 export default function App() {
@@ -113,25 +124,23 @@ export default function App() {
 
         {/* Student routes */}
         <Route path="/student/login" element={<StudentLogin />} />
+        <Route path="/student/forgot-password" element={<ForgotPassword />} />
+        <Route path="/student/reset-password" element={<ResetPassword />} />
+        <Route path="/student/verify-email" element={<VerifyEmail />} />
         <Route
           path="/student"
           element={
             <StudentProtectedRoute>
-              <StudentDashboard />
+              <StudentLayout />
             </StudentProtectedRoute>
           }
-        />
-        <Route
-          path="/student/review/:responseId"
-          element={
-            <StudentProtectedRoute>
-              <AssessmentReview />
-            </StudentProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<StudentDashboard />} />
+          <Route path="review/:responseId" element={<AssessmentReview />} />
+        </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/welcome" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <BugReportButton />

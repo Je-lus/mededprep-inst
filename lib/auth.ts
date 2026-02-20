@@ -225,6 +225,7 @@ export async function requireStudentAuth(
     email: student.email,
     firstName: student.firstName,
     lastName: student.lastName,
+    emailVerified: student.emailVerified,
   };
   next();
 }
