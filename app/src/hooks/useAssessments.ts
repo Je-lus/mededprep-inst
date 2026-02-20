@@ -36,6 +36,7 @@ export function useCreateAssessment() {
       timeLimitMinutes?: number;
       randomizeQuestions?: boolean;
       randomizeChoices?: boolean;
+      oneQuestionPerPage?: boolean;
       allowStudentReview?: boolean;
     }) => ensureSuccess(await api.post<Assessment>('/api/assessments', data)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assessments'] }),
@@ -60,6 +61,7 @@ export function useUpdateAssessment() {
       allowStudentReview?: boolean;
       randomizeQuestions?: boolean;
       randomizeChoices?: boolean;
+      oneQuestionPerPage?: boolean;
     }) => ensureSuccess(await api.put<Assessment>(`/api/assessments/${id}`, data)),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['assessments'] });

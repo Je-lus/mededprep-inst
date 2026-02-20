@@ -12,6 +12,7 @@ export interface Assessment {
   timeLimitMinutes?: number;
   randomizeQuestions: boolean;
   randomizeChoices: boolean;
+  oneQuestionPerPage?: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: { responses: number };
@@ -54,6 +55,7 @@ export interface QuestionAnalysis {
   percentCorrect: number;
   choiceDistribution: ChoiceDistribution[];
   pointBiserial: number;
+  avgTimeSeconds?: number | null;
 }
 
 export interface ChoiceDistribution {
@@ -74,7 +76,9 @@ export interface ItemAnalysisResult {
 export interface SurveyJson {
   pages?: SurveyPage[];
   showTimer?: boolean;
+  showTimerPanel?: string;
   timeLimit?: number;
+  questionsOnPageMode?: string;
   [key: string]: unknown;
 }
 
@@ -168,6 +172,7 @@ export interface ResponseDetail {
     totalQuestions?: number;
     passed?: boolean;
     timeTaken?: number;
+    questionTimings?: Record<string, number>;
     completedAt?: string;
   };
   questions: ReviewQuestion[];

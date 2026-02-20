@@ -39,6 +39,7 @@ type FormState = {
   timeLimitMinutes: string;
   randomizeQuestions: boolean;
   randomizeChoices: boolean;
+  oneQuestionPerPage: boolean;
   allowStudentReview: boolean;
 };
 
@@ -63,6 +64,7 @@ export default function AssessmentCreate() {
     timeLimitMinutes: '',
     randomizeQuestions: true,
     randomizeChoices: true,
+    oneQuestionPerPage: false,
     allowStudentReview: false,
   });
   const [activeTab, setActiveTab] = useState<'builder' | 'csv' | 'bank'>('builder');
@@ -154,6 +156,7 @@ export default function AssessmentCreate() {
     timeLimitMinutes: toOptionalNumber(form.timeLimitMinutes),
     randomizeQuestions: form.randomizeQuestions,
     randomizeChoices: form.randomizeChoices,
+    oneQuestionPerPage: form.oneQuestionPerPage,
     allowStudentReview: form.allowStudentReview,
   });
 
@@ -288,6 +291,18 @@ export default function AssessmentCreate() {
               className="h-4 w-4 rounded border"
             />
             Randomize Choices
+          </label>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.oneQuestionPerPage}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, oneQuestionPerPage: event.target.checked }))
+              }
+              className="h-4 w-4 rounded border"
+            />
+            One Question Per Page
           </label>
 
           <label className="flex items-center gap-2 text-sm">

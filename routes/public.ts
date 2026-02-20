@@ -20,6 +20,7 @@ const submitAssessmentSchema = z.object({
   responseId: z.string(),
   responseData: z.record(z.string(), z.unknown()),
   timeTaken: z.number().int().optional(),
+  questionTimings: z.record(z.string(), z.number()).optional(),
 });
 
 const saveProgressSchema = z.object({
@@ -45,10 +46,17 @@ function getGradableElements(surveyJson: SurveyJson): SurveyElement[] {
   return elements;
 }
 
-function applyTimerConfig(surveyJson: SurveyJson, timeLimitMinutes: number | null): SurveyJson {
+function applyDisplayConfig(
+  surveyJson: SurveyJson,
+  timeLimitMinutes: number | null,
+  oneQuestionPerPage: boolean,
+): SurveyJson {
   if (timeLimitMinutes) {
-    surveyJson.showTimer = true;
+    surveyJson.showTimerPanel = 'top';
     surveyJson.timeLimit = timeLimitMinutes * 60;
+  }
+  if (oneQuestionPerPage) {
+    surveyJson.questionsOnPageMode = 'questionPerPage';
   }
   return surveyJson;
 }
@@ -105,6 +113,7 @@ router.get('/assessment/:hash', async (req: Request, res: Response, next: NextFu
         timeLimitMinutes: true,
         surveyJson: true,
         allowStudentReview: true,
+        oneQuestionPerPage: true,
       },
     });
 
@@ -152,6 +161,7 @@ router.post(
           randomizeQuestions: true,
           randomizeChoices: true,
           timeLimitMinutes: true,
+          oneQuestionPerPage: true,
         },
       });
 
@@ -187,7 +197,11 @@ router.post(
           success: true,
           data: {
             responseId: existingIncompleteResponse.id,
-            surveyJson: applyTimerConfig(sanitizedSurveyJson, assessment.timeLimitMinutes),
+            surveyJson: applyDisplayConfig(
+              sanitizedSurveyJson,
+              assessment.timeLimitMinutes,
+              assessment.oneQuestionPerPage,
+            ),
             questionOrder: Array.isArray(existingIncompleteResponse.questionOrder)
               ? existingIncompleteResponse.questionOrder
               : [],
@@ -244,7 +258,11 @@ router.post(
         success: true,
         data: {
           responseId: response.id,
-          surveyJson: applyTimerConfig(sanitizedSurveyJson, assessment.timeLimitMinutes),
+          surveyJson: applyDisplayConfig(
+            sanitizedSurveyJson,
+            assessment.timeLimitMinutes,
+            assessment.oneQuestionPerPage,
+          ),
           questionOrder: randomized.questionOrder,
         },
       });
@@ -259,7 +277,7 @@ router.post(
   validate(submitAssessmentSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { responseId, responseData, timeTaken } = req.body;
+      const { responseId, responseData, timeTaken, questionTimings } = req.body;
 
       const response = await prisma.assessmentResponse.findFirst({
         where: {
@@ -292,6 +310,7 @@ router.post(
           responseData,
           completedAt: new Date(),
           timeTaken,
+          questionTimings,
           totalQuestions: score.totalQuestions,
           totalCorrect: score.totalCorrect,
           scorePercentage: score.scorePercentage,

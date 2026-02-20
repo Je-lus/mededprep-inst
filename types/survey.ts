@@ -33,7 +33,9 @@ export interface SurveyPage {
 export interface SurveyJson {
   pages: SurveyPage[];
   showTimer?: boolean;
+  showTimerPanel?: string;
   timeLimit?: number;
+  questionsOnPageMode?: string;
   [key: string]: unknown;
 }
 

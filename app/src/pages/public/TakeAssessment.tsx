@@ -233,11 +233,23 @@ export default function TakeAssessment() {
         const responseData = model.data;
         const timeTaken = Math.max(0, Math.round((Date.now() - capturedStartedAt) / 1000));
 
+        // Collect per-question timing (available in one-question-per-page mode)
+        const questionTimings: Record<string, number> = {};
+        for (const page of model.pages) {
+          if (page.timeSpent > 0 && page.elements.length > 0) {
+            const element = page.elements[0];
+            if (element?.name) {
+              questionTimings[element.name] = page.timeSpent;
+            }
+          }
+        }
+
         submitAssessment
           .mutateAsync({
             responseId: capturedResponseId,
             responseData,
             timeTaken,
+            questionTimings: Object.keys(questionTimings).length > 0 ? questionTimings : undefined,
           })
           .then((submitRes) => {
             setSubmitResult(submitRes);

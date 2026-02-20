@@ -19,10 +19,24 @@ function formatAnswer(answer: unknown): string {
   return String(answer);
 }
 
-function QuestionCard({ question }: { question: ReviewQuestion }) {
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
+function QuestionCard({ question, timeSpent }: { question: ReviewQuestion; timeSpent?: number }) {
   return (
     <div className="rounded-lg border p-4 space-y-3">
-      <h4 className="font-medium text-sm">{question.questionTitle}</h4>
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="font-medium text-sm">{question.questionTitle}</h4>
+        {timeSpent !== undefined && timeSpent !== null && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Time: {formatTime(timeSpent)}
+          </span>
+        )}
+      </div>
 
       <div className="space-y-2 text-sm">
         <div>
@@ -129,7 +143,11 @@ export function ResponseDetailDialog({
           {data && (
             <div className="space-y-3">
               {data.questions.map((question) => (
-                <QuestionCard key={question.questionName} question={question} />
+                <QuestionCard
+                  key={question.questionName}
+                  question={question}
+                  timeSpent={data.response.questionTimings?.[question.questionName]}
+                />
               ))}
             </div>
           )}

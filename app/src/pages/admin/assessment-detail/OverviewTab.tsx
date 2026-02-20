@@ -16,6 +16,7 @@ export function OverviewTab({
   onTimeLimitToggle,
   onTimeLimitInputChange,
   onTimeLimitCommit,
+  onOneQuestionPerPageToggle,
 }: {
   assessment: AssessmentDetail;
   timeLimitEnabled: boolean;
@@ -25,6 +26,7 @@ export function OverviewTab({
   onTimeLimitToggle: (enabled: boolean) => void;
   onTimeLimitInputChange: (value: string) => void;
   onTimeLimitCommit: () => void;
+  onOneQuestionPerPageToggle: (enabled: boolean) => void;
 }) {
   const shareUrl = getPublicUrl(assessment.publicHash);
 
@@ -110,6 +112,17 @@ export function OverviewTab({
           <div>
             <p className="text-sm font-medium text-muted-foreground">Randomize Choices</p>
             <p>{assessment.randomizeChoices ? 'Enabled' : 'Disabled'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">One Question Per Page</p>
+            <div className="mt-2">
+              <ToggleSwitch
+                label="Enable"
+                checked={assessment.oneQuestionPerPage ?? false}
+                disabled={assessment.status !== 'draft' || isUpdating}
+                onChange={onOneQuestionPerPageToggle}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

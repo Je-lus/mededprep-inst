@@ -21,6 +21,7 @@ const createAssessmentSchema = z.object({
   timeLimitMinutes: z.number().int().positive().optional(),
   randomizeQuestions: z.boolean().optional(),
   randomizeChoices: z.boolean().optional(),
+  oneQuestionPerPage: z.boolean().optional(),
   showScoreFeedback: z.boolean().optional(),
   allowStudentReview: z.boolean().optional(),
 });
@@ -98,6 +99,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         timeLimitMinutes: true,
         randomizeQuestions: true,
         randomizeChoices: true,
+        oneQuestionPerPage: true,
         showScoreFeedback: true,
         createdAt: true,
         updatedAt: true,
@@ -124,6 +126,7 @@ router.post(
         timeLimitMinutes,
         randomizeQuestions,
         randomizeChoices,
+        oneQuestionPerPage,
         showScoreFeedback,
         allowStudentReview,
       } = req.body;
@@ -141,6 +144,7 @@ router.post(
           timeLimitMinutes,
           randomizeQuestions,
           randomizeChoices,
+          oneQuestionPerPage,
           showScoreFeedback,
           allowStudentReview,
         },
@@ -457,6 +461,7 @@ router.get(
           timeTaken: true,
           completedAt: true,
           responseData: true,
+          questionTimings: true,
         },
       });
 
@@ -482,6 +487,7 @@ router.get(
             passed: response.passed,
             timeTaken: response.timeTaken,
             completedAt: response.completedAt,
+            questionTimings: response.questionTimings,
           },
           questions,
         },
@@ -540,6 +546,7 @@ router.get('/:id/item-analysis', async (req: Request, res: Response, next: NextF
     }
     const latestResponses = [...latestByStudent.values()].map((response) => ({
       responseData: response.responseData as Record<string, unknown>,
+      questionTimings: response.questionTimings as Record<string, number> | null,
     }));
 
     const analysis = computeItemAnalysis(assessment.surveyJson as SurveyJson, latestResponses);

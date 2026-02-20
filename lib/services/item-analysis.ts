@@ -35,6 +35,7 @@ export interface QuestionAnalysis {
   percentCorrect: number;
   choiceDistribution: ChoiceDistribution[];
   pointBiserial: number;
+  avgTimeSeconds: number | null;
 }
 
 export interface ItemAnalysisResult {
@@ -46,6 +47,7 @@ export interface ItemAnalysisResult {
 
 interface ResponseInput {
   responseData: Record<string, unknown> | null;
+  questionTimings?: Record<string, number> | null;
 }
 
 function normalizeAnswer(val: unknown): string {
@@ -130,6 +132,19 @@ export function computeItemAnalysis(
       }
     }
 
+    // Compute average time for this question
+    const timings: number[] = [];
+    for (const r of responses) {
+      const timing = r.questionTimings?.[q.name];
+      if (typeof timing === 'number' && timing > 0) {
+        timings.push(timing);
+      }
+    }
+    const avgTimeSeconds =
+      timings.length > 0
+        ? Math.round((timings.reduce((a, b) => a + b, 0) / timings.length) * 10) / 10
+        : null;
+
     const p = responses.length > 0 ? correctCount / responses.length : 0;
     const qVal = 1 - p;
     const M1 = mean(scoresCorrect);
@@ -165,6 +180,7 @@ export function computeItemAnalysis(
         };
       }),
       pointBiserial: Math.round(rpb * 1000) / 1000,
+      avgTimeSeconds,
     };
   });
 

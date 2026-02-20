@@ -45,6 +45,14 @@ function QuestionDetail({ question }: { question: QuestionAnalysis }) {
           <Badge variant="outline">Difficulty: {question.difficulty}</Badge>
         )}
         <Badge variant="outline">Responses: {question.totalResponses}</Badge>
+        {question.avgTimeSeconds !== null && question.avgTimeSeconds !== undefined && (
+          <Badge variant="outline">
+            Avg Time:{' '}
+            {question.avgTimeSeconds < 60
+              ? `${Math.round(question.avgTimeSeconds)}s`
+              : `${Math.floor(question.avgTimeSeconds / 60)}m ${Math.round(question.avgTimeSeconds % 60)}s`}
+          </Badge>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -264,6 +272,7 @@ export function ItemAnalysisTab({
                   <TableHead className="w-[120px]">Question Code</TableHead>
                   <TableHead>Question</TableHead>
                   <TableHead className="w-[130px] text-right">% Correct</TableHead>
+                  <TableHead className="w-[100px] text-right">Avg Time</TableHead>
                   <TableHead className="w-[140px] text-right">Point-Biserial</TableHead>
                 </TableRow>
               </TableHeader>
@@ -296,6 +305,13 @@ export function ItemAnalysisTab({
                         >
                           {percentCorrect.toFixed(1)}%
                         </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {question.avgTimeSeconds !== null && question.avgTimeSeconds !== undefined
+                            ? question.avgTimeSeconds < 60
+                              ? `${Math.round(question.avgTimeSeconds)}s`
+                              : `${Math.floor(question.avgTimeSeconds / 60)}m ${Math.round(question.avgTimeSeconds % 60)}s`
+                            : '-'}
+                        </TableCell>
                         <TableCell className="text-right">
                           <span
                             className={cn(
@@ -309,7 +325,7 @@ export function ItemAnalysisTab({
                       </TableRow>
                       {isExpanded && (
                         <TableRow>
-                          <TableCell colSpan={4} className="bg-muted/20 p-4">
+                          <TableCell colSpan={5} className="bg-muted/20 p-4">
                             <Card className="bg-white shadow-sm">
                               <CardContent className="pt-6">
                                 <QuestionDetail question={question} />

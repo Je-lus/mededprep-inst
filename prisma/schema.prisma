@@ -126,6 +126,7 @@ model Assessment {
   timeLimitMinutes   Int?
   randomizeQuestions Boolean          @default(true)
   randomizeChoices   Boolean          @default(true)
+  oneQuestionPerPage Boolean          @default(false)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
@@ -156,6 +157,7 @@ model AssessmentResponse {
   attempt         Int       @default(1)
   responseData    Json      // { questionName: answerValue }
   questionOrder   Json?     // array of question names in the randomized order shown
+  questionTimings Json?     // { questionName: secondsSpent }
   totalQuestions  Int?
   totalCorrect    Int?
   scorePercentage Decimal?  @db.Decimal(5, 2)

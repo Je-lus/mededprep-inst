@@ -167,6 +167,17 @@ export default function AssessmentDetail() {
     }
   };
 
+  const handleOneQuestionPerPageToggle = async (oneQuestionPerPage: boolean) => {
+    try {
+      await updateAssessment.mutateAsync({ id, oneQuestionPerPage });
+      toast.success(
+        oneQuestionPerPage ? 'One question per page enabled' : 'One question per page disabled',
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update display setting');
+    }
+  };
+
   const handleTimeLimitToggle = async (enabled: boolean) => {
     if (!assessment || assessment.status !== 'draft') return;
 
@@ -389,6 +400,7 @@ export default function AssessmentDetail() {
             onTimeLimitToggle={(enabled) => void handleTimeLimitToggle(enabled)}
             onTimeLimitInputChange={setTimeLimitInput}
             onTimeLimitCommit={() => void handleTimeLimitCommit()}
+            onOneQuestionPerPageToggle={(enabled) => void handleOneQuestionPerPageToggle(enabled)}
           />
         </TabsContent>
 

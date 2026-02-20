@@ -36,6 +36,7 @@ export function useSubmitAssessment(hash: string) {
       responseId: string;
       responseData: Record<string, unknown>;
       timeTaken?: number;
+      questionTimings?: Record<string, number>;
     }) =>
       ensureSuccess(
         await api.post<AssessmentSubmitResult>(`/api/public/assessment/${hash}/submit`, data),
