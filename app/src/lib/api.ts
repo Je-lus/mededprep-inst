@@ -1,6 +1,10 @@
 import type { Pagination } from '../types/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
+const REQUEST_TIMEOUT_MS = 30_000;
+
+/** Prevents multiple concurrent 401 responses from each triggering a redirect. */
+let isRedirecting = false;
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -50,10 +54,14 @@ export async function apiClient<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<ApiResponse<T>> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       credentials: 'include',
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         ...options?.headers,
@@ -61,18 +69,31 @@ export async function apiClient<T>(
     });
 
     if (response.status === 401) {
-      if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
+      if (
+        !isRedirecting &&
+        !endpoint.includes('/auth/login') &&
+        !endpoint.includes('/auth/refresh')
+      ) {
+        isRedirecting = true;
         window.location.href = '/login';
       }
       return { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' } };
     }
 
     return response.json();
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      return {
+        success: false,
+        error: { code: 'TIMEOUT', message: 'Request timed out' },
+      };
+    }
     return {
       success: false,
       error: { code: 'NETWORK_ERROR', message: 'Unable to connect to server' },
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

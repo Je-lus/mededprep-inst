@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api, ensureSuccess, ensurePaginatedSuccess } from '../lib/api';
 import { useStudentAuthStore, type StudentUser } from '../lib/student-auth';
 import type { AssessmentReviewData } from '../types/api';
@@ -53,6 +53,7 @@ export function useStudentAssessments(page = 1, limit = 10) {
           `/api/student/assessments?page=${page}&limit=${limit}`,
         ),
       ),
+    placeholderData: keepPreviousData,
   });
 }
 

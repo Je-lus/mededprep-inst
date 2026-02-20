@@ -29,6 +29,9 @@ jobs:
       - name: Lint backend
         run: npm run lint
 
+      - name: Test backend
+        run: npm test
+
       - name: Cache frontend node_modules
         uses: actions/cache@v4
         with:
@@ -45,6 +48,9 @@ jobs:
 
       - name: Typecheck frontend
         run: cd app && npm run typecheck
+
+      - name: Test frontend
+        run: cd app && npm test
 
       - name: Build frontend
         run: cd app && npm run build

@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma.js';
 import { NotFoundError } from '../lib/errors.js';
 import { z, validate } from '../lib/validate.js';
+import { param } from '../lib/route-utils.js';
 
 const router = Router();
 
@@ -101,7 +102,7 @@ router.patch(
   validate(updateInstructorSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const id = param(req.params.id);
       const { name, email, role, isActive } = req.body;
 
       // Prevent owner from deactivating themselves
@@ -151,7 +152,7 @@ router.patch(
 // DELETE /:id — Deactivate an instructor (soft delete)
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = param(req.params.id);
 
     if (id === req.user!.id) {
       res.status(400).json({

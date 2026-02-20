@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { getFieldErrors } from '@/lib/api';
-import { useCreateAssessment, useImportCsv } from '@/hooks/useAssessments';
+import { useCreateAssessment, useParseCsv } from '@/hooks/useAssessments';
 import { useQuestionBanks, useQuestionBank, useIncrementItemUsage } from '@/hooks/useQuestionBanks';
 
 type FormState = {
@@ -52,7 +52,7 @@ export default function AssessmentCreate() {
   const navigate = useNavigate();
   const surveyEditorRef = useRef<SurveyEditorRef>(null);
   const createAssessment = useCreateAssessment();
-  const importCsv = useImportCsv();
+  const parseCsv = useParseCsv();
   const { data: banks } = useQuestionBanks();
   const incrementUsage = useIncrementItemUsage();
 
@@ -77,7 +77,7 @@ export default function AssessmentCreate() {
   const { data: bankResult } = useQuestionBank(selectedBankId, 1, 200);
   const bankDetail = bankResult?.data;
 
-  const isCreating = createAssessment.isPending || (activeTab === 'csv' && importCsv.isPending);
+  const isCreating = createAssessment.isPending || (activeTab === 'csv' && parseCsv.isPending);
 
   const toggleExpand = (id: string) => {
     const newSet = new Set(expandedQuestions);
@@ -110,12 +110,14 @@ export default function AssessmentCreate() {
       if (existingJson) {
         try {
           const parsed = typeof existingJson === 'string' ? JSON.parse(existingJson) : existingJson;
-          const hasQuestions = parsed.pages?.some((p: any) => p.elements?.length > 0);
+          const hasQuestions = parsed.pages?.some(
+            (p: { elements?: unknown[] }) => (p.elements?.length ?? 0) > 0,
+          );
           if (hasQuestions) {
             setShowConfirmReplace(true);
             return;
           }
-        } catch (e) {
+        } catch {
           // fallback to no warning if parse fails
         }
       }
@@ -167,35 +169,25 @@ export default function AssessmentCreate() {
     }
   };
 
-  const handleCreateAndImport = async () => {
+  const handleLoadCsvIntoBuilder = async () => {
     if (!csvContent.trim()) {
-      toast.error('Paste CSV content before importing');
+      toast.error('Upload or paste CSV content first');
       return;
     }
 
-    setFieldErrors({});
-    let createdAssessmentId: string | null = null;
-
     try {
-      const assessment = await createAssessment.mutateAsync({
-        ...createPayload(),
-        surveyJson: undefined,
-      });
-      createdAssessmentId = assessment.id;
-
-      const result = await importCsv.mutateAsync({
-        id: assessment.id,
-        csvContent,
-      });
-
-      toast.success(`Imported ${result.questionCount} questions`);
-      navigate(`/assessments/${assessment.id}`);
-    } catch (error) {
-      setFieldErrors(getFieldErrors(error));
-      toast.error(error instanceof Error ? error.message : 'Unable to import CSV');
-      if (createdAssessmentId) {
-        navigate(`/assessments/${createdAssessmentId}`);
+      const result = await parseCsv.mutateAsync({ csvContent });
+      setSurveyJson(JSON.stringify(result.surveyJson));
+      if (result.warnings?.length) {
+        toast.warning(
+          `${result.warnings.length} warnings during import. Check the console for details.`,
+        );
+        console.warn('CSV import warnings:', result.warnings);
       }
+      setActiveTab('builder');
+      toast.success(`Parsed ${result.questionCount} questions — review in the builder`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to parse CSV');
     }
   };
 
@@ -332,7 +324,11 @@ export default function AssessmentCreate() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <SurveyEditor ref={surveyEditorRef} onSave={setSurveyJson} />
+              <SurveyEditor
+                ref={surveyEditorRef}
+                initialJson={surveyJson ?? undefined}
+                onSave={setSurveyJson}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -342,8 +338,8 @@ export default function AssessmentCreate() {
             <CardHeader>
               <CardTitle>CSV Import</CardTitle>
               <CardDescription>
-                Paste tab-delimited CSV content. The assessment will be created first, then
-                questions will be imported.
+                Upload or paste tab-delimited CSV content. Questions will be loaded into the Survey
+                Builder for review before saving.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -358,23 +354,42 @@ export default function AssessmentCreate() {
                 </AlertDescription>
               </Alert>
               <div className="space-y-2">
-                <Label htmlFor="csvContent">CSV Content</Label>
+                <Label htmlFor="csvFile">Upload CSV File</Label>
+                <Input
+                  id="csvFile"
+                  type="file"
+                  accept=".csv,.tsv,.txt"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 1_048_576) {
+                      toast.error('CSV file is too large. Maximum size is 1MB.');
+                      return;
+                    }
+                    const text = await file.text();
+                    setCsvContent(text);
+                    toast.success(`Loaded ${file.name}`);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="csvContent">Or Paste CSV Content</Label>
                 <Textarea
                   id="csvContent"
                   value={csvContent}
                   onChange={(event) => setCsvContent(event.target.value)}
                   placeholder="Paste CSV rows here..."
-                  rows={14}
+                  rows={10}
                 />
               </div>
               <div className="flex justify-end">
                 <Button
-                  onClick={handleCreateAndImport}
-                  disabled={isCreating || !form.title.trim() || !csvContent.trim()}
+                  onClick={handleLoadCsvIntoBuilder}
+                  disabled={parseCsv.isPending || !csvContent.trim()}
                   className="bg-primary-500 hover:bg-primary-500/90"
                 >
-                  {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create &amp; Import
+                  {parseCsv.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Load into Builder
                 </Button>
               </div>
             </CardContent>

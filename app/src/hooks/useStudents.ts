@@ -1,14 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ensureSuccess } from '../lib/api';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { api, ensureSuccess, ensurePaginatedSuccess } from '../lib/api';
 import type { Student } from '../types/api';
 
-export function useStudents() {
+export function useStudents(page = 1, limit = 25) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+
   return useQuery({
-    queryKey: ['students'],
-    queryFn: async () => {
-      const res = await api.get<Student[]>('/api/students');
-      return ensureSuccess(res);
-    },
+    queryKey: ['students', page, limit],
+    queryFn: async () =>
+      ensurePaginatedSuccess(await api.get<Student[]>(`/api/students?${params.toString()}`)),
+    placeholderData: keepPreviousData,
   });
 }
 

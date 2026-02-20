@@ -163,6 +163,8 @@ router.post(
         select: {
           id: true,
           questionOrder: true,
+          responseData: true,
+          startedAt: true,
         },
         orderBy: {
           startedAt: 'desc',
@@ -184,6 +186,8 @@ router.post(
             questionOrder: Array.isArray(existingIncompleteResponse.questionOrder)
               ? existingIncompleteResponse.questionOrder
               : [],
+            responseData: existingIncompleteResponse.responseData as Record<string, unknown> | null,
+            startedAt: existingIncompleteResponse.startedAt?.toISOString() ?? null,
           },
         });
       }

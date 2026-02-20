@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useIsAuthenticated } from './lib/auth';
 import { useIsStudentAuthenticated } from './lib/student-auth';
@@ -5,8 +6,6 @@ import AdminLayout from './components/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AssessmentList from './pages/admin/AssessmentList';
-import AssessmentCreate from './pages/admin/AssessmentCreate';
-import AssessmentDetail from './pages/admin/AssessmentDetail';
 import QrPresenter from './pages/admin/QrPresenter';
 import QuestionBankList from './pages/admin/QuestionBankList';
 import QuestionBankCreate from './pages/admin/QuestionBankCreate';
@@ -16,7 +15,6 @@ import InstructorList from './pages/admin/InstructorList';
 import StudentList from './pages/admin/StudentList';
 import SessionList from './pages/admin/SessionList';
 import SessionDetail from './pages/admin/SessionDetail';
-import TakeAssessment from './pages/public/TakeAssessment';
 import AttendSession from './pages/public/AttendSession';
 import CheckOutSession from './pages/public/CheckOutSession';
 import CreateAccount from './pages/public/CreateAccount';
@@ -25,6 +23,23 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import AssessmentReview from './pages/student/AssessmentReview';
 import Welcome from './pages/Welcome';
 import BugReportButton from './components/BugReportButton';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy-load heavy pages (SurveyJS, recharts) to reduce initial bundle size
+const TakeAssessment = lazy(() => import('./pages/public/TakeAssessment'));
+const AssessmentCreate = lazy(() => import('./pages/admin/AssessmentCreate'));
+const AssessmentDetail = lazy(() => import('./pages/admin/AssessmentDetail'));
+
+function SurveyLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useIsAuthenticated();
@@ -40,7 +55,7 @@ function StudentProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
       <Routes>
         {/* Welcome / role selection */}
         <Route path="/welcome" element={<Welcome />} />
@@ -56,8 +71,22 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="assessments" element={<AssessmentList />} />
-          <Route path="assessments/new" element={<AssessmentCreate />} />
-          <Route path="assessments/:id" element={<AssessmentDetail />} />
+          <Route
+            path="assessments/new"
+            element={
+              <Suspense fallback={<SurveyLoadingFallback />}>
+                <AssessmentCreate />
+              </Suspense>
+            }
+          />
+          <Route
+            path="assessments/:id"
+            element={
+              <Suspense fallback={<SurveyLoadingFallback />}>
+                <AssessmentDetail />
+              </Suspense>
+            }
+          />
           <Route path="assessments/:id/present" element={<QrPresenter />} />
           <Route path="question-banks" element={<QuestionBankList />} />
           <Route path="question-banks/new" element={<QuestionBankCreate />} />
@@ -70,7 +99,14 @@ export default function App() {
         </Route>
 
         {/* Public routes (no auth) */}
-        <Route path="/take/:hash" element={<TakeAssessment />} />
+        <Route
+          path="/take/:hash"
+          element={
+            <Suspense fallback={<SurveyLoadingFallback />}>
+              <TakeAssessment />
+            </Suspense>
+          }
+        />
         <Route path="/attend/:hash" element={<AttendSession />} />
         <Route path="/attend/:hash/checkout" element={<CheckOutSession />} />
         <Route path="/create-account" element={<CreateAccount />} />
@@ -99,6 +135,6 @@ export default function App() {
       </Routes>
 
       <BugReportButton />
-    </>
+    </ErrorBoundary>
   );
 }

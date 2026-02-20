@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { api, ensureSuccess, ensurePaginatedSuccess } from '../lib/api';
 import type { BugReport, BugReportSubmission } from '../types/api';
 
@@ -35,6 +35,7 @@ export function useBugReports(
     queryKey: ['bug-reports', page, limit, status],
     queryFn: async () =>
       ensurePaginatedSuccess(await api.get<BugReport[]>(`/api/bug-reports?${params.toString()}`)),
+    placeholderData: keepPreviousData,
   });
 }
 

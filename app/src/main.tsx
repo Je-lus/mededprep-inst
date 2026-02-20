@@ -4,7 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import App from './App';
+import { initializeSurveyJS } from './lib/surveyjs-license';
+import 'survey-core/survey-core.min.css';
 import './index.css';
+
+initializeSurveyJS();
 
 const queryClient = new QueryClient({
   defaultOptions: {

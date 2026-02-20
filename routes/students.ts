@@ -2,8 +2,8 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma.js';
-import { NotFoundError } from '../lib/errors.js';
-import { z, validate } from '../lib/validate.js';
+import { NotFoundError, ValidationError } from '../lib/errors.js';
+import { z, validate, formatZodErrors } from '../lib/validate.js';
 import { param } from '../lib/route-utils.js';
 
 const router = Router();
@@ -24,6 +24,11 @@ const studentSelect = {
 // SCHEMAS
 // ============================================
 
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(25),
+});
+
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -38,17 +43,29 @@ const updateStudentSchema = z.object({
 // ROUTES
 // ============================================
 
-// GET / — List all students for this org
+// GET / — List students for this org (paginated)
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const students = await prisma.student.findMany({
-      where: { orgId: req.orgId },
-      select: {
-        ...studentSelect,
-        _count: { select: { responses: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const { page, limit } = paginationSchema.parse(req.query);
+    const skip = (page - 1) * limit;
+
+    const where = { orgId: req.orgId };
+
+    const [students, total] = await Promise.all([
+      prisma.student.findMany({
+        where,
+        select: {
+          ...studentSelect,
+          _count: { select: { responses: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.student.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.json({
       success: true,
@@ -58,8 +75,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         responseCount: s._count.responses,
         _count: undefined,
       })),
+      pagination: { page, limit, total, totalPages },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new ValidationError('Invalid query parameters', formatZodErrors(error)));
+    }
     next(error);
   }
 });

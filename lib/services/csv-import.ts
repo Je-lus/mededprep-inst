@@ -7,6 +7,7 @@
  * Difficulty Level, Category, Sub Topics, Explanation, Page Number
  */
 import { parse } from 'csv-parse/sync';
+import { ValidationError } from '../errors.js';
 import type { SurveyJson, SurveyElement } from '../../types/survey.js';
 
 interface CsvRow {
@@ -16,6 +17,7 @@ interface CsvRow {
 export interface CsvImportResult {
   surveyJson: SurveyJson;
   questionCount: number;
+  warnings: string[];
 }
 
 const REQUIRED_COLUMNS = ['Question Code', 'Question', 'Answer 1', 'Correct Answer'];
@@ -32,24 +34,30 @@ export function parseCsvToSurveyJson(csvContent: string): CsvImportResult {
   }) as CsvRow[];
 
   if (records.length === 0) {
-    throw new Error('CSV file is empty or contains no data rows');
+    throw new ValidationError('CSV file is empty or contains no data rows');
   }
 
   const headers = Object.keys(records[0]);
   const missing = REQUIRED_COLUMNS.filter((col) => !headers.includes(col));
   if (missing.length > 0) {
-    throw new Error(`CSV is missing required columns: ${missing.join(', ')}`);
+    throw new ValidationError(`CSV is missing required columns: ${missing.join(', ')}`);
   }
 
   const elements: SurveyElement[] = [];
+  const warnings: string[] = [];
   const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-  for (const row of records) {
+  for (let rowIndex = 0; rowIndex < records.length; rowIndex++) {
+    const row = records[rowIndex];
+    const rowNum = rowIndex + 2; // +2 because row 1 is header, data starts at row 2
     const questionCode = row['Question Code']?.trim();
     const questionText = row['Question']?.trim();
     const questionChoice = row['Question Choice']?.trim() || 'Single';
 
-    if (!questionCode || !questionText) continue;
+    if (!questionCode || !questionText) {
+      warnings.push(`Row ${rowNum}: skipped — missing Question Code or Question text`);
+      continue;
+    }
 
     const choices: { value: string; text: string }[] = [];
     for (let i = 1; i <= 6; i++) {
@@ -61,6 +69,26 @@ export function parseCsvToSurveyJson(csvContent: string): CsvImportResult {
 
     const correctAnswer = row['Correct Answer']?.trim();
     const difficulty = parseInt(row['Difficulty Level'] ?? '') || null;
+
+    // Validate correctAnswer against available choices
+    const choiceValues = choices.map((c) => c.value);
+    if (correctAnswer) {
+      if (questionChoice.toLowerCase() === 'multiple') {
+        const answerValues = correctAnswer.split(',').map((a) => a.trim());
+        const invalid = answerValues.filter((v) => !choiceValues.includes(v));
+        if (invalid.length > 0) {
+          warnings.push(
+            `Row ${rowNum} (${questionCode}): correctAnswer '${invalid.join(', ')}' does not match any choice`,
+          );
+        }
+      } else {
+        if (!choiceValues.includes(correctAnswer)) {
+          warnings.push(
+            `Row ${rowNum} (${questionCode}): correctAnswer '${correctAnswer}' does not match any choice`,
+          );
+        }
+      }
+    }
 
     const element: SurveyElement = {
       type: questionChoice.toLowerCase() === 'multiple' ? 'checkbox' : 'radiogroup',
@@ -102,5 +130,5 @@ export function parseCsvToSurveyJson(csvContent: string): CsvImportResult {
     });
   }
 
-  return { surveyJson: { pages }, questionCount: elements.length };
+  return { surveyJson: { pages }, questionCount: elements.length, warnings };
 }

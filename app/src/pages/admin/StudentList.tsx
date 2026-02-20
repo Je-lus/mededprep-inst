@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, GraduationCap, KeyRound } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, GraduationCap, KeyRound } from 'lucide-react';
 import { useStudents, useUpdateStudent, useResetStudentPassword } from '@/hooks/useStudents';
 import type { Student } from '@/types/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -42,9 +42,15 @@ function formatDate(value: string) {
 }
 
 export default function StudentList() {
-  const { data, isLoading, isError, error } = useStudents();
+  const [page, setPage] = useState(1);
+  const limit = 25;
+
+  const { data, isLoading, isError, error } = useStudents(page, limit);
   const updateStudent = useUpdateStudent();
   const resetPassword = useResetStudentPassword();
+
+  const students = data?.data || [];
+  const pagination = data?.pagination;
 
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editForm, setEditForm] = useState({
@@ -107,7 +113,7 @@ export default function StudentList() {
     );
   };
 
-  const filteredData = data?.filter((student) => {
+  const filteredData = students.filter((student) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -151,7 +157,7 @@ export default function StudentList() {
         </Alert>
       )}
 
-      {!isLoading && !isError && data && data.length === 0 && (
+      {!isLoading && !isError && pagination && pagination.total === 0 && (
         <EmptyState
           icon={GraduationCap}
           title="No students yet"
@@ -159,7 +165,7 @@ export default function StudentList() {
         />
       )}
 
-      {!isLoading && !isError && data && data.length > 0 && (
+      {!isLoading && !isError && students.length > 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="mb-4">
@@ -182,7 +188,7 @@ export default function StudentList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData?.map((student: Student) => (
+                {filteredData.map((student: Student) => (
                   <TableRow key={student.id}>
                     <TableCell className="font-medium">
                       {student.firstName} {student.lastName}
@@ -213,7 +219,7 @@ export default function StudentList() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredData?.length === 0 && (
+                {filteredData.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       No students match your search.
@@ -222,6 +228,38 @@ export default function StudentList() {
                 )}
               </TableBody>
             </Table>
+
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between border-t pt-4 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(page - 1) * limit + 1} to {Math.min(page * limit, pagination.total)} of{' '}
+                  {pagination.total} students
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {page} of {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page === pagination.totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

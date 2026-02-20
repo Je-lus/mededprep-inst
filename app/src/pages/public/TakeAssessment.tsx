@@ -1,21 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AlertCircle, Clock3 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { Model } from 'survey-core';
+import { Survey } from 'survey-react-ui';
 import {
   usePublicAssessment,
   useStartAssessment,
   useSubmitAssessment,
 } from '../../hooks/usePublic';
-import type { AssessmentSubmitResult, SurveyElement, SurveyJson } from '../../types/api';
+import type { AssessmentSubmitResult, SurveyJson } from '../../types/api';
 import { ApiError } from '../../lib/api';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { StudentInfoStep } from './take-assessment/StudentInfoStep';
-import { QuestionCard } from './take-assessment/QuestionCard';
 import { AssessmentResults } from './take-assessment/AssessmentResults';
 
 type FlowStep = 'info' | 'taking' | 'results';
@@ -23,32 +22,6 @@ type FlowStep = 'info' | 'taking' | 'results';
 function asSurveyJson(value: unknown): SurveyJson | null {
   if (value && typeof value === 'object') return value as SurveyJson;
   return null;
-}
-
-function flattenSurveyElements(surveyJson: SurveyJson, questionOrder?: string[]): SurveyElement[] {
-  const rawElements =
-    surveyJson.pages?.flatMap((page) =>
-      (page.elements ?? []).filter(
-        (element): element is SurveyElement =>
-          !!element && typeof element === 'object' && typeof element.name === 'string',
-      ),
-    ) ?? [];
-
-  if (!Array.isArray(questionOrder) || questionOrder.length === 0) return rawElements;
-
-  const elementByName = new Map(rawElements.map((element) => [element.name, element]));
-  const ordered = questionOrder
-    .map((name) => elementByName.get(name))
-    .filter(Boolean) as SurveyElement[];
-  const orderedNames = new Set(ordered.map((element) => element.name));
-  const remainder = rawElements.filter((element) => !orderedNames.has(element.name));
-  return [...ordered, ...remainder];
-}
-
-function formatTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 export default function TakeAssessment() {
@@ -59,68 +32,33 @@ export default function TakeAssessment() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
-  const [responseId, setResponseId] = useState('');
-  const [surveyJson, setSurveyJson] = useState<SurveyJson | null>(null);
-  const [questions, setQuestions] = useState<SurveyElement[]>([]);
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [submitResult, setSubmitResult] = useState<AssessmentSubmitResult | null>(null);
+  const [surveyModel, setSurveyModel] = useState<Model | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const autoSubmittedRef = useRef(false);
+  const submittingRef = useRef(false);
+  const submitFnRef = useRef<(() => void) | null>(null);
 
   const assessmentQuery = usePublicAssessment(safeHash);
   const startAssessment = useStartAssessment(safeHash);
   const submitAssessment = useSubmitAssessment(safeHash);
 
-  const onSubmitAssessment = useCallback(
-    async (autoSubmitted = false) => {
-      if (!responseId || submitAssessment.isPending) return;
-      if (autoSubmitted) toast.info('Time is up. Submitting your assessment...');
-
-      const timeTaken = startedAt
-        ? Math.max(0, Math.round((Date.now() - startedAt) / 1000))
-        : undefined;
-
-      try {
-        const result = await submitAssessment.mutateAsync({
-          responseId,
-          responseData: answers,
-          ...(timeTaken !== undefined ? { timeTaken } : {}),
-        });
-        setSubmitResult(result);
-        setStep('results');
-        toast.success('Assessment submitted');
-      } catch (error) {
-        if (error instanceof ApiError) {
-          toast.error(error.message || 'Unable to submit assessment');
-        } else {
-          toast.error('Unable to submit assessment');
-        }
-      }
-    },
-    [answers, responseId, startedAt, submitAssessment],
-  );
-
+  // Cleanup SurveyJS model event listeners and dispose on unmount or model change
   useEffect(() => {
-    if (step !== 'taking' || remainingSeconds === null || remainingSeconds <= 0) return undefined;
+    if (!surveyModel) return;
 
-    const timer = window.setInterval(() => {
-      setRemainingSeconds((current) => {
-        if (current === null) return null;
-        return Math.max(current - 1, 0);
-      });
-    }, 1000);
+    return () => {
+      surveyModel.onComplete.clear();
+      surveyModel.onTimerTick.clear();
+      surveyModel.dispose();
+    };
+  }, [surveyModel]);
 
-    return () => window.clearInterval(timer);
-  }, [remainingSeconds, step]);
-
-  useEffect(() => {
-    if (step !== 'taking' || remainingSeconds === null || remainingSeconds > 0) return;
-    if (autoSubmittedRef.current) return;
-    autoSubmittedRef.current = true;
-    void onSubmitAssessment(true);
-  }, [onSubmitAssessment, remainingSeconds, step]);
+  const retrySubmit = useCallback(() => {
+    if (!submitFnRef.current) return;
+    setSubmitError(null);
+    submitFnRef.current();
+  }, []);
 
   const handleStart = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -143,27 +81,93 @@ export default function TakeAssessment() {
         return;
       }
 
-      const parsedQuestions = flattenSurveyElements(parsedSurvey, result.questionOrder);
-      if (parsedQuestions.length === 0) {
-        toast.error('This assessment has no questions to answer');
-        return;
+      // Create SurveyJS model from the sanitized survey JSON.
+      // The backend already reorders elements according to questionOrder
+      // for resumed sessions, so no additional reordering is needed here.
+      const model = new Model(parsedSurvey);
+
+      // Restore previous answers when resuming an in-progress assessment
+      if (
+        result.responseData &&
+        typeof result.responseData === 'object' &&
+        Object.keys(result.responseData).length > 0
+      ) {
+        model.data = result.responseData;
       }
 
-      setResponseId(result.responseId);
-      setSurveyJson(parsedSurvey);
-      setQuestions(parsedQuestions);
-      setAnswers({});
-      setStartedAt(Date.now());
+      // Apply brand theme
+      model.applyTheme({
+        cssVariables: {
+          '--sjs-primary-backcolor': '#1b5fd0',
+          '--sjs-primary-backcolor-light': 'rgba(27, 95, 208, 0.1)',
+          '--sjs-primary-backcolor-dark': '#1550b5',
+          '--sjs-primary-forecolor': '#ffffff',
+        },
+      });
+
+      const capturedResponseId = result.responseId;
+      // On resume, use the original startedAt so timeTaken accounts for
+      // time already spent. For new sessions, fall back to Date.now().
+      const capturedStartedAt = result.startedAt
+        ? new Date(result.startedAt).getTime()
+        : Date.now();
+
+      // Extract submit logic so it can be called from both onComplete and retry.
+      // Calling surveyModel.doComplete() on retry would not re-fire onComplete
+      // on an already-completed model, so we call the submit function directly.
+      const doSubmit = () => {
+        if (submittingRef.current) return;
+        submittingRef.current = true;
+        setSubmitError(null);
+
+        const responseData = model.data;
+        const timeTaken = Math.max(0, Math.round((Date.now() - capturedStartedAt) / 1000));
+
+        submitAssessment
+          .mutateAsync({
+            responseId: capturedResponseId,
+            responseData,
+            timeTaken,
+          })
+          .then((submitRes) => {
+            setSubmitResult(submitRes);
+            setStep('results');
+            toast.success('Assessment submitted');
+          })
+          .catch((error) => {
+            submittingRef.current = false;
+            const message =
+              error instanceof ApiError
+                ? error.message || 'Unable to submit assessment'
+                : 'Unable to submit assessment';
+            toast.error(message);
+            setSubmitError(message);
+          });
+      };
+
+      // Store submit function in ref so retry button can call it directly
+      submitFnRef.current = doSubmit;
+
+      // Timer auto-submit
+      if (model.timeLimit > 0) {
+        model.onTimerTick.add((sender) => {
+          if (sender.timeSpent >= sender.timeLimit && !submittingRef.current) {
+            toast.info('Time is up! Submitting your assessment...');
+            sender.doComplete();
+          }
+        });
+      }
+
+      // Handle survey completion
+      model.onComplete.add(() => {
+        doSubmit();
+      });
+
+      setSurveyModel(model);
       setSubmitResult(null);
+      setSubmitError(null);
+      submittingRef.current = false;
       setStep('taking');
-
-      autoSubmittedRef.current = false;
-
-      if (typeof parsedSurvey.timeLimit === 'number' && parsedSurvey.timeLimit > 0) {
-        setRemainingSeconds(Math.floor(parsedSurvey.timeLimit));
-      } else {
-        setRemainingSeconds(null);
-      }
     } catch (error) {
       if (error instanceof ApiError) {
         toast.error(error.message || 'Unable to start assessment');
@@ -171,21 +175,6 @@ export default function TakeAssessment() {
         toast.error('Unable to start assessment');
       }
     }
-  };
-
-  const updateCheckboxAnswer = (questionName: string, value: string, checked: boolean) => {
-    setAnswers((current) => {
-      const existing = Array.isArray(current[questionName])
-        ? (current[questionName] as string[]).filter(
-            (item): item is string => typeof item === 'string',
-          )
-        : [];
-
-      const next = checked
-        ? [...new Set([...existing, value])]
-        : existing.filter((item) => item !== value);
-      return { ...current, [questionName]: next };
-    });
   };
 
   if (!hash) {
@@ -237,7 +226,6 @@ export default function TakeAssessment() {
   }
 
   const assessment = assessmentQuery.data;
-  const isTimed = typeof surveyJson?.timeLimit === 'number' && surveyJson.timeLimit > 0;
 
   return (
     <div className="min-h-screen bg-background px-4 py-8 sm:py-10">
@@ -269,63 +257,22 @@ export default function TakeAssessment() {
           />
         )}
 
-        {step === 'taking' && (
-          <div className="space-y-4">
-            {isTimed && remainingSeconds !== null && (
-              <Card className="border-primary/30">
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                    <Clock3 className="h-4 w-4" />
-                    Time Remaining
-                  </div>
-                  <Badge
-                    variant={remainingSeconds <= 60 ? 'destructive' : 'secondary'}
-                    className="font-mono text-sm"
-                  >
-                    {formatTime(remainingSeconds)}
-                  </Badge>
-                </CardContent>
-              </Card>
-            )}
-
-            {questions.map((question, index) => (
-              <QuestionCard
-                key={question.name}
-                question={question}
-                index={index}
-                totalQuestions={questions.length}
-                answerValue={answers[question.name]}
-                onRadioChange={(name, value) =>
-                  setAnswers((current) => ({ ...current, [name]: value }))
-                }
-                onCheckboxChange={updateCheckboxAnswer}
-                onTextChange={(name, value) =>
-                  setAnswers((current) => ({ ...current, [name]: value }))
-                }
-              />
-            ))}
-
-            <Button
-              type="button"
-              className="w-full"
-              disabled={submitAssessment.isPending}
-              onClick={() => void onSubmitAssessment(false)}
-            >
-              {submitAssessment.isPending ? 'Submitting...' : 'Submit Assessment'}
-            </Button>
-
-            {submitAssessment.isError && (
-              <Alert variant="destructive">
+        {step === 'taking' && surveyModel && (
+          <>
+            <Survey model={surveyModel} />
+            {submitError && (
+              <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Submission Error</AlertTitle>
-                <AlertDescription>
-                  {submitAssessment.error instanceof ApiError
-                    ? submitAssessment.error.message
-                    : 'Please try submitting again.'}
+                <AlertTitle>Submission Failed</AlertTitle>
+                <AlertDescription className="flex items-center justify-between gap-4">
+                  <span>{submitError}</span>
+                  <Button type="button" variant="outline" size="sm" onClick={retrySubmit}>
+                    Retry
+                  </Button>
                 </AlertDescription>
               </Alert>
             )}
-          </div>
+          </>
         )}
 
         {step === 'results' && submitResult && (

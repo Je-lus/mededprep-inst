@@ -31,8 +31,13 @@ const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
+const itemAnalysisPaginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+});
+
 const importCsvSchema = z.object({
-  csvContent: z.string().min(1),
+  csvContent: z.string().min(1).max(1_048_576, 'CSV content exceeds 1MB limit'),
 });
 
 const releaseResultsSchema = z.object({
@@ -142,6 +147,19 @@ router.post(
       });
 
       res.json({ success: true, data: assessment });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.post(
+  '/parse-csv',
+  validate(importCsvSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { surveyJson, questionCount, warnings } = parseCsvToSurveyJson(req.body.csvContent);
+      res.json({ success: true, data: { surveyJson, questionCount, warnings } });
     } catch (error) {
       next(error);
     }
@@ -299,22 +317,36 @@ router.post(
         throw new ValidationError('CSV import is only allowed for draft assessments');
       }
 
-      const { surveyJson, questionCount } = parseCsvToSurveyJson(req.body.csvContent);
+      const { surveyJson, questionCount, warnings } = parseCsvToSurveyJson(req.body.csvContent);
 
       await prisma.assessment.update({
         where: { id: assessment.id },
         data: { surveyJson: surveyJson as unknown as Prisma.InputJsonValue },
       });
 
-      res.json({ success: true, data: { questionCount } });
+      res.json({ success: true, data: { questionCount, warnings } });
     } catch (error) {
       next(error);
     }
   },
 );
 
-// In-memory QR code cache keyed by publicHash
-const qrCodeCache = new Map<string, { url: string; qrCode: string }>();
+// In-memory QR code cache keyed by publicHash, with TTL eviction
+const QR_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const qrCodeCache = new Map<string, { url: string; qrCode: string; cachedAt: number }>();
+
+// Periodic cleanup of expired entries every 5 minutes
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of qrCodeCache) {
+      if (now - entry.cachedAt > QR_CACHE_TTL_MS) {
+        qrCodeCache.delete(key);
+      }
+    }
+  },
+  5 * 60 * 1000,
+).unref();
 
 router.get('/:id/qr-code', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -326,7 +358,11 @@ router.get('/:id/qr-code', async (req: Request, res: Response, next: NextFunctio
 
     const cached = qrCodeCache.get(assessment.publicHash);
     if (cached) {
-      return res.json({ success: true, data: cached });
+      if (Date.now() - cached.cachedAt > QR_CACHE_TTL_MS) {
+        qrCodeCache.delete(assessment.publicHash);
+      } else {
+        return res.json({ success: true, data: { url: cached.url, qrCode: cached.qrCode } });
+      }
     }
 
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:9000';
@@ -339,7 +375,7 @@ router.get('/:id/qr-code', async (req: Request, res: Response, next: NextFunctio
     });
 
     const data = { url, qrCode };
-    qrCodeCache.set(assessment.publicHash, data);
+    qrCodeCache.set(assessment.publicHash, { ...data, cachedAt: Date.now() });
 
     res.json({ success: true, data });
   } catch (error) {
@@ -459,14 +495,24 @@ router.get(
 router.get('/:id/item-analysis', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const assessment = await findAssessmentOrThrow(param(req.params.id), req.orgId);
+    const { page, limit } = itemAnalysisPaginationSchema.parse(req.query);
+    const skip = (page - 1) * limit;
 
-    const allResponses = await prisma.assessmentResponse.findMany({
-      where: {
-        assessmentId: assessment.id,
-        assessment: { orgId: req.orgId },
-      },
-      orderBy: { completedAt: 'desc' },
-    });
+    const where = {
+      assessmentId: assessment.id,
+      assessment: { orgId: req.orgId },
+    };
+
+    const [allResponses, total] = await Promise.all([
+      prisma.assessmentResponse.findMany({
+        where,
+        orderBy: { completedAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.assessmentResponse.count({ where }),
+    ]);
+
     const latestByStudent = new Map<string, (typeof allResponses)[number]>();
     for (const response of allResponses) {
       const key = response.studentEmail;
@@ -497,8 +543,16 @@ router.get('/:id/item-analysis', async (req: Request, res: Response, next: NextF
     }));
 
     const analysis = computeItemAnalysis(assessment.surveyJson as SurveyJson, latestResponses);
-    res.json({ success: true, data: analysis });
+    const totalPages = Math.ceil(total / limit);
+    res.json({
+      success: true,
+      data: analysis,
+      pagination: { page, limit, total, totalPages },
+    });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new ValidationError('Invalid query parameters', formatZodErrors(error)));
+    }
     next(error);
   }
 });

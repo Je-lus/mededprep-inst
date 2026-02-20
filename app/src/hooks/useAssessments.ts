@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { api, ensureSuccess, ensurePaginatedSuccess } from '../lib/api';
 import type {
   Assessment,
@@ -7,6 +7,7 @@ import type {
   ItemAnalysisResult,
   QrCodeData,
   ResponseDetail,
+  SurveyJson,
 } from '../types/api';
 
 export function useAssessments() {
@@ -112,18 +113,15 @@ export function useReactivateAssessment() {
   });
 }
 
-export function useImportCsv() {
-  const qc = useQueryClient();
+export function useParseCsv() {
   return useMutation({
-    mutationFn: async ({ id, csvContent }: { id: string; csvContent: string }) =>
+    mutationFn: async ({ csvContent }: { csvContent: string }) =>
       ensureSuccess(
-        await api.post<{ questionCount: number }>(`/api/assessments/${id}/import-csv`, {
-          csvContent,
-        }),
+        await api.post<{ surveyJson: SurveyJson; questionCount: number; warnings: string[] }>(
+          '/api/assessments/parse-csv',
+          { csvContent },
+        ),
       ),
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['assessments', vars.id] });
-    },
   });
 }
 
@@ -158,6 +156,7 @@ export function useAssessmentResponses(id: string, page = 1, limit = 10, refetch
       ),
     enabled: !!id,
     refetchInterval,
+    placeholderData: keepPreviousData,
   });
 }
 
