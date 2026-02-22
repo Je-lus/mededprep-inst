@@ -29,6 +29,7 @@ export function ResponsesTab({
   isError,
   error,
   isLive,
+  questionCount,
   onPrevious,
   onNext,
 }: {
@@ -41,6 +42,7 @@ export function ResponsesTab({
   isError: boolean;
   error: Error | null;
   isLive?: boolean;
+  questionCount: number;
   onPrevious: () => void;
   onNext: () => void;
 }) {
@@ -93,6 +95,7 @@ export function ResponsesTab({
                 <TableRow>
                   <TableHead>Student Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead className="w-[140px]">Progress</TableHead>
                   <TableHead className="w-[90px] text-right">Score</TableHead>
                   <TableHead className="w-[90px]">Passed</TableHead>
                   <TableHead className="w-[120px]">Time Taken</TableHead>
@@ -108,6 +111,9 @@ export function ResponsesTab({
                   >
                     <TableCell className="font-medium">{response.studentName || '-'}</TableCell>
                     <TableCell>{response.studentEmail || '-'}</TableCell>
+                    <TableCell>
+                      <ProgressCell response={response} questionCount={questionCount} />
+                    </TableCell>
                     <TableCell className="text-right">{response.scorePercentage ?? '-'}</TableCell>
                     <TableCell>
                       {typeof response.passed === 'boolean' ? (
@@ -151,5 +157,36 @@ export function ResponsesTab({
         />
       )}
     </Card>
+  );
+}
+
+function ProgressCell({
+  response,
+  questionCount,
+}: {
+  response: AssessmentResponse;
+  questionCount: number;
+}) {
+  if (questionCount === 0) return '-';
+
+  const isCompleted = !!response.completedAt;
+  const answered = isCompleted ? questionCount : Object.keys(response.responseData ?? {}).length;
+  const percent = Math.round((answered / questionCount) * 100);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-1.5 w-16 rounded-full bg-gray-200 overflow-hidden">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all',
+            isCompleted ? 'bg-emerald-500' : 'bg-[#1b5fd0]',
+          )}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span className="text-xs text-muted-foreground whitespace-nowrap">
+        {answered} / {questionCount}
+      </span>
+    </div>
   );
 }

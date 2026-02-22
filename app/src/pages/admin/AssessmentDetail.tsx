@@ -36,6 +36,7 @@ import { QrCodeTab } from './assessment-detail/QrCodeTab';
 import { ResponsesTab } from './assessment-detail/ResponsesTab';
 import { ItemAnalysisTab } from './assessment-detail/ItemAnalysisTab';
 import { EditAssessmentDialog } from './assessment-detail/EditAssessmentDialog';
+import { getQuestionCount } from './assessment-detail/utils';
 
 export default function AssessmentDetail() {
   const { id = '' } = useParams();
@@ -428,6 +429,7 @@ export default function AssessmentDetail() {
             isError={responsesQuery.isError}
             error={responsesQuery.error}
             isLive={isActiveAssessment}
+            questionCount={assessment ? getQuestionCount(assessment.surveyJson) : 0}
             onPrevious={() => setResponsesPage((current) => Math.max(current - 1, 1))}
             onNext={() => setResponsesPage((current) => current + 1)}
           />

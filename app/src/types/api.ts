@@ -42,6 +42,7 @@ export interface AssessmentResponse {
   timeTaken?: number;
   startedAt: string;
   completedAt?: string;
+  responseData?: Record<string, unknown>;
 }
 
 export interface QuestionAnalysis {

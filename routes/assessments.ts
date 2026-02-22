@@ -416,6 +416,7 @@ router.get('/:id/responses', async (req: Request, res: Response, next: NextFunct
           timeTaken: true,
           startedAt: true,
           completedAt: true,
+          responseData: true,
           createdAt: true,
           updatedAt: true,
         },
