@@ -14,7 +14,7 @@ This milestone transforms the flat white instructor UI into a polished 2-theme s
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Atomic CSS Migration** - Migrate all CSS variables from HSL-component format to raw hex atomically (completed 2026-02-24)
-- [ ] **Phase 2: Theme Infrastructure** - ThemeContext provider, localStorage persistence, FOUC prevention, and sun/moon toggle
+- [x] **Phase 2: Theme Infrastructure** - ThemeContext provider, localStorage persistence, FOUC prevention, and sun/moon toggle (completed 2026-02-24)
 - [ ] **Phase 3: Admin Sidebar & AppShell** - Replace horizontal tab nav with fixed sidebar, mobile Sheet drawer, and responsive layout
 - [ ] **Phase 4: Glass Purple Visual Effects** - Body gradient, glass card blur, glass sidebar, button glow, and transition utilities
 - [ ] **Phase 5: SurveyJS Sync, Color Sweep & Student Layout** - Theme-aware assessments, full semantic color sweep, student layout upgrade, and final quality gate
@@ -54,7 +54,7 @@ Plans:
 4. The toggle button is present in both the admin area and the student area
 5. `npm run build` and `npm run typecheck` pass with zero errors
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase                                          | Plans Complete | Status      | Completed  |
 | ---------------------------------------------- | -------------- | ----------- | ---------- |
 | 1. Atomic CSS Migration                        | 2/2            | Complete    | 2026-02-24 |
-| 2. Theme Infrastructure                        | 1/2            | In progress | -          |
+| 2. Theme Infrastructure                        | 2/2            | Complete    | 2026-02-24 |
 | 3. Admin Sidebar & AppShell                    | 0/2            | Not started | -          |
 | 4. Glass Purple Visual Effects                 | 0/2            | Not started | -          |
 | 5. SurveyJS Sync, Color Sweep & Student Layout | 0/5            | Not started | -          |
