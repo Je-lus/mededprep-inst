@@ -86,6 +86,11 @@
   min-height: 100vh;
 }
 
+/* STU-01: Glass Purple background gradient for layout wrappers */
+.glass-body-gradient {
+  background: radial-gradient(ellipse at top, #2d1b69 0%, #0f0a1e 100%) !important;
+}
+
 /* LAY-07: Glass sidebar blur */
 [data-theme='glass-purple'] .sidebar-glass {
   background: rgba(255, 255, 255, 0.05);

@@ -5,6 +5,8 @@ import { useStudentAuthStore } from '@/lib/student-auth';
 import { useResendVerification } from '@/hooks/useStudentAuth';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 
 function EmailVerificationBanner() {
   const student = useStudentAuthStore((s) => s.student);
@@ -44,6 +46,7 @@ function EmailVerificationBanner() {
 }
 
 export default function StudentLayout() {
+  const { theme } = useTheme();
   const student = useStudentAuthStore((s) => s.student);
   const logout = useStudentAuthStore((s) => s.logout);
   const navigate = useNavigate();
@@ -55,14 +58,19 @@ export default function StudentLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className={cn(
+        'min-h-screen bg-background',
+        theme === 'glass-purple' && 'glass-body-gradient',
+      )}
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-0 focus:top-0 focus:z-50 focus:block focus:w-full focus:bg-primary focus:px-4 focus:py-3 focus:text-center focus:text-sm focus:font-medium focus:text-primary-foreground"
       >
         Skip to main content
       </a>
-      <header className="sticky top-0 z-10 border-b bg-white">
+      <header className="sticky top-0 z-10 border-b bg-card">
         <nav
           aria-label="Student portal"
           className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6"
