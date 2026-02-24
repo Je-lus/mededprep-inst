@@ -10,11 +10,11 @@ Requirements for initial release. Each maps to roadmap phases.
 ### CSS Foundation
 
 - [x] **CSS-01**: CSS variables migrate from HSL-component format to raw hex format atomically (index.css + tailwind.config + all primary-500 class references in one commit)
-- [ ] **CSS-02**: Tailwind config switches from `hsl(var(--xxx))` to `var(--xxx)` consumption pattern for all color tokens
-- [ ] **CSS-03**: All `primary-500` / `primary-100` / `primary-50` / `primary-600` / `primary-700` utility class references replaced with semantic equivalents (`bg-primary`, `bg-primary/10`, etc.)
-- [ ] **CSS-04**: Global `border-color` rule in index.css switches from `hsl(var(--border))` to `var(--border)`
-- [ ] **CSS-05**: Glass Purple CSS variables defined under `[data-theme="glass"]` selector with dark background, purple accent, and rgba surface colors
-- [ ] **CSS-06**: Daylight CSS variables defined under `:root` selector matching current light appearance (no visual regression)
+- [x] **CSS-02**: Tailwind config switches from `hsl(var(--xxx))` to `var(--xxx)` consumption pattern for all color tokens
+- [x] **CSS-03**: All `primary-500` / `primary-100` / `primary-50` / `primary-600` / `primary-700` utility class references replaced with semantic equivalents (`bg-primary`, `bg-primary/10`, etc.)
+- [x] **CSS-04**: Global `border-color` rule in index.css switches from `hsl(var(--border))` to `var(--border)`
+- [x] **CSS-05**: Glass Purple CSS variables defined under `[data-theme="glass"]` selector with dark background, purple accent, and rgba surface colors
+- [x] **CSS-06**: Daylight CSS variables defined under `:root` selector matching current light appearance (no visual regression)
 
 ### Theme Infrastructure
 
@@ -111,11 +111,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase   | Status   |
 | ----------- | ------- | -------- |
 | CSS-01      | Phase 1 | Complete |
-| CSS-02      | Phase 1 | Pending  |
-| CSS-03      | Phase 1 | Pending  |
-| CSS-04      | Phase 1 | Pending  |
-| CSS-05      | Phase 1 | Pending  |
-| CSS-06      | Phase 1 | Pending  |
+| CSS-02      | Phase 1 | Complete |
+| CSS-03      | Phase 1 | Complete |
+| CSS-04      | Phase 1 | Complete |
+| CSS-05      | Phase 1 | Complete |
+| CSS-06      | Phase 1 | Complete |
 | THM-01      | Phase 2 | Pending  |
 | THM-02      | Phase 2 | Pending  |
 | THM-03      | Phase 2 | Pending  |
