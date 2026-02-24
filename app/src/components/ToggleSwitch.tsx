@@ -19,7 +19,7 @@ export function ToggleSwitch({
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
       />
-      <span className="relative h-5 w-9 rounded-full bg-muted transition-colors peer-checked:bg-primary-500 peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4" />
+      <span className="relative h-5 w-9 rounded-full bg-muted transition-colors peer-checked:bg-primary peer-disabled:opacity-50 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4" />
     </label>
   );
 }

@@ -47,7 +47,7 @@ export default function QrPresenter() {
       <Card className="w-full max-w-4xl border-slate-300 bg-white text-slate-900 shadow-2xl">
         <CardContent className="space-y-6 p-8 text-center md:p-12">
           <div className="space-y-2">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary-500">
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
               MedEdPrep Assessment
             </p>
             <h1 className="text-3xl font-bold md:text-4xl">
@@ -92,7 +92,7 @@ export default function QrPresenter() {
             </>
           )}
 
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-4 py-2 text-primary-500">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-primary">
             {responsesQuery.isFetching ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

@@ -46,7 +46,7 @@ export default function AssessmentList() {
             Manage draft, active, and closed assessments.
           </p>
         </div>
-        <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
+        <Button asChild className="bg-primary hover:bg-primary/90">
           <Link to="/assessments/new">
             <Plus className="mr-2 h-4 w-4" />
             Create Assessment
@@ -71,7 +71,9 @@ export default function AssessmentList() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Unable to load assessments</AlertTitle>
-          <AlertDescription>{error instanceof Error ? error.message : 'Try again.'}</AlertDescription>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Try again.'}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -80,7 +82,7 @@ export default function AssessmentList() {
           title="No assessments yet"
           description="Create your first assessment to begin collecting responses."
           action={
-            <Button asChild className="bg-primary-500 hover:bg-primary-500/90">
+            <Button asChild className="bg-primary hover:bg-primary/90">
               <Link to="/assessments/new">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Assessment
@@ -119,9 +121,13 @@ export default function AssessmentList() {
                         </p>
                       )}
                     </TableCell>
-                    <TableCell><StatusBadge status={assessment.status} /></TableCell>
+                    <TableCell>
+                      <StatusBadge status={assessment.status} />
+                    </TableCell>
                     <TableCell className="text-right">{getQuestionCount(assessment)}</TableCell>
-                    <TableCell className="text-right">{assessment._count?.responses ?? 0}</TableCell>
+                    <TableCell className="text-right">
+                      {assessment._count?.responses ?? 0}
+                    </TableCell>
                     <TableCell>{formatDate(assessment.createdAt)}</TableCell>
                     <TableCell className="text-right">
                       <Button

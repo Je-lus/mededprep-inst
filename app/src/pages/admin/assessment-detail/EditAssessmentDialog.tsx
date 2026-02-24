@@ -61,11 +61,7 @@ export function EditAssessmentDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={onSave}
-            disabled={isSaving}
-            className="bg-primary-500 hover:bg-primary-500/90"
-          >
+          <Button onClick={onSave} disabled={isSaving} className="bg-primary hover:bg-primary/90">
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
           </Button>

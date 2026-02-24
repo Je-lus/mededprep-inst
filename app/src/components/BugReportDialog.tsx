@@ -230,7 +230,7 @@ export default function BugReportDialog({ open, onOpenChange }: BugReportDialogP
             <Button
               type="submit"
               disabled={submitMutation.isPending || description.length < 10}
-              className="bg-primary-500 hover:bg-primary-500/90"
+              className="bg-primary hover:bg-primary/90"
             >
               {submitMutation.isPending ? (
                 <>

@@ -156,7 +156,7 @@ export default function SessionDetail() {
             <Button
               onClick={handlePublish}
               disabled={publishSession.isPending}
-              className="bg-primary-500 hover:bg-primary-500/90"
+              className="bg-primary hover:bg-primary/90"
             >
               {publishSession.isPending ? 'Publishing...' : 'Publish Session'}
             </Button>
@@ -240,10 +240,7 @@ export default function SessionDetail() {
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <p>Publish this session to generate QR codes for check-in and check-out.</p>
-                <Button
-                  onClick={handlePublish}
-                  className="mt-4 bg-primary-500 hover:bg-primary-500/90"
-                >
+                <Button onClick={handlePublish} className="mt-4 bg-primary hover:bg-primary/90">
                   Publish Session
                 </Button>
               </CardContent>
