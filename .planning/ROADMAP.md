@@ -47,7 +47,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 3. A user visiting for the first time with `prefers-color-scheme: dark` system preference sees Glass Purple automatically
 4. The toggle button is present in both the admin area and the student area
 5. `npm run build` and `npm run typecheck` pass with zero errors
-   **Plans**: TBD
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 02-01-PLAN.md — Core theme infrastructure (ThemeProvider, FOUC script, localStorage persistence, system preference detection)
+- [ ] 02-02-PLAN.md — ThemeToggle component and placement in AdminLayout and StudentLayout headers
 
 ### Phase 3: Admin Sidebar & AppShell
 
@@ -99,7 +105,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase                                          | Plans Complete | Status      | Completed |
 | ---------------------------------------------- | -------------- | ----------- | --------- |
 | 1. Atomic CSS Migration                        | 0/TBD          | Not started | -         |
-| 2. Theme Infrastructure                        | 0/TBD          | Not started | -         |
+| 2. Theme Infrastructure                        | 0/2            | Not started | -         |
 | 3. Admin Sidebar & AppShell                    | 0/TBD          | Not started | -         |
 | 4. Glass Purple Visual Effects                 | 0/TBD          | Not started | -         |
 | 5. SurveyJS Sync, Color Sweep & Student Layout | 0/TBD          | Not started | -         |
