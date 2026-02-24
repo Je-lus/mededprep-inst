@@ -47,11 +47,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### SurveyJS
 
-- [ ] **SJS-01**: TakeAssessment page reads current theme from ThemeContext
-- [ ] **SJS-02**: SurveyJS `model.applyTheme()` called with dark colorPalette and custom `--sjs-*` variables when Glass Purple is active
-- [ ] **SJS-03**: SurveyJS renders with purple primary color, dark backgrounds, and light text in Glass Purple
-- [ ] **SJS-04**: Existing `.sd-root-modern` border-color revert block preserved through migration
-- [ ] **SJS-05**: Daylight theme SurveyJS appearance matches current behavior (no regression)
+- [x] **SJS-01**: TakeAssessment page reads current theme from ThemeContext
+- [x] **SJS-02**: SurveyJS `model.applyTheme()` called with dark colorPalette and custom `--sjs-*` variables when Glass Purple is active
+- [x] **SJS-03**: SurveyJS renders with purple primary color, dark backgrounds, and light text in Glass Purple
+- [x] **SJS-04**: Existing `.sd-root-modern` border-color revert block preserved through migration
+- [x] **SJS-05**: Daylight theme SurveyJS appearance matches current behavior (no regression)
 
 ### Color Sweep
 
@@ -136,11 +136,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMP-04      | Phase 4 | Complete |
 | CMP-05      | Phase 4 | Complete |
 | CMP-06      | Phase 4 | Complete |
-| SJS-01      | Phase 5 | Pending  |
-| SJS-02      | Phase 5 | Pending  |
-| SJS-03      | Phase 5 | Pending  |
-| SJS-04      | Phase 5 | Pending  |
-| SJS-05      | Phase 5 | Pending  |
+| SJS-01      | Phase 5 | Complete |
+| SJS-02      | Phase 5 | Complete |
+| SJS-03      | Phase 5 | Complete |
+| SJS-04      | Phase 5 | Complete |
+| SJS-05      | Phase 5 | Complete |
 | CLR-01      | Phase 5 | Pending  |
 | CLR-02      | Phase 5 | Pending  |
 | CLR-03      | Phase 5 | Pending  |
