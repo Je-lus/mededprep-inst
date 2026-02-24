@@ -3,6 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var key = 'mededprep-theme';
+        var theme = 'daylight';
+        try {
+          var saved = localStorage.getItem(key);
+          if (saved === 'glass-purple' || saved === 'daylight') {
+            theme = saved;
+          } else if (
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches
+          ) {
+            theme = 'glass-purple';
+          }
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
     <title>MedEdPrep</title>
   </head>
   <body>
