@@ -41,7 +41,7 @@ export default function ResetPassword() {
                   This link is invalid or has expired. Please request a new password reset.
                 </AlertDescription>
               </Alert>
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-muted-foreground">
                 <Link to="/student/forgot-password" className="font-medium text-primary underline">
                   Request a new reset link
                 </Link>
@@ -156,7 +156,7 @@ export default function ResetPassword() {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               Remember your password?{' '}
               <Link to="/student/login" className="font-medium text-primary underline">
                 Sign in

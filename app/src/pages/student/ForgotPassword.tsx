@@ -118,7 +118,7 @@ export default function ForgotPassword() {
               </form>
             )}
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               Remember your password?{' '}
               <Link to="/student/login" className="font-medium text-primary underline">
                 Sign in

@@ -129,7 +129,7 @@ function ClassPerformanceCard({
               <span className="font-medium">Your Score</span>
               <span className="font-semibold">{studentScore.toFixed(1)}%</span>
             </div>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-[#1b5fd0] transition-all"
                 style={{ width: `${Math.min(studentScore, 100)}%` }}
@@ -141,9 +141,9 @@ function ClassPerformanceCard({
               <span className="font-medium">Class Average</span>
               <span className="font-semibold">{peerStats.classAverage.toFixed(1)}%</span>
             </div>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-slate-400 transition-all"
+                className="h-full rounded-full bg-muted-foreground transition-all"
                 style={{ width: `${Math.min(peerStats.classAverage, 100)}%` }}
               />
             </div>
@@ -315,7 +315,7 @@ function AssessmentReviewContent({
               </button>
             ))}
           </div>
-          <p className="text-sm text-gray-600" aria-live="polite">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
             {filter !== 'all'
               ? `Showing ${filteredQuestions.length} of ${review.questions.length} questions`
               : `${review.questions.length} questions`}
@@ -369,7 +369,7 @@ function AssessmentReviewContent({
                               studentWrong && 'border-rose-300 bg-rose-50 text-rose-900',
                               !isCorrect &&
                                 !studentWrong &&
-                                'border-slate-200 bg-white text-slate-700',
+                                'border-border bg-card text-foreground',
                             ]
                               .filter(Boolean)
                               .join(' ')}
@@ -385,7 +385,10 @@ function AssessmentReviewContent({
                                 aria-label="Your incorrect answer"
                               />
                             ) : (
-                              <Circle className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                              <Circle
+                                className="h-4 w-4 text-muted-foreground"
+                                aria-hidden="true"
+                              />
                             )}
                             <span>{choice.text}</span>
                           </li>

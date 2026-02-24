@@ -132,7 +132,7 @@ function StatsCards() {
               <card.icon className={`h-5 w-5 ${card.color}`} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-xs text-gray-600">{card.label}</p>
+              <p className="truncate text-xs text-muted-foreground">{card.label}</p>
               <p className="text-xl font-bold">{card.value}</p>
             </div>
           </CardContent>
