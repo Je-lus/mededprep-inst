@@ -10,26 +10,26 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 2 of 5 (Theme Infrastructure)
-Plan: 1 of 2 in current phase (02-01 complete)
+Plan: 2 of 2 in current phase (02-02 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 02-01 complete: React ThemeContext with lazy useState init, FOUC prevention inline script, and localStorage persistence for daylight/glass-purple switching
+Last activity: 2026-02-24 — Plan 02-02 complete: ThemeToggle sun/moon button component placed in AdminLayout and StudentLayout headers
 
-Progress: [███░░░░░░░] 15%
+Progress: [████░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
-- Average duration: 4 min
-- Total execution time: 0.1 hours
+- Total plans completed: 4
+- Average duration: 3 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase                   | Plans | Total | Avg/Plan |
 | ----------------------- | ----- | ----- | -------- |
 | 01-atomic-css-migration | 2     | 8 min | 4 min    |
-| 02-theme-infrastructure | 1     | 2 min | 2 min    |
+| 02-theme-infrastructure | 2     | 3 min | 1.5 min  |
 
 **Recent Trend:**
 
@@ -55,6 +55,8 @@ Recent decisions affecting current work:
 - 02-01: FOUC prevention script placed as first element in <head> before <title> and Vite module script.
 - 02-01: ThemeProvider placed inside BrowserRouter but outside App — allows future router hooks in theme-aware components.
 - 02-01: All localStorage and matchMedia calls wrapped in try/catch — iOS Safari private browsing throws SecurityError.
+- 02-02: aria-label on icon-only toggle buttons describes the action (what clicking will do), not the current state — correct WCAG accessibility pattern.
+- 02-02: ThemeToggle placed between user identity info and sign-out/logout button in both layouts — natural visual grouping for session controls.
 
 ### Pending Todos
 
@@ -68,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-01-PLAN.md — ThemeContext + FOUC script complete, theme infrastructure ready for ThemeToggle component in 02-02
+Stopped at: Completed 02-02-PLAN.md — ThemeToggle component complete in both layouts; Phase 2 theme infrastructure fully wired; next: Phase 3 glass-purple CSS variable definitions
 Resume file: None
