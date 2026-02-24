@@ -5,36 +5,37 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** The app must look and feel professional across both themes — no broken layouts, no unreadable text, no white flashes when switching themes
-**Current focus:** Phase 3 — Admin Sidebar App Shell
+**Current focus:** Phase 4 — Glass Purple Visual Effects
 
 ## Current Position
 
-Phase: 3 of 5 (Admin Sidebar App Shell)
-Plan: 2 of 3 in current phase (03-02 complete)
+Phase: 4 of 5 (Glass Purple Visual Effects)
+Plan: 1 of 3 in current phase (04-01 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 03-02 complete: AppShell layout component with fixed desktop sidebar and mobile Sheet drawer; AdminLayout replaced and deleted
+Last activity: 2026-02-24 — Plan 04-01 complete: 5 shadcn/ui components installed (Tooltip, ScrollArea, Popover, Checkbox, Switch); Sheet pre-existing from Phase 3; clean build baseline confirmed
 
-Progress: [██████░░░░] 30%
+Progress: [███████░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
-- Average duration: 2.4 min
+- Total plans completed: 7
+- Average duration: 2.1 min
 - Total execution time: 0.2 hours
 
 **By Phase:**
 
-| Phase                     | Plans | Total | Avg/Plan |
-| ------------------------- | ----- | ----- | -------- |
-| 01-atomic-css-migration   | 2     | 8 min | 4 min    |
-| 02-theme-infrastructure   | 2     | 3 min | 1.5 min  |
-| 03-admin-sidebar-appshell | 2     | 3 min | 1.5 min  |
+| Phase                          | Plans | Total | Avg/Plan |
+| ------------------------------ | ----- | ----- | -------- |
+| 01-atomic-css-migration        | 2     | 8 min | 4 min    |
+| 02-theme-infrastructure        | 2     | 3 min | 1.5 min  |
+| 03-admin-sidebar-appshell      | 2     | 3 min | 1.5 min  |
+| 04-glass-purple-visual-effects | 1     | 1 min | 1 min    |
 
 **Recent Trend:**
 
-- Last 5 plans: 5 min, 3 min, 2 min, 1 min
+- Last 5 plans: 5 min, 3 min, 2 min, 1 min, 1 min
 - Trend: Fast
 
 _Updated after each plan completion_
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - 03-02: sidebar-glass applied to inner div inside fixed aside (not the aside itself) — prevents stacking context trap where backdrop-filter breaks child fixed positioning.
 - 03-02: No ThemeToggle in AppShell — ThemeToggle lives in AdminSidebar header; mobile users open Sheet to access it.
 - 03-02: bg-card Tailwind fallback on both sidebar containers — Glass Purple CSS overrides with rgba; Daylight uses white card background.
+- 04-01: Sheet was already installed from Phase 3 (AppShell uses Sheet for mobile drawer) — only 5 new components needed when plan specified 6.
+- 04-01: tsconfig.app.json with test file exclusions was pre-existing — no TypeScript config changes needed; build gate clean from start.
 
 ### Pending Todos
 
@@ -77,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 03-02-PLAN.md — AppShell layout complete; AdminLayout replaced with AppShell; ready for Phase 3 Plan 03
+Stopped at: Completed 04-01-PLAN.md — shadcn component installation complete; clean build baseline confirmed; ready for Phase 4 Plan 02
 Resume file: None

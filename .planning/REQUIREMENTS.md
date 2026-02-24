@@ -40,7 +40,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **CMP-01**: Button component uses semantic color tokens; primary variant works in both themes
 - [ ] **CMP-02**: Card component uses semantic color tokens; renders correctly in both themes
-- [ ] **CMP-03**: New shadcn/ui components installed: Sheet, Tooltip, ScrollArea, Popover, Checkbox, Switch
+- [x] **CMP-03**: New shadcn/ui components installed: Sheet, Tooltip, ScrollArea, Popover, Checkbox, Switch
 - [ ] **CMP-04**: Glass card backdrop blur in Glass Purple: blur(12px) + rgba surface + subtle border
 - [ ] **CMP-05**: Primary button glow effect in Glass Purple: purple box-shadow on hover
 - [ ] **CMP-06**: Smooth color transition on theme switch (background-color 0.25s, color 0.15s on body and sidebar)
@@ -132,7 +132,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAY-08      | Phase 3 | Complete |
 | CMP-01      | Phase 4 | Pending  |
 | CMP-02      | Phase 4 | Pending  |
-| CMP-03      | Phase 4 | Pending  |
+| CMP-03      | Phase 4 | Complete |
 | CMP-04      | Phase 4 | Pending  |
 | CMP-05      | Phase 4 | Pending  |
 | CMP-06      | Phase 4 | Pending  |
