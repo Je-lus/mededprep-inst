@@ -3,7 +3,7 @@ import type { Assessment } from '@/types/api';
 
 export function StatusBadge({ status }: { status: Assessment['status'] }) {
   if (status === 'active') {
-    return <Badge className="bg-primary text-white hover:bg-primary">Active</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Active</Badge>;
   }
   if (status === 'closed') {
     return <Badge variant="secondary">Closed</Badge>;
