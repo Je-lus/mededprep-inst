@@ -77,3 +77,33 @@
 .sd-root-modern *::after {
   border-color: revert;
 }
+
+/* === Phase 3: Admin Sidebar Glass Effects === */
+
+/* LAY-06: Body gradient in Glass Purple */
+[data-theme='glass-purple'] body {
+  background: radial-gradient(ellipse at top, #2d1b69 0%, #0f0a1e 100%);
+  min-height: 100vh;
+}
+
+/* LAY-07: Glass sidebar blur */
+[data-theme='glass-purple'] .sidebar-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* LAY-08: Active nav item — glass glow in Glass Purple */
+[data-theme='glass-purple'] .nav-active {
+  background: rgba(139, 92, 246, 0.2) !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+  color: #c4b5fd !important;
+}
+
+/* LAY-08: Active nav item — primary highlight in Daylight */
+:root .nav-active,
+[data-theme='daylight'] .nav-active {
+  background: var(--primary-alpha, rgba(27, 95, 208, 0.1));
+  color: var(--primary, #1b5fd0);
+}
