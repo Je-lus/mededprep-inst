@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AdminLayout() {
   const user = useAuthStore((s) => s.user);
@@ -13,6 +14,7 @@ export default function AdminLayout() {
           <h1 className="text-xl font-semibold">MedEdPrep</h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <ThemeToggle />
             <Button variant="outline" size="sm" onClick={logout}>
               Sign Out
             </Button>
