@@ -33,7 +33,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 3. Searching source files for `hsl(var(--` returns zero results
 4. Searching source files for `primary-500`, `primary-100`, `primary-50`, `primary-600`, `primary-700` utility classes returns zero results
 5. `npm run build` and `npm run typecheck` pass with zero errors
-   **Plans**: TBD
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 01-01-PLAN.md — Fix build prerequisites (install missing @testing-library packages, resolve TypeScript errors)
+- [ ] 01-02-PLAN.md — Atomic CSS migration (hex variables, var() config, Glass Purple block, 20-file class replacement)
 
 ### Phase 2: Theme Infrastructure
 
@@ -125,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase                                          | Plans Complete | Status      | Completed |
 | ---------------------------------------------- | -------------- | ----------- | --------- |
-| 1. Atomic CSS Migration                        | 0/TBD          | Not started | -         |
+| 1. Atomic CSS Migration                        | 0/2            | Not started | -         |
 | 2. Theme Infrastructure                        | 0/2            | Not started | -         |
 | 3. Admin Sidebar & AppShell                    | 0/2            | Not started | -         |
 | 4. Glass Purple Visual Effects                 | 0/2            | Not started | -         |
