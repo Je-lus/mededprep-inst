@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useIsAuthenticated } from './lib/auth';
 import { useIsStudentAuthenticated } from './lib/student-auth';
-import AdminLayout from './components/AdminLayout';
+import AppShell from './components/AppShell';
 import StudentLayout from './components/StudentLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -76,7 +76,7 @@ export default function App() {
         <Route
           element={
             <ProtectedRoute>
-              <AdminLayout />
+              <AppShell />
             </ProtectedRoute>
           }
         >
