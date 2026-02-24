@@ -164,7 +164,7 @@ export default function BugReportDialog({ open, onOpenChange }: BugReportDialogP
               minLength={10}
               maxLength={5000}
             />
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {description.length}/5000 characters (minimum 10)
             </p>
           </div>
