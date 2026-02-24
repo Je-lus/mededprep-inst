@@ -175,7 +175,7 @@ function ProgressCell({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 rounded-full bg-gray-200 overflow-hidden">
+      <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
         <div
           className={cn(
             'h-full rounded-full transition-all',
