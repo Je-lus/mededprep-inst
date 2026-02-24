@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useStudentAuthStore } from '@/lib/student-auth';
 import { useResendVerification } from '@/hooks/useStudentAuth';
 import { Button } from '@/components/ui/button';
+import ThemeToggle from '@/components/ThemeToggle';
 
 function EmailVerificationBanner() {
   const student = useStudentAuthStore((s) => s.student);
@@ -76,6 +77,7 @@ export default function StudentLayout() {
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {student?.firstName} {student?.lastName}
             </span>
+            <ThemeToggle />
             <Button
               type="button"
               variant="outline"
