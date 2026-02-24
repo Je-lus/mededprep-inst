@@ -46,7 +46,7 @@ function SeverityBadge({ severity }: { severity: BugReport['severity'] }) {
     critical: 'bg-red-600 text-white hover:bg-red-600',
     high: 'bg-orange-500 text-white hover:bg-orange-500',
     medium: 'bg-yellow-500 text-white hover:bg-yellow-500',
-    low: 'bg-gray-400 text-white hover:bg-gray-400',
+    low: 'bg-muted text-muted-foreground hover:bg-muted',
   };
 
   const labels = {
@@ -102,7 +102,7 @@ export default function BugReports() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

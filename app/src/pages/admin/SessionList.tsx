@@ -162,7 +162,7 @@ export default function SessionList() {
                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                           session.isPublished
                             ? 'bg-green-50 text-green-700'
-                            : 'bg-gray-100 text-gray-600'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {session.isPublished ? 'Published' : 'Draft'}

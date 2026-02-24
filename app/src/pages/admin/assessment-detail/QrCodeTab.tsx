@@ -79,7 +79,7 @@ export function QrCodeTab({
             <img
               src={qrData.qrCode}
               alt="Assessment QR code"
-              className="mx-auto h-[300px] w-[300px] rounded border bg-white p-2"
+              className="mx-auto h-[300px] w-[300px] rounded border bg-white p-2" /* intentional: QR code readability requires white background */
             />
             <p className="text-center text-sm text-muted-foreground">{qrData.url}</p>
             <div className="flex flex-wrap justify-center gap-2">

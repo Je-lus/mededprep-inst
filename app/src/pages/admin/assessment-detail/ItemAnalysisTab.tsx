@@ -69,7 +69,7 @@ function QuestionDetail({ question }: { question: QuestionAnalysis }) {
               key={`${question.questionName}-${choice.value}`}
               className={cn(
                 'rounded border p-2',
-                isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white',
+                isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-border bg-card',
               )}
             >
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">
@@ -88,7 +88,7 @@ function QuestionDetail({ question }: { question: QuestionAnalysis }) {
               </div>
               <div className="h-2 rounded bg-muted">
                 <div
-                  className={cn('h-2 rounded bg-gray-300', isCorrect && 'bg-emerald-600')}
+                  className={cn('h-2 rounded bg-muted', isCorrect && 'bg-emerald-600')}
                   style={{ width: `${Math.min(percent, 100)}%` }}
                 />
               </div>
@@ -326,7 +326,7 @@ export function ItemAnalysisTab({
                       {isExpanded && (
                         <TableRow>
                           <TableCell colSpan={5} className="bg-muted/20 p-4">
-                            <Card className="bg-white shadow-sm">
+                            <Card className="bg-card shadow-sm">
                               <CardContent className="pt-6">
                                 <QuestionDetail question={question} />
                               </CardContent>
