@@ -38,12 +38,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Components
 
-- [ ] **CMP-01**: Button component uses semantic color tokens; primary variant works in both themes
-- [ ] **CMP-02**: Card component uses semantic color tokens; renders correctly in both themes
+- [x] **CMP-01**: Button component uses semantic color tokens; primary variant works in both themes
+- [x] **CMP-02**: Card component uses semantic color tokens; renders correctly in both themes
 - [x] **CMP-03**: New shadcn/ui components installed: Sheet, Tooltip, ScrollArea, Popover, Checkbox, Switch
-- [ ] **CMP-04**: Glass card backdrop blur in Glass Purple: blur(12px) + rgba surface + subtle border
-- [ ] **CMP-05**: Primary button glow effect in Glass Purple: purple box-shadow on hover
-- [ ] **CMP-06**: Smooth color transition on theme switch (background-color 0.25s, color 0.15s on body and sidebar)
+- [x] **CMP-04**: Glass card backdrop blur in Glass Purple: blur(12px) + rgba surface + subtle border
+- [x] **CMP-05**: Primary button glow effect in Glass Purple: purple box-shadow on hover
+- [x] **CMP-06**: Smooth color transition on theme switch (background-color 0.25s, color 0.15s on body and sidebar)
 
 ### SurveyJS
 
@@ -130,12 +130,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAY-06      | Phase 3 | Complete |
 | LAY-07      | Phase 3 | Complete |
 | LAY-08      | Phase 3 | Complete |
-| CMP-01      | Phase 4 | Pending  |
-| CMP-02      | Phase 4 | Pending  |
+| CMP-01      | Phase 4 | Complete |
+| CMP-02      | Phase 4 | Complete |
 | CMP-03      | Phase 4 | Complete |
-| CMP-04      | Phase 4 | Pending  |
-| CMP-05      | Phase 4 | Pending  |
-| CMP-06      | Phase 4 | Pending  |
+| CMP-04      | Phase 4 | Complete |
+| CMP-05      | Phase 4 | Complete |
+| CMP-06      | Phase 4 | Complete |
 | SJS-01      | Phase 5 | Pending  |
 | SJS-02      | Phase 5 | Pending  |
 | SJS-03      | Phase 5 | Pending  |

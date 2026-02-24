@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 4 of 5 (Glass Purple Visual Effects)
-Plan: 1 of 3 in current phase (04-01 complete)
+Plan: 2 of 3 in current phase (04-02 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 04-01 complete: 5 shadcn/ui components installed (Tooltip, ScrollArea, Popover, Checkbox, Switch); Sheet pre-existing from Phase 3; clean build baseline confirmed
+Last activity: 2026-02-24 — Plan 04-02 complete: Glass Purple CSS effects added (glass card backdrop-filter blur, button glow, smooth theme transition); Card updated with glass-card className; npm run build and typecheck pass clean
 
-Progress: [███████░░░] 40%
+Progress: [████████░░] 47%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 2.1 min
 - Total execution time: 0.2 hours
 
@@ -31,11 +31,11 @@ Progress: [███████░░░] 40%
 | 01-atomic-css-migration        | 2     | 8 min | 4 min    |
 | 02-theme-infrastructure        | 2     | 3 min | 1.5 min  |
 | 03-admin-sidebar-appshell      | 2     | 3 min | 1.5 min  |
-| 04-glass-purple-visual-effects | 1     | 1 min | 1 min    |
+| 04-glass-purple-visual-effects | 2     | 3 min | 1.5 min  |
 
 **Recent Trend:**
 
-- Last 5 plans: 5 min, 3 min, 2 min, 1 min, 1 min
+- Last 5 plans: 3 min, 2 min, 1 min, 1 min, 2 min
 - Trend: Fast
 
 _Updated after each plan completion_
@@ -67,6 +67,9 @@ Recent decisions affecting current work:
 - 03-02: bg-card Tailwind fallback on both sidebar containers — Glass Purple CSS overrides with rgba; Daylight uses white card background.
 - 04-01: Sheet was already installed from Phase 3 (AppShell uses Sheet for mobile drawer) — only 5 new components needed when plan specified 6.
 - 04-01: tsconfig.app.json with test file exclusions was pre-existing — no TypeScript config changes needed; build gate clean from start.
+- 04-02: Glass Purple CSS effects use [data-theme='glass-purple'] selectors — ThemeContext sets glass-purple not glass; plan spec of glass was incorrect and silently inert.
+- 04-02: backdrop-filter excluded from universal transition rule — animating backdrop-filter causes GPU jank; only background-color, color, border-color, box-shadow transitioned.
+- 04-02: glass-card class on Card is always present (not conditional) — inert in Daylight, activated by CSS selector in Glass Purple; no JSX logic needed.
 
 ### Pending Todos
 
@@ -80,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 04-01-PLAN.md — shadcn component installation complete; clean build baseline confirmed; ready for Phase 4 Plan 02
+Stopped at: Completed 04-02-PLAN.md — Glass Purple CSS effects (glass card, button glow, smooth transition) added; Card updated with glass-card className; build and typecheck pass; ready for Phase 4 Plan 03
 Resume file: None
