@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Atomic CSS Migration** - Migrate all CSS variables from HSL-component format to raw hex atomically (completed 2026-02-24)
 - [x] **Phase 2: Theme Infrastructure** - ThemeContext provider, localStorage persistence, FOUC prevention, and sun/moon toggle (completed 2026-02-24)
 - [x] **Phase 3: Admin Sidebar & AppShell** - Replace horizontal tab nav with fixed sidebar, mobile Sheet drawer, and responsive layout (completed 2026-02-24)
-- [ ] **Phase 4: Glass Purple Visual Effects** - Body gradient, glass card blur, glass sidebar, button glow, and transition utilities
+- [x] **Phase 4: Glass Purple Visual Effects** - Body gradient, glass card blur, glass sidebar, button glow, and transition utilities (completed 2026-02-24)
 - [ ] **Phase 5: SurveyJS Sync, Color Sweep & Student Layout** - Theme-aware assessments, full semantic color sweep, student layout upgrade, and final quality gate
 
 ## Phase Details
@@ -94,7 +94,7 @@ Plans:
 4. All six new shadcn/ui components (Sheet, Tooltip, ScrollArea, Popover, Checkbox, Switch) are installed and usable
 5. `npm run build` and `npm run typecheck` pass with zero errors
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 
@@ -134,5 +134,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Atomic CSS Migration                        | 2/2            | Complete    | 2026-02-24 |
 | 2. Theme Infrastructure                        | 2/2            | Complete    | 2026-02-24 |
 | 3. Admin Sidebar & AppShell                    | 2/2            | Complete    | 2026-02-24 |
-| 4. Glass Purple Visual Effects                 | 1/2            | In Progress |            |
+| 4. Glass Purple Visual Effects                 | 2/2            | Complete    | 2026-02-24 |
 | 5. SurveyJS Sync, Color Sweep & Student Layout | 0/5            | Not started | -          |
