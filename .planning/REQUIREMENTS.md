@@ -67,10 +67,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Student Layout
 
-- [ ] **STU-01**: StudentLayout upgraded with ThemeContext integration
-- [ ] **STU-02**: Glass Purple background effects applied to student pages
-- [ ] **STU-03**: Theme toggle (sun/moon) in student header
-- [ ] **STU-04**: Theme persists across admin and student sides (shared localStorage key)
+- [x] **STU-01**: StudentLayout upgraded with ThemeContext integration
+- [x] **STU-02**: Glass Purple background effects applied to student pages
+- [x] **STU-03**: Theme toggle (sun/moon) in student header
+- [x] **STU-04**: Theme persists across admin and student sides (shared localStorage key)
 
 ### Quality
 
@@ -150,10 +150,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLR-07      | Phase 5 | Pending  |
 | CLR-08      | Phase 5 | Pending  |
 | CLR-09      | Phase 5 | Pending  |
-| STU-01      | Phase 5 | Pending  |
-| STU-02      | Phase 5 | Pending  |
-| STU-03      | Phase 5 | Pending  |
-| STU-04      | Phase 5 | Pending  |
+| STU-01      | Phase 5 | Complete |
+| STU-02      | Phase 5 | Complete |
+| STU-03      | Phase 5 | Complete |
+| STU-04      | Phase 5 | Complete |
 | QAL-01      | Phase 5 | Pending  |
 | QAL-02      | Phase 5 | Pending  |
 | QAL-03      | Phase 5 | Pending  |

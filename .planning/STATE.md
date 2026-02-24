@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 5 of 5 (SurveyJS Sync, Color Sweep & Student Layout)
-Plan: 1 of 3 in current phase (05-01 complete)
+Plan: 2 of 3 in current phase (05-02 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 05-01 complete: TakeAssessment.tsx now reads theme from ThemeContext and applies glassPurpleTheme (dark palette, purple #8b5cf6 primary) or daylightTheme (brand #1b5fd0) via model.applyTheme(); TypeScript clean
+Last activity: 2026-02-24 — Plan 05-02 complete: StudentLayout upgraded with useTheme() hook, conditional glass-body-gradient class on outer div, bg-card header surface (replaces bg-white); glass-body-gradient CSS utility added to index.css; ThemeToggle already present; build and typecheck pass clean
 
 Progress: [█████████░] 53%
 
@@ -20,7 +20,7 @@ Progress: [█████████░] 53%
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 2.1 min
 - Total execution time: 0.2 hours
 
@@ -32,7 +32,7 @@ Progress: [█████████░] 53%
 | 02-theme-infrastructure        | 2     | 3 min | 1.5 min  |
 | 03-admin-sidebar-appshell      | 2     | 3 min | 1.5 min  |
 | 04-glass-purple-visual-effects | 2     | 3 min | 1.5 min  |
-| 05-surveyjs-sync-color-sweep   | 1     | 2 min | 2 min    |
+| 05-surveyjs-sync-color-sweep   | 2     | 4 min | 2 min    |
 
 **Recent Trend:**
 
@@ -74,6 +74,9 @@ Recent decisions affecting current work:
 - 05-01: Theme comparison uses 'glass-purple' not 'glass' — ThemeContext type is 'daylight' | 'glass-purple'; plan template of 'glass' would have been silently inert.
 - 05-01: glassPurpleTheme primary color is #8b5cf6 (not #7c3aed from plan template) — matches actual --primary CSS variable in index.css Glass Purple block.
 - 05-01: glassPurpleTheme and daylightTheme defined as module-level constants to avoid object re-creation on each render.
+- 05-02: glass-body-gradient utility class added to index.css — layout divs can't use [data-theme] body rule; utility class applied via cn() conditional is the clean solution.
+- 05-02: ThemeToggle was already present in StudentLayout from Phase 2 work; only useTheme() call and gradient class were missing.
+- 05-02: bg-card replaces bg-white on student header — semantically correct token for card-like surfaces; enables Glass Purple glass translucency.
 
 ### Pending Todos
 
@@ -87,5 +90,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 05-01-PLAN.md — TakeAssessment.tsx updated with theme-aware SurveyJS model configuration; glassPurpleTheme and daylightTheme constants defined; useTheme() hook added; TypeScript clean; ready for Phase 5 Plan 02
+Stopped at: Completed 05-02-PLAN.md — StudentLayout upgraded with useTheme(), glass-body-gradient conditional class, bg-card header; glass-body-gradient CSS utility added; build and typecheck pass; ready for Phase 5 Plan 03
 Resume file: None
