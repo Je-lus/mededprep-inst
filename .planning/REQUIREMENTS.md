@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### CSS Foundation
 
-- [ ] **CSS-01**: CSS variables migrate from HSL-component format to raw hex format atomically (index.css + tailwind.config + all primary-500 class references in one commit)
+- [x] **CSS-01**: CSS variables migrate from HSL-component format to raw hex format atomically (index.css + tailwind.config + all primary-500 class references in one commit)
 - [ ] **CSS-02**: Tailwind config switches from `hsl(var(--xxx))` to `var(--xxx)` consumption pattern for all color tokens
 - [ ] **CSS-03**: All `primary-500` / `primary-100` / `primary-50` / `primary-600` / `primary-700` utility class references replaced with semantic equivalents (`bg-primary`, `bg-primary/10`, etc.)
 - [ ] **CSS-04**: Global `border-color` rule in index.css switches from `hsl(var(--border))` to `var(--border)`
@@ -108,57 +108,57 @@ Deferred to future release. Tracked but not in current roadmap.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase   | Status  |
-| ----------- | ------- | ------- |
-| CSS-01      | Phase 1 | Pending |
-| CSS-02      | Phase 1 | Pending |
-| CSS-03      | Phase 1 | Pending |
-| CSS-04      | Phase 1 | Pending |
-| CSS-05      | Phase 1 | Pending |
-| CSS-06      | Phase 1 | Pending |
-| THM-01      | Phase 2 | Pending |
-| THM-02      | Phase 2 | Pending |
-| THM-03      | Phase 2 | Pending |
-| THM-04      | Phase 2 | Pending |
-| THM-05      | Phase 2 | Pending |
-| THM-06      | Phase 2 | Pending |
-| LAY-01      | Phase 3 | Pending |
-| LAY-02      | Phase 3 | Pending |
-| LAY-03      | Phase 3 | Pending |
-| LAY-04      | Phase 3 | Pending |
-| LAY-05      | Phase 3 | Pending |
-| LAY-06      | Phase 3 | Pending |
-| LAY-07      | Phase 3 | Pending |
-| LAY-08      | Phase 3 | Pending |
-| CMP-01      | Phase 4 | Pending |
-| CMP-02      | Phase 4 | Pending |
-| CMP-03      | Phase 4 | Pending |
-| CMP-04      | Phase 4 | Pending |
-| CMP-05      | Phase 4 | Pending |
-| CMP-06      | Phase 4 | Pending |
-| SJS-01      | Phase 5 | Pending |
-| SJS-02      | Phase 5 | Pending |
-| SJS-03      | Phase 5 | Pending |
-| SJS-04      | Phase 5 | Pending |
-| SJS-05      | Phase 5 | Pending |
-| CLR-01      | Phase 5 | Pending |
-| CLR-02      | Phase 5 | Pending |
-| CLR-03      | Phase 5 | Pending |
-| CLR-04      | Phase 5 | Pending |
-| CLR-05      | Phase 5 | Pending |
-| CLR-06      | Phase 5 | Pending |
-| CLR-07      | Phase 5 | Pending |
-| CLR-08      | Phase 5 | Pending |
-| CLR-09      | Phase 5 | Pending |
-| STU-01      | Phase 5 | Pending |
-| STU-02      | Phase 5 | Pending |
-| STU-03      | Phase 5 | Pending |
-| STU-04      | Phase 5 | Pending |
-| QAL-01      | Phase 5 | Pending |
-| QAL-02      | Phase 5 | Pending |
-| QAL-03      | Phase 5 | Pending |
-| QAL-04      | Phase 5 | Pending |
-| QAL-05      | Phase 5 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| CSS-01      | Phase 1 | Complete |
+| CSS-02      | Phase 1 | Pending  |
+| CSS-03      | Phase 1 | Pending  |
+| CSS-04      | Phase 1 | Pending  |
+| CSS-05      | Phase 1 | Pending  |
+| CSS-06      | Phase 1 | Pending  |
+| THM-01      | Phase 2 | Pending  |
+| THM-02      | Phase 2 | Pending  |
+| THM-03      | Phase 2 | Pending  |
+| THM-04      | Phase 2 | Pending  |
+| THM-05      | Phase 2 | Pending  |
+| THM-06      | Phase 2 | Pending  |
+| LAY-01      | Phase 3 | Pending  |
+| LAY-02      | Phase 3 | Pending  |
+| LAY-03      | Phase 3 | Pending  |
+| LAY-04      | Phase 3 | Pending  |
+| LAY-05      | Phase 3 | Pending  |
+| LAY-06      | Phase 3 | Pending  |
+| LAY-07      | Phase 3 | Pending  |
+| LAY-08      | Phase 3 | Pending  |
+| CMP-01      | Phase 4 | Pending  |
+| CMP-02      | Phase 4 | Pending  |
+| CMP-03      | Phase 4 | Pending  |
+| CMP-04      | Phase 4 | Pending  |
+| CMP-05      | Phase 4 | Pending  |
+| CMP-06      | Phase 4 | Pending  |
+| SJS-01      | Phase 5 | Pending  |
+| SJS-02      | Phase 5 | Pending  |
+| SJS-03      | Phase 5 | Pending  |
+| SJS-04      | Phase 5 | Pending  |
+| SJS-05      | Phase 5 | Pending  |
+| CLR-01      | Phase 5 | Pending  |
+| CLR-02      | Phase 5 | Pending  |
+| CLR-03      | Phase 5 | Pending  |
+| CLR-04      | Phase 5 | Pending  |
+| CLR-05      | Phase 5 | Pending  |
+| CLR-06      | Phase 5 | Pending  |
+| CLR-07      | Phase 5 | Pending  |
+| CLR-08      | Phase 5 | Pending  |
+| CLR-09      | Phase 5 | Pending  |
+| STU-01      | Phase 5 | Pending  |
+| STU-02      | Phase 5 | Pending  |
+| STU-03      | Phase 5 | Pending  |
+| STU-04      | Phase 5 | Pending  |
+| QAL-01      | Phase 5 | Pending  |
+| QAL-02      | Phase 5 | Pending  |
+| QAL-03      | Phase 5 | Pending  |
+| QAL-04      | Phase 5 | Pending  |
+| QAL-05      | Phase 5 | Pending  |
 
 **Coverage:**
 
