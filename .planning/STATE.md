@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 3 of 5 (Admin Sidebar App Shell)
-Plan: 1 of 3 in current phase (03-01 complete)
+Plan: 2 of 3 in current phase (03-02 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 03-01 complete: shadcn Sheet, AdminSidebar component, and Glass Purple CSS rules (body gradient, sidebar blur, nav glow)
+Last activity: 2026-02-24 — Plan 03-02 complete: AppShell layout component with fixed desktop sidebar and mobile Sheet drawer; AdminLayout replaced and deleted
 
-Progress: [█████░░░░░] 25%
+Progress: [██████░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: 2.4 min
 - Total execution time: 0.2 hours
 
@@ -30,7 +30,7 @@ Progress: [█████░░░░░] 25%
 | ------------------------- | ----- | ----- | -------- |
 | 01-atomic-css-migration   | 2     | 8 min | 4 min    |
 | 02-theme-infrastructure   | 2     | 3 min | 1.5 min  |
-| 03-admin-sidebar-appshell | 1     | 1 min | 1 min    |
+| 03-admin-sidebar-appshell | 2     | 3 min | 1.5 min  |
 
 **Recent Trend:**
 
@@ -61,6 +61,9 @@ Recent decisions affecting current work:
 - 03-01: AdminSidebar uses map over navItems const array (not 7 individual NavLink elements) — DRY pattern; runtime behavior identical; verification count reflects literal occurrences only.
 - 03-01: ThemeToggle placed in sidebar header per plan requirement THM-06.
 - 03-01: !important on glass-purple .nav-active overrides Tailwind bg-primary/10 — no JSX theme-conditional logic needed.
+- 03-02: sidebar-glass applied to inner div inside fixed aside (not the aside itself) — prevents stacking context trap where backdrop-filter breaks child fixed positioning.
+- 03-02: No ThemeToggle in AppShell — ThemeToggle lives in AdminSidebar header; mobile users open Sheet to access it.
+- 03-02: bg-card Tailwind fallback on both sidebar containers — Glass Purple CSS overrides with rgba; Daylight uses white card background.
 
 ### Pending Todos
 
@@ -74,5 +77,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 03-01-PLAN.md — AdminSidebar building blocks complete; Sheet primitive, sidebar nav component, and Glass Purple CSS rules ready for AppShell (Plan 03-02)
+Stopped at: Completed 03-02-PLAN.md — AppShell layout complete; AdminLayout replaced with AppShell; ready for Phase 3 Plan 03
 Resume file: None
