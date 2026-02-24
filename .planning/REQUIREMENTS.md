@@ -18,10 +18,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Theme Infrastructure
 
-- [ ] **THM-01**: ThemeContext provider exposes `theme` state and `setTheme` function via React context
-- [ ] **THM-02**: Theme persists to localStorage and loads on initialization without server round-trip
-- [ ] **THM-03**: FOUC prevention inline script in index.html sets `data-theme` attribute on `<html>` before React mounts
-- [ ] **THM-04**: System preference detection on first visit — users with `prefers-color-scheme: dark` get Glass Purple automatically
+- [x] **THM-01**: ThemeContext provider exposes `theme` state and `setTheme` function via React context
+- [x] **THM-02**: Theme persists to localStorage and loads on initialization without server round-trip
+- [x] **THM-03**: FOUC prevention inline script in index.html sets `data-theme` attribute on `<html>` before React mounts
+- [x] **THM-04**: System preference detection on first visit — users with `prefers-color-scheme: dark` get Glass Purple automatically
 - [ ] **THM-05**: Sun/Moon toggle button switches between Daylight and Glass Purple themes
 - [ ] **THM-06**: Toggle placed in admin sidebar header and student page header
 
@@ -116,10 +116,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CSS-04      | Phase 1 | Complete |
 | CSS-05      | Phase 1 | Complete |
 | CSS-06      | Phase 1 | Complete |
-| THM-01      | Phase 2 | Pending  |
-| THM-02      | Phase 2 | Pending  |
-| THM-03      | Phase 2 | Pending  |
-| THM-04      | Phase 2 | Pending  |
+| THM-01      | Phase 2 | Complete |
+| THM-02      | Phase 2 | Complete |
+| THM-03      | Phase 2 | Complete |
+| THM-04      | Phase 2 | Complete |
 | THM-05      | Phase 2 | Pending  |
 | THM-06      | Phase 2 | Pending  |
 | LAY-01      | Phase 3 | Pending  |
