@@ -67,7 +67,13 @@ Plans:
 3. The active nav item is visually distinguished — glass glow indicator in Glass Purple, primary highlight in Daylight
 4. In Glass Purple the sidebar renders with backdrop-filter blur and a semi-transparent background; the body shows the purple radial gradient
 5. `npm run build` and `npm run typecheck` pass with zero errors
-   **Plans**: TBD
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 03-01-PLAN.md — AdminSidebar component, Sheet installation, and glass CSS rules
+- [ ] 03-02-PLAN.md — AppShell layout and AdminLayout replacement
 
 ### Phase 4: Glass Purple Visual Effects
 
@@ -121,6 +127,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | ---------------------------------------------- | -------------- | ----------- | --------- |
 | 1. Atomic CSS Migration                        | 0/TBD          | Not started | -         |
 | 2. Theme Infrastructure                        | 0/2            | Not started | -         |
-| 3. Admin Sidebar & AppShell                    | 0/TBD          | Not started | -         |
+| 3. Admin Sidebar & AppShell                    | 0/2            | Not started | -         |
 | 4. Glass Purple Visual Effects                 | 0/2            | Not started | -         |
 | 5. SurveyJS Sync, Color Sweep & Student Layout | 0/5            | Not started | -         |
