@@ -407,11 +407,11 @@ export default function TakeAssessment() {
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">MedEdPrep</p>
-          <h1 className="text-3xl font-bold text-slate-900" ref={stepHeadingRef} tabIndex={-1}>
+          <h1 className="text-3xl font-bold text-foreground" ref={stepHeadingRef} tabIndex={-1}>
             {assessment.title}
           </h1>
           {assessment.description && (
-            <p className="text-sm text-slate-600">{assessment.description}</p>
+            <p className="text-sm text-muted-foreground">{assessment.description}</p>
           )}
         </div>
 
@@ -436,7 +436,10 @@ export default function TakeAssessment() {
 
         {step === 'taking' && surveyModel && (
           <>
-            <div aria-live="polite" className="flex items-center gap-1.5 text-xs text-gray-600">
+            <div
+              aria-live="polite"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+            >
               {saveStatus === 'saving' && (
                 <>
                   <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />

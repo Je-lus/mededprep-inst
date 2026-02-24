@@ -7,13 +7,13 @@ export default function NotFound() {
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
-          <p className="text-6xl font-bold text-gray-500" aria-hidden="true">
+          <p className="text-6xl font-bold text-muted-foreground" aria-hidden="true">
             404
           </p>
           <CardTitle className="mt-4 text-2xl">Page not found</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             The page you're looking for doesn't exist or has been moved.
           </p>
           <Button asChild>

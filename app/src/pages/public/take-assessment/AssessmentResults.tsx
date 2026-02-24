@@ -147,6 +147,7 @@ export function AssessmentResults({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col items-center gap-3 py-2 sm:flex-row sm:gap-6">
+              {/* intentional: score circle visual design */}
               <div
                 className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-4 bg-white ${scoreBorderColor(percentNum, passed)}`}
                 aria-label={`Score: ${Math.round(percentNum)} percent`}
@@ -159,7 +160,7 @@ export function AssessmentResults({
                 </span>
               </div>
               <div className="text-center sm:text-left">
-                <p className="text-base text-slate-700">
+                <p className="text-base text-muted-foreground">
                   You scored{' '}
                   <span className="font-semibold">
                     {score.totalCorrect} out of {score.totalQuestions}
@@ -195,7 +196,7 @@ export function AssessmentResults({
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-base text-gray-600">
+            <p className="text-base text-muted-foreground">
               Your response has been recorded. Thank you for completing this assessment.
             </p>
           </CardContent>
@@ -221,7 +222,7 @@ export function AssessmentResults({
               </AlertDescription>
             </Alert>
           ) : accountSkipped ? (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               You can create an account later at{' '}
               <Link to="/student/login" className="font-medium text-primary underline">
                 student login
