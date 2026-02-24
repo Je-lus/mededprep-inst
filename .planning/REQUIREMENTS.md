@@ -27,14 +27,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Admin Layout
 
-- [ ] **LAY-01**: Admin sidebar navigation with links: Dashboard, Assessments, Question Banks, Attendance, Students, Bug Reports, Instructors (owner-only)
+- [x] **LAY-01**: Admin sidebar navigation with links: Dashboard, Assessments, Question Banks, Attendance, Students, Bug Reports, Instructors (owner-only)
 - [ ] **LAY-02**: Sidebar fixed left (w-64) on desktop, hidden on mobile
 - [ ] **LAY-03**: Mobile sidebar rendered as Sheet drawer from left with hamburger toggle
 - [ ] **LAY-04**: AppShell layout: sidebar + header + scrollable main content area with md:pl-64 offset
 - [ ] **LAY-05**: Existing AdminLayout.tsx replaced by AppShell — all admin routes work through new layout
-- [ ] **LAY-06**: Glass Purple body background: radial gradient from purple-dark tones
-- [ ] **LAY-07**: Glass sidebar: backdrop-filter blur(16px) with semi-transparent background in Glass Purple
-- [ ] **LAY-08**: Active nav item: glass glow indicator in Glass Purple, simple primary highlight in Daylight
+- [x] **LAY-06**: Glass Purple body background: radial gradient from purple-dark tones
+- [x] **LAY-07**: Glass sidebar: backdrop-filter blur(16px) with semi-transparent background in Glass Purple
+- [x] **LAY-08**: Active nav item: glass glow indicator in Glass Purple, simple primary highlight in Daylight
 
 ### Components
 
@@ -122,14 +122,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | THM-04      | Phase 2 | Complete |
 | THM-05      | Phase 2 | Complete |
 | THM-06      | Phase 2 | Complete |
-| LAY-01      | Phase 3 | Pending  |
+| LAY-01      | Phase 3 | Complete |
 | LAY-02      | Phase 3 | Pending  |
 | LAY-03      | Phase 3 | Pending  |
 | LAY-04      | Phase 3 | Pending  |
 | LAY-05      | Phase 3 | Pending  |
-| LAY-06      | Phase 3 | Pending  |
-| LAY-07      | Phase 3 | Pending  |
-| LAY-08      | Phase 3 | Pending  |
+| LAY-06      | Phase 3 | Complete |
+| LAY-07      | Phase 3 | Complete |
+| LAY-08      | Phase 3 | Complete |
 | CMP-01      | Phase 4 | Pending  |
 | CMP-02      | Phase 4 | Pending  |
 | CMP-03      | Phase 4 | Pending  |
