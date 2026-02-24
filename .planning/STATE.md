@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** The app must look and feel professional across both themes — no broken layouts, no unreadable text, no white flashes when switching themes
-**Current focus:** Phase 4 — Glass Purple Visual Effects
+**Current focus:** Phase 5 — SurveyJS Sync, Color Sweep & Student Layout
 
 ## Current Position
 
-Phase: 4 of 5 (Glass Purple Visual Effects)
-Plan: 2 of 3 in current phase (04-02 complete)
+Phase: 5 of 5 (SurveyJS Sync, Color Sweep & Student Layout)
+Plan: 1 of 3 in current phase (05-01 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 04-02 complete: Glass Purple CSS effects added (glass card backdrop-filter blur, button glow, smooth theme transition); Card updated with glass-card className; npm run build and typecheck pass clean
+Last activity: 2026-02-24 — Plan 05-01 complete: TakeAssessment.tsx now reads theme from ThemeContext and applies glassPurpleTheme (dark palette, purple #8b5cf6 primary) or daylightTheme (brand #1b5fd0) via model.applyTheme(); TypeScript clean
 
-Progress: [████████░░] 47%
+Progress: [█████████░] 53%
 
 ## Performance Metrics
 
@@ -32,6 +32,7 @@ Progress: [████████░░] 47%
 | 02-theme-infrastructure        | 2     | 3 min | 1.5 min  |
 | 03-admin-sidebar-appshell      | 2     | 3 min | 1.5 min  |
 | 04-glass-purple-visual-effects | 2     | 3 min | 1.5 min  |
+| 05-surveyjs-sync-color-sweep   | 1     | 2 min | 2 min    |
 
 **Recent Trend:**
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - 04-02: Glass Purple CSS effects use [data-theme='glass-purple'] selectors — ThemeContext sets glass-purple not glass; plan spec of glass was incorrect and silently inert.
 - 04-02: backdrop-filter excluded from universal transition rule — animating backdrop-filter causes GPU jank; only background-color, color, border-color, box-shadow transitioned.
 - 04-02: glass-card class on Card is always present (not conditional) — inert in Daylight, activated by CSS selector in Glass Purple; no JSX logic needed.
+- 05-01: Theme comparison uses 'glass-purple' not 'glass' — ThemeContext type is 'daylight' | 'glass-purple'; plan template of 'glass' would have been silently inert.
+- 05-01: glassPurpleTheme primary color is #8b5cf6 (not #7c3aed from plan template) — matches actual --primary CSS variable in index.css Glass Purple block.
+- 05-01: glassPurpleTheme and daylightTheme defined as module-level constants to avoid object re-creation on each render.
 
 ### Pending Todos
 
@@ -83,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 04-02-PLAN.md — Glass Purple CSS effects (glass card, button glow, smooth transition) added; Card updated with glass-card className; build and typecheck pass; ready for Phase 4 Plan 03
+Stopped at: Completed 05-01-PLAN.md — TakeAssessment.tsx updated with theme-aware SurveyJS model configuration; glassPurpleTheme and daylightTheme constants defined; useTheme() hook added; TypeScript clean; ready for Phase 5 Plan 02
 Resume file: None
