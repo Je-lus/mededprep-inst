@@ -45,7 +45,7 @@ export default function CheckOutSession() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader>
@@ -65,11 +65,13 @@ export default function CheckOutSession() {
 
   if (error || !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="max-w-md w-full text-center">
           <CardContent className="p-8">
             <div className="text-red-500 text-xl font-bold mb-2">Session Not Found</div>
-            <p className="text-gray-500">This session is not available or the link is invalid.</p>
+            <p className="text-muted-foreground">
+              This session is not available or the link is invalid.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -79,7 +81,7 @@ export default function CheckOutSession() {
   const windowClosed = session.checkOutWindow && !session.checkOutWindow.allowed;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-lg mx-auto">
         <Card className="mb-6">
           <CardHeader>
@@ -87,7 +89,7 @@ export default function CheckOutSession() {
             {session.org?.name && <CardDescription>Hosted by {session.org.name}</CardDescription>}
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-gray-600 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               {session.startDateTime && <div>Date: {formatDate(session.startDateTime)}</div>}
               {session.startDateTime && (
                 <div>
@@ -112,7 +114,7 @@ export default function CheckOutSession() {
             <CardContent className="p-8 text-center">
               <div className="text-amber-600 text-4xl mb-4">&#9201;</div>
               <h2 className="text-lg font-bold mb-2">Check-Out Not Available</h2>
-              <p className="text-gray-500">{session.checkOutWindow?.reason}</p>
+              <p className="text-muted-foreground">{session.checkOutWindow?.reason}</p>
             </CardContent>
           </Card>
         ) : !result ? (
@@ -150,7 +152,7 @@ export default function CheckOutSession() {
               <h2 className="text-xl font-bold mb-2">
                 {result.alreadyCheckedOut ? 'Already Checked Out' : "You're Checked Out!"}
               </h2>
-              <p className="text-gray-600 mb-2">{result.studentName}</p>
+              <p className="text-muted-foreground mb-2">{result.studentName}</p>
               <p className="text-sm text-muted-foreground">
                 Checked out at{' '}
                 {new Date(result.checkedOutAt).toLocaleTimeString('en-US', {

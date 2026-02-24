@@ -47,11 +47,11 @@ export function StudentInfoStep({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border bg-white p-3">
+            <div className="rounded-lg border bg-card p-3">
               <p className="text-xs uppercase text-muted-foreground">Questions</p>
               <p className="text-xl font-semibold">{questionCount}</p>
             </div>
-            <div className="rounded-lg border bg-white p-3">
+            <div className="rounded-lg border bg-card p-3">
               <p className="text-xs uppercase text-muted-foreground">Time Limit</p>
               <p className="text-xl font-semibold">
                 {timeLimitMinutes ? `${timeLimitMinutes} min` : 'No time limit'}

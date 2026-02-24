@@ -181,7 +181,7 @@ export default function CreateAccount() {
               </Button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-gray-600">
+            <p className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link to="/student/login" className="font-medium text-primary underline">
                 Sign in
