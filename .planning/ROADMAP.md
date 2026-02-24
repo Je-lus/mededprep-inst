@@ -101,7 +101,16 @@ Plans:
 3. Grep for `bg-white`, `bg-gray-`, `text-gray-`, `border-gray-`, `text-slate-`, `border-slate-`, `primary-50`, `primary-100`, `primary-500` across all non-test source files returns zero results
 4. All admin pages (dashboard, assessment creation, take-assessment flow) render correctly in both themes on desktop and mobile with no broken layouts
 5. `npm run build` and `npm run typecheck` pass clean; QR code backgrounds remain white (intentional preservation confirmed)
-   **Plans**: TBD
+
+**Plans:** 5 plans
+
+Plans:
+
+- [ ] 05-01-PLAN.md — SurveyJS theme sync (theme-aware applyTheme in TakeAssessment)
+- [ ] 05-02-PLAN.md — Student layout upgrade (ThemeContext, glass effects, toggle)
+- [ ] 05-03-PLAN.md — Color sweep: components and public/shared pages (15 files)
+- [ ] 05-04-PLAN.md — Color sweep: admin pages and student pages + final grep verification (20 files)
+- [ ] 05-05-PLAN.md — Quality gate: build, typecheck, and visual verification checkpoint
 
 ## Progress
 
@@ -114,4 +123,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Theme Infrastructure                        | 0/2            | Not started | -         |
 | 3. Admin Sidebar & AppShell                    | 0/TBD          | Not started | -         |
 | 4. Glass Purple Visual Effects                 | 0/2            | Not started | -         |
-| 5. SurveyJS Sync, Color Sweep & Student Layout | 0/TBD          | Not started | -         |
+| 5. SurveyJS Sync, Color Sweep & Student Layout | 0/5            | Not started | -         |
