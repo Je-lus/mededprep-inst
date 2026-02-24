@@ -108,65 +108,65 @@ Deferred to future release. Tracked but not in current roadmap.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status  |
-| ----------- | ----- | ------- |
-| CSS-01      | —     | Pending |
-| CSS-02      | —     | Pending |
-| CSS-03      | —     | Pending |
-| CSS-04      | —     | Pending |
-| CSS-05      | —     | Pending |
-| CSS-06      | —     | Pending |
-| THM-01      | —     | Pending |
-| THM-02      | —     | Pending |
-| THM-03      | —     | Pending |
-| THM-04      | —     | Pending |
-| THM-05      | —     | Pending |
-| THM-06      | —     | Pending |
-| LAY-01      | —     | Pending |
-| LAY-02      | —     | Pending |
-| LAY-03      | —     | Pending |
-| LAY-04      | —     | Pending |
-| LAY-05      | —     | Pending |
-| LAY-06      | —     | Pending |
-| LAY-07      | —     | Pending |
-| LAY-08      | —     | Pending |
-| CMP-01      | —     | Pending |
-| CMP-02      | —     | Pending |
-| CMP-03      | —     | Pending |
-| CMP-04      | —     | Pending |
-| CMP-05      | —     | Pending |
-| CMP-06      | —     | Pending |
-| SJS-01      | —     | Pending |
-| SJS-02      | —     | Pending |
-| SJS-03      | —     | Pending |
-| SJS-04      | —     | Pending |
-| SJS-05      | —     | Pending |
-| CLR-01      | —     | Pending |
-| CLR-02      | —     | Pending |
-| CLR-03      | —     | Pending |
-| CLR-04      | —     | Pending |
-| CLR-05      | —     | Pending |
-| CLR-06      | —     | Pending |
-| CLR-07      | —     | Pending |
-| CLR-08      | —     | Pending |
-| CLR-09      | —     | Pending |
-| STU-01      | —     | Pending |
-| STU-02      | —     | Pending |
-| STU-03      | —     | Pending |
-| STU-04      | —     | Pending |
-| QAL-01      | —     | Pending |
-| QAL-02      | —     | Pending |
-| QAL-03      | —     | Pending |
-| QAL-04      | —     | Pending |
-| QAL-05      | —     | Pending |
+| Requirement | Phase   | Status  |
+| ----------- | ------- | ------- |
+| CSS-01      | Phase 1 | Pending |
+| CSS-02      | Phase 1 | Pending |
+| CSS-03      | Phase 1 | Pending |
+| CSS-04      | Phase 1 | Pending |
+| CSS-05      | Phase 1 | Pending |
+| CSS-06      | Phase 1 | Pending |
+| THM-01      | Phase 2 | Pending |
+| THM-02      | Phase 2 | Pending |
+| THM-03      | Phase 2 | Pending |
+| THM-04      | Phase 2 | Pending |
+| THM-05      | Phase 2 | Pending |
+| THM-06      | Phase 2 | Pending |
+| LAY-01      | Phase 3 | Pending |
+| LAY-02      | Phase 3 | Pending |
+| LAY-03      | Phase 3 | Pending |
+| LAY-04      | Phase 3 | Pending |
+| LAY-05      | Phase 3 | Pending |
+| LAY-06      | Phase 3 | Pending |
+| LAY-07      | Phase 3 | Pending |
+| LAY-08      | Phase 3 | Pending |
+| CMP-01      | Phase 4 | Pending |
+| CMP-02      | Phase 4 | Pending |
+| CMP-03      | Phase 4 | Pending |
+| CMP-04      | Phase 4 | Pending |
+| CMP-05      | Phase 4 | Pending |
+| CMP-06      | Phase 4 | Pending |
+| SJS-01      | Phase 5 | Pending |
+| SJS-02      | Phase 5 | Pending |
+| SJS-03      | Phase 5 | Pending |
+| SJS-04      | Phase 5 | Pending |
+| SJS-05      | Phase 5 | Pending |
+| CLR-01      | Phase 5 | Pending |
+| CLR-02      | Phase 5 | Pending |
+| CLR-03      | Phase 5 | Pending |
+| CLR-04      | Phase 5 | Pending |
+| CLR-05      | Phase 5 | Pending |
+| CLR-06      | Phase 5 | Pending |
+| CLR-07      | Phase 5 | Pending |
+| CLR-08      | Phase 5 | Pending |
+| CLR-09      | Phase 5 | Pending |
+| STU-01      | Phase 5 | Pending |
+| STU-02      | Phase 5 | Pending |
+| STU-03      | Phase 5 | Pending |
+| STU-04      | Phase 5 | Pending |
+| QAL-01      | Phase 5 | Pending |
+| QAL-02      | Phase 5 | Pending |
+| QAL-03      | Phase 5 | Pending |
+| QAL-04      | Phase 5 | Pending |
+| QAL-05      | Phase 5 | Pending |
 
 **Coverage:**
 
-- v1 requirements: 45 total
-- Mapped to phases: 0
-- Unmapped: 45 ⚠️
+- v1 requirements: 49 total
+- Mapped to phases: 49
+- Unmapped: 0 ✓
 
 ---
 
 _Requirements defined: 2026-02-23_
-_Last updated: 2026-02-23 after initial definition_
+_Last updated: 2026-02-24 after roadmap creation — all 49 requirements mapped_
