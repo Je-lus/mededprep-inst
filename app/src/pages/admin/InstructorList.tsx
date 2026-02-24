@@ -1,10 +1,6 @@
 import { useState } from 'react';
 import { AlertCircle, Plus, Users } from 'lucide-react';
-import {
-  useInstructors,
-  useCreateInstructor,
-  useUpdateInstructor,
-} from '@/hooks/useInstructors';
+import { useInstructors, useCreateInstructor, useUpdateInstructor } from '@/hooks/useInstructors';
 import type { Instructor } from '@/types/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -126,13 +122,11 @@ export default function InstructorList() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Instructors</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage instructor accounts and roles.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage instructor accounts and roles.</p>
         </div>
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="bg-primary-500 hover:bg-primary-500/90"
+          className="bg-primary hover:bg-primary/90"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Instructor
@@ -170,7 +164,7 @@ export default function InstructorList() {
           action={
             <Button
               onClick={() => setShowCreateDialog(true)}
-              className="bg-primary-500 hover:bg-primary-500/90"
+              className="bg-primary hover:bg-primary/90"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Instructor
@@ -243,9 +237,7 @@ export default function InstructorList() {
           <form onSubmit={handleCreate}>
             <DialogHeader>
               <DialogTitle>Add Instructor</DialogTitle>
-              <DialogDescription>
-                Create a new instructor account.
-              </DialogDescription>
+              <DialogDescription>Create a new instructor account.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -309,14 +301,15 @@ export default function InstructorList() {
       </Dialog>
 
       {/* Edit Instructor Dialog */}
-      <Dialog open={!!editingInstructor} onOpenChange={(open) => !open && setEditingInstructor(null)}>
+      <Dialog
+        open={!!editingInstructor}
+        onOpenChange={(open) => !open && setEditingInstructor(null)}
+      >
         <DialogContent>
           <form onSubmit={handleEdit}>
             <DialogHeader>
               <DialogTitle>Edit Instructor</DialogTitle>
-              <DialogDescription>
-                Update instructor details.
-              </DialogDescription>
+              <DialogDescription>Update instructor details.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -357,7 +350,9 @@ export default function InstructorList() {
                 <Label htmlFor="edit-active">Status</Label>
                 <Select
                   value={editForm.isActive ? 'active' : 'inactive'}
-                  onValueChange={(value) => setEditForm({ ...editForm, isActive: value === 'active' })}
+                  onValueChange={(value) =>
+                    setEditForm({ ...editForm, isActive: value === 'active' })
+                  }
                 >
                   <SelectTrigger id="edit-active">
                     <SelectValue />

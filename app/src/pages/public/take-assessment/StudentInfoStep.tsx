@@ -104,7 +104,7 @@ export function StudentInfoStep({
             <Button
               type="submit"
               disabled={isPending}
-              className="w-full bg-primary-500 hover:bg-primary-500/90"
+              className="w-full bg-primary hover:bg-primary/90"
             >
               {isPending ? 'Starting...' : 'Begin Assessment'}
             </Button>

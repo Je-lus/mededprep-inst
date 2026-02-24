@@ -301,7 +301,7 @@ export default function AssessmentDetail() {
               <Button
                 onClick={handlePublish}
                 disabled={publishAssessment.isPending}
-                className="bg-primary-500 hover:bg-primary-500/90"
+                className="bg-primary hover:bg-primary/90"
               >
                 {publishAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Publish
@@ -340,7 +340,7 @@ export default function AssessmentDetail() {
             <Button
               onClick={handleReactivate}
               disabled={reactivateAssessment.isPending}
-              className="bg-primary-500 hover:bg-primary-500/90"
+              className="bg-primary hover:bg-primary/90"
             >
               {reactivateAssessment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Reactivate

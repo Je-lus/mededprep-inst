@@ -23,7 +23,7 @@ export default function AdminLayout() {
             to="/"
             className={({ isActive }) =>
               isActive
-                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                ? 'py-3 border-b-2 border-primary text-primary font-medium'
                 : 'py-3 text-muted-foreground hover:text-foreground'
             }
           >
@@ -33,7 +33,7 @@ export default function AdminLayout() {
             to="/assessments"
             className={({ isActive }) =>
               isActive
-                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                ? 'py-3 border-b-2 border-primary text-primary font-medium'
                 : 'py-3 text-muted-foreground hover:text-foreground'
             }
           >
@@ -43,7 +43,7 @@ export default function AdminLayout() {
             to="/question-banks"
             className={({ isActive }) =>
               isActive
-                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                ? 'py-3 border-b-2 border-primary text-primary font-medium'
                 : 'py-3 text-muted-foreground hover:text-foreground'
             }
           >
@@ -53,7 +53,7 @@ export default function AdminLayout() {
             to="/sessions"
             className={({ isActive }) =>
               isActive
-                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                ? 'py-3 border-b-2 border-primary text-primary font-medium'
                 : 'py-3 text-muted-foreground hover:text-foreground'
             }
           >
@@ -63,7 +63,7 @@ export default function AdminLayout() {
             to="/bug-reports"
             className={({ isActive }) =>
               isActive
-                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                ? 'py-3 border-b-2 border-primary text-primary font-medium'
                 : 'py-3 text-muted-foreground hover:text-foreground'
             }
           >
@@ -73,7 +73,7 @@ export default function AdminLayout() {
             to="/students"
             className={({ isActive }) =>
               isActive
-                ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                ? 'py-3 border-b-2 border-primary text-primary font-medium'
                 : 'py-3 text-muted-foreground hover:text-foreground'
             }
           >
@@ -84,7 +84,7 @@ export default function AdminLayout() {
               to="/instructors"
               className={({ isActive }) =>
                 isActive
-                  ? 'py-3 border-b-2 border-primary-500 text-primary-500 font-medium'
+                  ? 'py-3 border-b-2 border-primary text-primary font-medium'
                   : 'py-3 text-muted-foreground hover:text-foreground'
               }
             >
