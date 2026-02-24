@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 5 of 5 (SurveyJS Sync, Color Sweep & Student Layout)
-Plan: 2 of 3 in current phase (05-02 complete)
-Status: In progress
-Last activity: 2026-02-24 — Plan 05-02 complete: StudentLayout upgraded with useTheme() hook, conditional glass-body-gradient class on outer div, bg-card header surface (replaces bg-white); glass-body-gradient CSS utility added to index.css; ThemeToggle already present; build and typecheck pass clean
+Plan: 4 of 4 in current phase (05-04 complete)
+Status: Phase 5 complete
+Last activity: 2026-02-24 — Plan 05-04 complete: Color sweep across all 12 admin + student pages; all hardcoded gray/slate/white replaced with semantic tokens; QrPresenter and QrCodeTab intentional whites documented; CLR-09 final grep verification passes; TypeScript clean
 
-Progress: [█████████░] 53%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 9
-- Average duration: 2.1 min
-- Total execution time: 0.2 hours
+- Total plans completed: 11
+- Average duration: 2.2 min
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [█████████░] 53%
 | 02-theme-infrastructure        | 2     | 3 min | 1.5 min  |
 | 03-admin-sidebar-appshell      | 2     | 3 min | 1.5 min  |
 | 04-glass-purple-visual-effects | 2     | 3 min | 1.5 min  |
-| 05-surveyjs-sync-color-sweep   | 2     | 4 min | 2 min    |
+| 05-surveyjs-sync-color-sweep   | 4     | 9 min | 2.25 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 3 min, 2 min, 1 min, 1 min, 2 min
+- Last 5 plans: 2 min, 1 min, 1 min, 2 min, 5 min
 - Trend: Fast
 
 _Updated after each plan completion_
@@ -77,6 +77,9 @@ Recent decisions affecting current work:
 - 05-02: glass-body-gradient utility class added to index.css — layout divs can't use [data-theme] body rule; utility class applied via cn() conditional is the clean solution.
 - 05-02: ThemeToggle was already present in StudentLayout from Phase 2 work; only useTheme() call and gradient class were missing.
 - 05-02: bg-card replaces bg-white on student header — semantically correct token for card-like surfaces; enables Glass Purple glass translucency.
+- 05-04: QrPresenter intentional whites/slates preserved with adjacent /_ intentional: presenter mode _/ comments (prettier formatting moved them off the className lines).
+- 05-04: bg-muted-foreground used for class average progress bar fill — semantically correct neutral fill token.
+- 05-04: ToggleSwitch.tsx bg-white on toggle thumb and public/ pages deferred — outside plan scope; pre-existing patterns in unrelated files.
 
 ### Pending Todos
 
@@ -90,5 +93,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 05-02-PLAN.md — StudentLayout upgraded with useTheme(), glass-body-gradient conditional class, bg-card header; glass-body-gradient CSS utility added; build and typecheck pass; ready for Phase 5 Plan 03
+Stopped at: Completed 05-04-PLAN.md — Color sweep complete across all admin + student pages; semantic tokens throughout; CLR-09 verification passes; all 5 phases complete
 Resume file: None

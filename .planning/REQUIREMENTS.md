@@ -55,15 +55,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Color Sweep
 
-- [ ] **CLR-01**: All hardcoded `bg-white` in layout/card contexts replaced with `bg-background` or `bg-card`
-- [ ] **CLR-02**: All hardcoded `bg-gray-50` / `bg-gray-100` replaced with `bg-muted` or `bg-background`
-- [ ] **CLR-03**: All hardcoded `text-gray-*` / `text-slate-*` replaced with `text-foreground` or `text-muted-foreground`
-- [ ] **CLR-04**: All hardcoded `border-gray-*` / `border-slate-*` replaced with `border-border`
+- [x] **CLR-01**: All hardcoded `bg-white` in layout/card contexts replaced with `bg-background` or `bg-card`
+- [x] **CLR-02**: All hardcoded `bg-gray-50` / `bg-gray-100` replaced with `bg-muted` or `bg-background`
+- [x] **CLR-03**: All hardcoded `text-gray-*` / `text-slate-*` replaced with `text-foreground` or `text-muted-foreground`
+- [x] **CLR-04**: All hardcoded `border-gray-*` / `border-slate-*` replaced with `border-border`
 - [ ] **CLR-05**: StatusBadge component uses theme-aware colors
 - [ ] **CLR-06**: BugReportButton/BugReportDialog use theme-aware colors
 - [ ] **CLR-07**: ToggleSwitch uses theme-aware colors
-- [ ] **CLR-08**: Intentional whites preserved (QR code backgrounds, print contexts)
-- [ ] **CLR-09**: Post-sweep grep confirms zero remaining hardcoded gray/white/slate references in component/page files
+- [x] **CLR-08**: Intentional whites preserved (QR code backgrounds, print contexts)
+- [x] **CLR-09**: Post-sweep grep confirms zero remaining hardcoded gray/white/slate references in component/page files
 
 ### Student Layout
 
@@ -141,15 +141,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SJS-03      | Phase 5 | Complete |
 | SJS-04      | Phase 5 | Complete |
 | SJS-05      | Phase 5 | Complete |
-| CLR-01      | Phase 5 | Pending  |
-| CLR-02      | Phase 5 | Pending  |
-| CLR-03      | Phase 5 | Pending  |
-| CLR-04      | Phase 5 | Pending  |
+| CLR-01      | Phase 5 | Complete |
+| CLR-02      | Phase 5 | Complete |
+| CLR-03      | Phase 5 | Complete |
+| CLR-04      | Phase 5 | Complete |
 | CLR-05      | Phase 5 | Pending  |
 | CLR-06      | Phase 5 | Pending  |
 | CLR-07      | Phase 5 | Pending  |
-| CLR-08      | Phase 5 | Pending  |
-| CLR-09      | Phase 5 | Pending  |
+| CLR-08      | Phase 5 | Complete |
+| CLR-09      | Phase 5 | Complete |
 | STU-01      | Phase 5 | Complete |
 | STU-02      | Phase 5 | Complete |
 | STU-03      | Phase 5 | Complete |
