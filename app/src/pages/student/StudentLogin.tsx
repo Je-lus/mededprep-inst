@@ -109,18 +109,18 @@ export default function StudentLogin() {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               <Link to="/student/forgot-password" className="font-medium text-primary underline">
                 Forgot password?
               </Link>
             </p>
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               Need an account?{' '}
               <Link to="/create-account" className="font-medium text-primary underline">
                 Create one
               </Link>
             </p>
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               Are you an instructor?{' '}
               <Link to="/login" className="font-medium text-primary underline">
                 Sign in here
