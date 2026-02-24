@@ -107,3 +107,35 @@
   background: var(--primary-alpha, rgba(27, 95, 208, 0.1));
   color: var(--primary, #1b5fd0);
 }
+
+/* === Phase 4: Glass Purple Visual Effects === */
+
+/* CMP-06: Smooth theme transition */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    transition:
+      background-color 0.25s ease,
+      color 0.15s ease,
+      border-color 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+}
+
+/* CMP-04: Glass card effect — activated via .glass-card className on Card component */
+[data-theme='glass-purple'] .glass-card {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* CMP-05: Primary button glow — Glass Purple hover effect */
+[data-theme='glass-purple'] button.bg-primary:hover,
+[data-theme='glass-purple'] a.bg-primary:hover,
+[data-theme='glass-purple'] [role='button'].bg-primary:hover {
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.3),
+    0 0 20px 4px rgba(139, 92, 246, 0.4);
+}
