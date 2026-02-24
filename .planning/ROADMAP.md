@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Theme Infrastructure** - ThemeContext provider, localStorage persistence, FOUC prevention, and sun/moon toggle (completed 2026-02-24)
 - [x] **Phase 3: Admin Sidebar & AppShell** - Replace horizontal tab nav with fixed sidebar, mobile Sheet drawer, and responsive layout (completed 2026-02-24)
 - [x] **Phase 4: Glass Purple Visual Effects** - Body gradient, glass card blur, glass sidebar, button glow, and transition utilities (completed 2026-02-24)
-- [ ] **Phase 5: SurveyJS Sync, Color Sweep & Student Layout** - Theme-aware assessments, full semantic color sweep, student layout upgrade, and final quality gate
+- [x] **Phase 5: SurveyJS Sync, Color Sweep & Student Layout** - Theme-aware assessments, full semantic color sweep, student layout upgrade, and final quality gate (completed 2026-02-24)
 
 ## Phase Details
 
@@ -114,7 +114,7 @@ Plans:
 4. All admin pages (dashboard, assessment creation, take-assessment flow) render correctly in both themes on desktop and mobile with no broken layouts
 5. `npm run build` and `npm run typecheck` pass clean; QR code backgrounds remain white (intentional preservation confirmed)
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 
@@ -129,10 +129,10 @@ Plans:
 **Execution Order:**
 Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
-| Phase                                          | Plans Complete | Status      | Completed  |
-| ---------------------------------------------- | -------------- | ----------- | ---------- |
-| 1. Atomic CSS Migration                        | 2/2            | Complete    | 2026-02-24 |
-| 2. Theme Infrastructure                        | 2/2            | Complete    | 2026-02-24 |
-| 3. Admin Sidebar & AppShell                    | 2/2            | Complete    | 2026-02-24 |
-| 4. Glass Purple Visual Effects                 | 2/2            | Complete    | 2026-02-24 |
-| 5. SurveyJS Sync, Color Sweep & Student Layout | 4/5            | In Progress |            |
+| Phase                                          | Plans Complete | Status   | Completed  |
+| ---------------------------------------------- | -------------- | -------- | ---------- |
+| 1. Atomic CSS Migration                        | 2/2            | Complete | 2026-02-24 |
+| 2. Theme Infrastructure                        | 2/2            | Complete | 2026-02-24 |
+| 3. Admin Sidebar & AppShell                    | 2/2            | Complete | 2026-02-24 |
+| 4. Glass Purple Visual Effects                 | 2/2            | Complete | 2026-02-24 |
+| 5. SurveyJS Sync, Color Sweep & Student Layout | 5/5            | Complete | 2026-02-24 |
