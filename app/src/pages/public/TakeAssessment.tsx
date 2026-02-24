@@ -3,7 +3,9 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertCircle, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { Model } from 'survey-core';
+import type { ITheme } from 'survey-core';
 import { Survey } from 'survey-react-ui';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   usePublicAssessment,
   useStartAssessment,
@@ -30,6 +32,31 @@ import { AssessmentResults } from './take-assessment/AssessmentResults';
 
 type FlowStep = 'info' | 'taking' | 'results';
 
+// Module-level constants — defined outside component to avoid re-creation on each render
+const glassPurpleTheme: ITheme = {
+  colorPalette: 'dark',
+  cssVariables: {
+    '--sjs-primary-backcolor': '#8b5cf6',
+    '--sjs-primary-backcolor-light': 'rgba(139, 92, 246, 0.1)',
+    '--sjs-primary-backcolor-dark': '#7c3aed',
+    '--sjs-primary-forecolor': '#ffffff',
+    '--sjs-general-backcolor': '#0d0a1e',
+    '--sjs-general-backcolor-dim': '#080614',
+    '--sjs-general-backcolor-dim-light': '#110820',
+    '--sjs-general-forecolor': 'rgba(255, 255, 255, 0.91)',
+    '--sjs-general-forecolor-light': 'rgba(255, 255, 255, 0.55)',
+  },
+};
+
+const daylightTheme: ITheme = {
+  cssVariables: {
+    '--sjs-primary-backcolor': '#1b5fd0',
+    '--sjs-primary-backcolor-light': 'rgba(27, 95, 208, 0.1)',
+    '--sjs-primary-backcolor-dark': '#1550b5',
+    '--sjs-primary-forecolor': '#ffffff',
+  },
+};
+
 function asSurveyJson(value: unknown): SurveyJson | null {
   if (value && typeof value === 'object') return value as SurveyJson;
   return null;
@@ -38,6 +65,7 @@ function asSurveyJson(value: unknown): SurveyJson | null {
 export default function TakeAssessment() {
   const { hash } = useParams<{ hash: string }>();
   const safeHash = hash ?? '';
+  const { theme } = useTheme();
 
   const [step, setStep] = useState<FlowStep>('info');
   const [firstName, setFirstName] = useState('');
@@ -200,15 +228,9 @@ export default function TakeAssessment() {
       model.showProgressBar = 'bottom';
       model.progressBarType = 'questions';
 
-      // Apply brand theme
-      model.applyTheme({
-        cssVariables: {
-          '--sjs-primary-backcolor': '#1b5fd0',
-          '--sjs-primary-backcolor-light': 'rgba(27, 95, 208, 0.1)',
-          '--sjs-primary-backcolor-dark': '#1550b5',
-          '--sjs-primary-forecolor': '#ffffff',
-        },
-      });
+      // Apply theme-aware SurveyJS styles — Glass Purple gets dark palette + purple primary;
+      // Daylight gets brand primary only (preserves current behavior)
+      model.applyTheme(theme === 'glass-purple' ? glassPurpleTheme : daylightTheme);
 
       const capturedResponseId = result.responseId;
       // On resume, use the original startedAt so timeTaken accounts for
