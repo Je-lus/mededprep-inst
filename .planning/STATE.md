@@ -5,35 +5,36 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** The app must look and feel professional across both themes — no broken layouts, no unreadable text, no white flashes when switching themes
-**Current focus:** Phase 2 — Theme Infrastructure
+**Current focus:** Phase 3 — Admin Sidebar App Shell
 
 ## Current Position
 
-Phase: 2 of 5 (Theme Infrastructure)
-Plan: 2 of 2 in current phase (02-02 complete)
+Phase: 3 of 5 (Admin Sidebar App Shell)
+Plan: 1 of 3 in current phase (03-01 complete)
 Status: In progress
-Last activity: 2026-02-24 — Plan 02-02 complete: ThemeToggle sun/moon button component placed in AdminLayout and StudentLayout headers
+Last activity: 2026-02-24 — Plan 03-01 complete: shadcn Sheet, AdminSidebar component, and Glass Purple CSS rules (body gradient, sidebar blur, nav glow)
 
-Progress: [████░░░░░░] 20%
+Progress: [█████░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
-- Average duration: 3 min
+- Total plans completed: 5
+- Average duration: 2.4 min
 - Total execution time: 0.2 hours
 
 **By Phase:**
 
-| Phase                   | Plans | Total | Avg/Plan |
-| ----------------------- | ----- | ----- | -------- |
-| 01-atomic-css-migration | 2     | 8 min | 4 min    |
-| 02-theme-infrastructure | 2     | 3 min | 1.5 min  |
+| Phase                     | Plans | Total | Avg/Plan |
+| ------------------------- | ----- | ----- | -------- |
+| 01-atomic-css-migration   | 2     | 8 min | 4 min    |
+| 02-theme-infrastructure   | 2     | 3 min | 1.5 min  |
+| 03-admin-sidebar-appshell | 1     | 1 min | 1 min    |
 
 **Recent Trend:**
 
-- Last 5 plans: 5 min, 3 min, 2 min
+- Last 5 plans: 5 min, 3 min, 2 min, 1 min
 - Trend: Fast
 
 _Updated after each plan completion_
@@ -57,6 +58,9 @@ Recent decisions affecting current work:
 - 02-01: All localStorage and matchMedia calls wrapped in try/catch — iOS Safari private browsing throws SecurityError.
 - 02-02: aria-label on icon-only toggle buttons describes the action (what clicking will do), not the current state — correct WCAG accessibility pattern.
 - 02-02: ThemeToggle placed between user identity info and sign-out/logout button in both layouts — natural visual grouping for session controls.
+- 03-01: AdminSidebar uses map over navItems const array (not 7 individual NavLink elements) — DRY pattern; runtime behavior identical; verification count reflects literal occurrences only.
+- 03-01: ThemeToggle placed in sidebar header per plan requirement THM-06.
+- 03-01: !important on glass-purple .nav-active overrides Tailwind bg-primary/10 — no JSX theme-conditional logic needed.
 
 ### Pending Todos
 
@@ -70,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-02-PLAN.md — ThemeToggle component complete in both layouts; Phase 2 theme infrastructure fully wired; next: Phase 3 glass-purple CSS variable definitions
+Stopped at: Completed 03-01-PLAN.md — AdminSidebar building blocks complete; Sheet primitive, sidebar nav component, and Glass Purple CSS rules ready for AppShell (Plan 03-02)
 Resume file: None
