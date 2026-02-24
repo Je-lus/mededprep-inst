@@ -81,7 +81,13 @@ Plans:
 3. Switching themes produces a smooth color transition (approximately 0.25s) with no jarring flash on background, sidebar, or cards
 4. All six new shadcn/ui components (Sheet, Tooltip, ScrollArea, Popover, Checkbox, Switch) are installed and usable
 5. `npm run build` and `npm run typecheck` pass with zero errors
-   **Plans**: TBD
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 04-01-PLAN.md — Install six shadcn/ui components and establish clean build baseline
+- [ ] 04-02-PLAN.md — Glass card backdrop blur, primary button glow, and smooth theme transition CSS
 
 ### Phase 5: SurveyJS Sync, Color Sweep & Student Layout
 
@@ -107,5 +113,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Atomic CSS Migration                        | 0/TBD          | Not started | -         |
 | 2. Theme Infrastructure                        | 0/2            | Not started | -         |
 | 3. Admin Sidebar & AppShell                    | 0/TBD          | Not started | -         |
-| 4. Glass Purple Visual Effects                 | 0/TBD          | Not started | -         |
+| 4. Glass Purple Visual Effects                 | 0/2            | Not started | -         |
 | 5. SurveyJS Sync, Color Sweep & Student Layout | 0/TBD          | Not started | -         |
