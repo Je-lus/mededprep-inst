@@ -40,3 +40,7 @@ prisma/*.db
 
 # File uploads
 storage/
+
+# WSL artifacts
+*:Zone.Identifier
+*:mshield
