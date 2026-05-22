@@ -37,8 +37,6 @@ All Prisma queries MUST include `WHERE orgId = req.orgId`.
 
 ## Critical Patterns
 
-- **API responses:** `{ success: true, data }` or `{ success: false, error: { code, message } }`
-- **Brand color:** `#1b5fd0`
 - SurveyJS license initialized via `app/src/lib/surveyjs-license.ts`
 - Question metadata (explanation, difficulty, page number) stored in SurveyJS element `metadata` property
 
@@ -78,7 +76,3 @@ sudo nginx -t                 # Test nginx config
 sudo systemctl reload nginx   # Reload nginx
 curl -s localhost:9001/health  # Health check
 ```
-
-## Multi-Agent Workflow
-
-Run `/director` to plan a batch. Shared tooling at `../workflow/`. See `AGENTS.md` for executor instructions.
